@@ -1,0 +1,3 @@
+Nick Tremaroli changes to this commit:
+
+Cleaning up Main.h
