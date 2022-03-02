@@ -4,7 +4,7 @@
 extern PROCBUFFER_OUT MasterToTiva;
 extern PROCBUFFER_IN TivaToMaster;
 
-AthenaLowLevel athena;
+PandoraLowLevel pandora;
 
 volatile bool runTimer1 = true;
 volatile bool runTimer3 = true;
@@ -198,29 +198,29 @@ int main(void)
 
     SysCtlDelay(2000);
 
-    // Populate athena object
-    athena = athenaConstruct(sample_rate);
+    // Populate pandora object
+    pandora = pandoraConstruct(sample_rate);
 
     // Initialize tiva
 
     tivaInitEtherCAT();
 
-    while(!athena.initialized)
+    while(!pandora.initialized)
     {
         EtherCAT_MainTask();
-        athena.prevProcessIdFromMaster = athena.processIdFromMaster;
-        athena.processIdFromMaster = MasterToTiva.Byte[PROCESS_ID_INDEX];
+        pandora.prevProcessIdFromMaster = pandora.processIdFromMaster;
+        pandora.processIdFromMaster = MasterToTiva.Byte[PROCESS_ID_INDEX];
  //       printf("%d\n", MasterToTiva.Byte[1]);
 
-        if(athena.processIdFromMaster != athena.prevProcessIdFromMaster)
+        if(pandora.processIdFromMaster != pandora.prevProcessIdFromMaster)
         {
-            storeDataFromMaster(&athena);
-   //     processDataFromMaster(&athena);
-            loadDataForMaster(&athena);
+            storeDataFromMaster(&pandora);
+   //     processDataFromMaster(&pandora);
+            loadDataForMaster(&pandora);
         }
     }
 
-    tivaInit(&athena);
+    tivaInit(&pandora);
 
     // Enable processor interrupts
     IntMasterEnable();
@@ -281,8 +281,8 @@ void UART1IntHandler(void)
 //        char p[150];
 //
 //        // Logging all Connor board data
-//        sprintf(&p[0],"f: %d,%d min: %d,%d max: %d,%d e: %d,%d pwm: %d,%d dir: %d,%d motors running: %d\n\r",athena.actuator0.forceSensor.raw,athena.actuator1.forceSensor.raw,athena.joint0.lowerJointLimitRaw,athena.joint1.lowerJointLimitRaw,athena.joint0.upperJointLimitRaw,athena.joint1.upperJointLimitRaw,athena.joint0.encoder.raw,athena.joint1.encoder.raw,(int)athena.actuator0.dutyCycle,(int)athena.actuator1.dutyCycle, athena.actuator0.direction, athena.actuator1.direction, runTimer3);
-////        sprintf(&p[0],"newtons: %d,%d raw: %d,%d slope: %d,%d offset: %d,%d \n\r",athena.joint0.forceSensor.newtons,athena.joint1.forceSensor.newtons,athena.joint0.forceSensor.raw,athena.joint1.forceSensor.raw,athena.joint0.forceSensor.slope,athena.joint1.forceSensor.slope,athena.joint0.encoder.raw,athena.joint1.encoder.raw,athena.joint0.forceSensor.slope,athena.joint1.forceSensor.slope,athena.joint0.forceSensor.offset,athena.joint1.forceSensor.offset);
+//        sprintf(&p[0],"f: %d,%d min: %d,%d max: %d,%d e: %d,%d pwm: %d,%d dir: %d,%d motors running: %d\n\r",pandora.actuator0.forceSensor.raw,pandora.actuator1.forceSensor.raw,pandora.joint0.lowerJointLimitRaw,pandora.joint1.lowerJointLimitRaw,pandora.joint0.upperJointLimitRaw,pandora.joint1.upperJointLimitRaw,pandora.joint0.encoder.raw,pandora.joint1.encoder.raw,(int)pandora.actuator0.dutyCycle,(int)pandora.actuator1.dutyCycle, pandora.actuator0.direction, pandora.actuator1.direction, runTimer3);
+////        sprintf(&p[0],"newtons: %d,%d raw: %d,%d slope: %d,%d offset: %d,%d \n\r",pandora.joint0.forceSensor.newtons,pandora.joint1.forceSensor.newtons,pandora.joint0.forceSensor.raw,pandora.joint1.forceSensor.raw,pandora.joint0.forceSensor.slope,pandora.joint1.forceSensor.slope,pandora.joint0.encoder.raw,pandora.joint1.encoder.raw,pandora.joint0.forceSensor.slope,pandora.joint1.forceSensor.slope,pandora.joint0.forceSensor.offset,pandora.joint1.forceSensor.offset);
 //
 //        UARTSendString(0, p);
 //    }
@@ -302,41 +302,41 @@ void Timer1AIntHandler(void)
         {
             // Stop timer1
             runTimer3 = false;
-            athena.signalToMaster = HALT_SIGNAL_TM;
+            pandora.signalToMaster = HALT_SIGNAL_TM;
 
             // Stop motor
-            athena.actuator0.dutyCycle = 0;
-            athena.actuator1.dutyCycle = 0;
-            SendPWMSignal(&athena.actuator0);
-            SendPWMSignal(&athena.actuator1);
+            pandora.actuator0.dutyCycle = 0;
+            pandora.actuator1.dutyCycle = 0;
+            SendPWMSignal(&pandora.actuator0);
+            SendPWMSignal(&pandora.actuator1);
 
             // Send shutdown signal to master
             EtherCAT_MainTask();
 
             // Send message over UART for debugging purposes
-/*            if (athena.joint0.encoder.raw > athena.joint0.upperJointLimitRaw ||
-                athena.joint0.encoder.raw < athena.joint0.lowerJointLimitRaw)
+/*            if (pandora.joint0.encoder.raw > pandora.joint0.upperJointLimitRaw ||
+                pandora.joint0.encoder.raw < pandora.joint0.lowerJointLimitRaw)
             {
                 UARTSendString(0,"Joint 0 limit reached, stop all motors!\r\n");
             }
-            else if (athena.joint1.encoder.raw > athena.joint1.upperJointLimitRaw ||
-                     athena.joint1.encoder.raw < athena.joint1.lowerJointLimitRaw)
+            else if (pandora.joint1.encoder.raw > pandora.joint1.upperJointLimitRaw ||
+                     pandora.joint1.encoder.raw < pandora.joint1.lowerJointLimitRaw)
             {
                 UARTSendString(0,"Joint 1 limit reached, stop all motors!\r\n");
             }*/
         }
         else
         {
-            athena.signalToMaster = NORMAL_OPERATION;
+            pandora.signalToMaster = NORMAL_OPERATION;
         }
     }
     else
     {
         // Stop motors if not running estop interrupt
-        athena.actuator0.dutyCycle = 0;
-        athena.actuator1.dutyCycle = 0;
-        SendPWMSignal(&athena.actuator0);
-        SendPWMSignal(&athena.actuator1);
+        pandora.actuator0.dutyCycle = 0;
+        pandora.actuator1.dutyCycle = 0;
+        SendPWMSignal(&pandora.actuator0);
+        SendPWMSignal(&pandora.actuator1);
     }
     TimerIntClear(TIMER1_BASE, TIMER_TIMA_TIMEOUT);
 }
@@ -348,16 +348,16 @@ void Timer1AIntHandler(void)
  * based on Force, Abs Encoder Angle Ranges.
  */
 bool EngageVirtualEStop(void) {
-    if ((athena.joint0.encoder.raw != 65535 &&
-            (athena.joint0.encoder.raw > athena.joint0.upperJointLimitRaw ||
-        athena.joint0.encoder.raw < athena.joint0.lowerJointLimitRaw)) ||
-            (athena.joint1.encoder.raw != 65535 &&
-        athena.joint1.encoder.raw > athena.joint1.upperJointLimitRaw ||
-        athena.joint1.encoder.raw < athena.joint1.lowerJointLimitRaw) ||
-        athena.actuator0.forceSensor.newtons > athena.actuator0.forceSensor.upperLimitNewtons ||
-        athena.actuator0.forceSensor.newtons < athena.actuator0.forceSensor.lowerLimitNewtons ||
-        athena.actuator1.forceSensor.newtons > athena.actuator1.forceSensor.upperLimitNewtons ||
-        athena.actuator1.forceSensor.newtons < athena.actuator1.forceSensor.lowerLimitNewtons)
+    if ((pandora.joint0.encoder.raw != 65535 &&
+            (pandora.joint0.encoder.raw > pandora.joint0.upperJointLimitRaw ||
+        pandora.joint0.encoder.raw < pandora.joint0.lowerJointLimitRaw)) ||
+            (pandora.joint1.encoder.raw != 65535 &&
+        pandora.joint1.encoder.raw > pandora.joint1.upperJointLimitRaw ||
+        pandora.joint1.encoder.raw < pandora.joint1.lowerJointLimitRaw) ||
+        pandora.actuator0.forceSensor.newtons > pandora.actuator0.forceSensor.upperLimitNewtons ||
+        pandora.actuator0.forceSensor.newtons < pandora.actuator0.forceSensor.lowerLimitNewtons ||
+        pandora.actuator1.forceSensor.newtons > pandora.actuator1.forceSensor.upperLimitNewtons ||
+        pandora.actuator1.forceSensor.newtons < pandora.actuator1.forceSensor.lowerLimitNewtons)
     {
             return true;
     }
@@ -384,16 +384,16 @@ void Timer2AIntHandler(void)
  */
 void Timer3AIntHandler(void)
 {
-    if (athena.signalFromMaster == CONTROL_SIGNAL)
+    if (pandora.signalFromMaster == CONTROL_SIGNAL)
     {
-        updateForces(&athena.actuator0.forceSensor);
-        updateForces(&athena.actuator1.forceSensor);
-        updateJointAngles(&athena.joint0);
-        updateJointAngles(&athena.joint1);
-        readQEIEncoderPosition(&athena.actuator0.motorEncoder);
-        readQEIEncoderPosition(&athena.actuator1.motorEncoder);
-        readQEIEncoderVelocity(&athena.actuator0.motorEncoder);
-        readQEIEncoderVelocity(&athena.actuator1.motorEncoder);
+        updateForces(&pandora.actuator0.forceSensor);
+        updateForces(&pandora.actuator1.forceSensor);
+        updateJointAngles(&pandora.joint0);
+        updateJointAngles(&pandora.joint1);
+        readQEIEncoderPosition(&pandora.actuator0.motorEncoder);
+        readQEIEncoderPosition(&pandora.actuator1.motorEncoder);
+        readQEIEncoderVelocity(&pandora.actuator0.motorEncoder);
+        readQEIEncoderVelocity(&pandora.actuator1.motorEncoder);
     }
 
     if (runTimer3)
@@ -401,24 +401,24 @@ void Timer3AIntHandler(void)
         // Send TivaToMaster and receive MasterToTiva
         EtherCAT_MainTask();
 
-        athena.prevProcessIdFromMaster = athena.processIdFromMaster;
-        athena.processIdFromMaster = MasterToTiva.Byte[PROCESS_ID_INDEX];
+        pandora.prevProcessIdFromMaster = pandora.processIdFromMaster;
+        pandora.processIdFromMaster = MasterToTiva.Byte[PROCESS_ID_INDEX];
 
-        if(athena.processIdFromMaster != athena.prevProcessIdFromMaster)
+        if(pandora.processIdFromMaster != pandora.prevProcessIdFromMaster)
         {
             // Read desired Tiva status, duty cycles, and directions from MasterToTiva
-            storeDataFromMaster(&athena);
+            storeDataFromMaster(&pandora);
 
             // Act according Tiva status
             // Turns off estop timer if necessary
-            runTimer1 = processDataFromMaster(&athena);
+            runTimer1 = processDataFromMaster(&pandora);
              // Populate TivaToMaster data frame
-            loadDataForMaster(&athena);
+            loadDataForMaster(&pandora);
         }
         else
         {
-            runTimer1 = processDataFromMaster(&athena);
-            loadDataForMaster(&athena);
+            runTimer1 = processDataFromMaster(&pandora);
+            loadDataForMaster(&pandora);
         }
     }
     TimerIntClear(TIMER3_BASE, TIMER_TIMA_TIMEOUT);

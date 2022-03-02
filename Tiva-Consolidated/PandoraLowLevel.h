@@ -5,8 +5,8 @@
  * of Athena
  */
 
-#ifndef ATHENALOWLEVEL_H
-#define ATHENALOWLEVEL_H
+#ifndef PANDORALOWLEVEL_H
+#define PANDORALOWLEVEL_H
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -80,7 +80,7 @@ typedef struct InitializationData InitializationData;
  * variables needed for ONE Tiva. Each Tiva has 2 joints,
  * a location, and variables to keep track of the processID
  */
-struct AthenaLowLevel
+struct PandoraLowLevel
 {
     Joint joint0;
     Joint joint1;
@@ -99,7 +99,7 @@ struct AthenaLowLevel
     InitializationData initializationData;
     bool initialized;
 };
-typedef struct AthenaLowLevel AthenaLowLevel;
+typedef struct PandoraLowLevel PandoraLowLevel;
 
 /**
  * floatByteData
@@ -132,8 +132,8 @@ TivaLocations getLocationsFromPins(void);
 // Configure the location pins
 void tivaLocationPinsConfig();
 // Construct and init the AthenaLowLevel object
-AthenaLowLevel athenaConstruct(uint16_t sample_rate);
-void tivaInit(AthenaLowLevel* athena);
+PandoraLowLevel pandoraConstruct(uint16_t sample_rate);
+void tivaInit(PandoraLowLevel* athena);
 
 /*-----------LED functions-----------*/
 
@@ -161,17 +161,17 @@ void modifyLEDs();
 // Create the ethercat Frame to send data to the master
 void tivaInitEtherCAT();
 
-void loadDataForMaster(AthenaLowLevel* athena);
+void loadDataForMaster(PandoraLowLevel* athena);
 // Decode the ethercat Frame which was sent form the master
-void storeDataFromMaster(AthenaLowLevel* athena);
+void storeDataFromMaster(PandoraLowLevel* athena);
 // Process the data which was received from the master
-bool processDataFromMaster(AthenaLowLevel* athena);
+bool processDataFromMaster(PandoraLowLevel* athena);
 // Check if the motors should be disabled
-void checkMotorDisable(AthenaLowLevel* athena);
+void checkMotorDisable(PandoraLowLevel* athena);
 
-void storeInitFrame(AthenaLowLevel* athena);
+void storeInitFrame(PandoraLowLevel* athena);
 
-void PandoraInit(AthenaLowLevel* athena);
+void PandoraInit(PandoraLowLevel* athena);
 
 // TODO: Move this to HAL/SSI_TIVA!!
 void disableSSI1();

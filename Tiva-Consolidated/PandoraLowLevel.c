@@ -1,15 +1,15 @@
 /**
- * AthenaLowLevel.c
+ * pandoraLowLevel.c
  * @author: Nick Tremaroli, Sam Schoedel, and Connor Herron
  * Defines all of the low-level features and functions
- * of Athena
+ * of pandora
  */
-#include "AthenaLowLevel.h"
+#include "PandoraLowLevel.h"
 
 /**
  * joint0Config
  *
- * Configures Joint 0 for this Tiva on Athena.
+ * Configures Joint 0 for this Tiva on pandora.
  *
  * @param sample_rate: The sample rate of the Encoder for this joint
  * @return: an initialized joint for position 0
@@ -44,7 +44,7 @@ Joint joint0Config(uint16_t sample_rate,  TivaLocations tivaLocation)
 /**
  * joint1Config
  *
- * Configures Joint 1 for this Tiva on Athena.
+ * Configures Joint 1 for this Tiva on pandora.
  *
  * @param sample_rate: The sample rate of the Encoder for this joint
  * @return: an initialized joint for position 1
@@ -77,58 +77,58 @@ Joint joint1Config(uint16_t sample_rate, TivaLocations tivaLocation)
 }
 */
 /**
- * athenaConstruct
+ * pandoraConstruct
  *
- * Constructs the AthenaLowLevel structure and initializes
+ * Constructs the pandoraLowLevel structure and initializes
  * all of the starting values to 0.
  *
  * @param sample_rate: the sample rate to be used by the encoders
  * at the joints this Tiva is connected too
- * @return: a basic AthenaLowLevel structure
+ * @return: a basic pandoraLowLevel structure
  */
-AthenaLowLevel athenaConstruct(uint16_t sample_rate)
+PandoraLowLevel pandoraConstruct(uint16_t sample_rate)
 {
-    AthenaLowLevel athena;
+    PandoraLowLevel pandora;
 
     // Configure the Location pins
     tivaLocationPinsConfig();
     // Then read the location from them
-    athena.location = getLocationsFromPins();
+    pandora.location = getLocationsFromPins();
 
-    athena.signalToMaster = 0;
-    athena.signalFromMaster = 0;
-    athena.prevSignalFromMaster = 0;
+    pandora.signalToMaster = 0;
+    pandora.signalFromMaster = 0;
+    pandora.prevSignalFromMaster = 0;
 
-    athena.masterLocationGuess = notValidLocation;
+    pandora.masterLocationGuess = notValidLocation;
 
-    athena.prevProcessIdFromMaster = 0;
-    athena.processIdFromMaster = 0;
+    pandora.prevProcessIdFromMaster = 0;
+    pandora.processIdFromMaster = 0;
 
-    athena.initialized = false;
+    pandora.initialized = false;
     // for the initialization DATA!! Allocate data on the heap to delete it later
-    athena.initializationData.numberOfInitFramesReceived = 0;
-    athena.initializationData.initalizationDataBlock =
+    pandora.initializationData.numberOfInitFramesReceived = 0;
+    pandora.initializationData.initalizationDataBlock =
             (void**)malloc(sizeof(void**) * NUMBER_OF_INITIALIZATION_FRAMES);
     int i;
     for(i = 0; i < NUMBER_OF_INITIALIZATION_FRAMES; i++)
-            *(athena.initializationData.initalizationDataBlock + i) = (void*)malloc(FRAME_SIZE);
-    return athena;
+            *(pandora.initializationData.initalizationDataBlock + i) = (void*)malloc(FRAME_SIZE);
+    return pandora;
 }
 
-void storeInitFrame(AthenaLowLevel* athena)
+void storeInitFrame(PandoraLowLevel* pandora)
 {
     // check to make sure the conditions match up
-    if(athena->signalFromMaster != INITIALIZATION_SIGNAL)
+    if(pandora->signalFromMaster != INITIALIZATION_SIGNAL)
         return;
 
     // check to make sure there is no error regarding initialization
     // this is important because sending the wrong initialization data can crash
     // the tiva. Initialization Frame Numbers start counting from zero
     uint8_t initFrameNumber = MasterToTiva.Byte[INITIALIZATION_FRAME_NUMBER_INDEX];
-    if(initFrameNumber != athena->initializationData.numberOfInitFramesReceived
+    if(initFrameNumber != pandora->initializationData.numberOfInitFramesReceived
             || initFrameNumber > NUMBER_OF_INITIALIZATION_FRAMES)
     {
-        athena->signalToMaster = HALT_SIGNAL_TM;
+        pandora->signalToMaster = HALT_SIGNAL_TM;
         return;
     }
     int i;
@@ -136,11 +136,11 @@ void storeInitFrame(AthenaLowLevel* athena)
     for(i = 3; i < FRAME_SIZE; i++)
     {
 //        printf("%d: %d\n", i, MasterToTiva.Byte[i]);
-        *(uint8_t*)(*(uint8_t**)(athena->initializationData.initalizationDataBlock + initFrameNumber) + i) =
+        *(uint8_t*)(*(uint8_t**)(pandora->initializationData.initalizationDataBlock + initFrameNumber) + i) =
                 MasterToTiva.Byte[i];
- //       printf("Init frame value: %d\n", *(uint8_t*)(*(uint8_t**)(athena->initializationData.initalizationDataBlock + initFrameNumber) + i));
+ //       printf("Init frame value: %d\n", *(uint8_t*)(*(uint8_t**)(pandora->initializationData.initalizationDataBlock + initFrameNumber) + i));
     }
-    athena->initializationData.numberOfInitFramesReceived++;
+    pandora->initializationData.numberOfInitFramesReceived++;
 }
 
 /**
@@ -377,17 +377,17 @@ void haltLEDS()
  * The intalization function with inits all of the
  * Tiva's peripherals needed.
  *
- * @param athena: a pointer to the athena structure
+ * @param pandora: a pointer to the pandora structure
  */
-void tivaInit(AthenaLowLevel* athena)
+void tivaInit(PandoraLowLevel* pandora)
 {
     PWMConfig();
-    enableForceSensor(&athena->actuator0.forceSensor);
-    enableForceSensor(&athena->actuator1.forceSensor);
-    enableSSIEncoder(&athena->joint0.encoder);
-    enableSSIEncoder(&athena->joint1.encoder);
-    enableQEIEncoder(&athena->actuator0.motorEncoder);
-    enableQEIEncoder(&athena->actuator1.motorEncoder);
+    enableForceSensor(&pandora->actuator0.forceSensor);
+    enableForceSensor(&pandora->actuator1.forceSensor);
+    enableSSIEncoder(&pandora->joint0.encoder);
+    enableSSIEncoder(&pandora->joint1.encoder);
+    enableQEIEncoder(&pandora->actuator0.motorEncoder);
+    enableQEIEncoder(&pandora->actuator1.motorEncoder);
     debugLEDSConfig();
     timer1A_Config();
     timer2A_Config();
@@ -397,12 +397,12 @@ void tivaInit(AthenaLowLevel* athena)
 //    printf("ret: %d\n", ret);
 }
 
-void PandoraInit(AthenaLowLevel* athena)
+void PandoraInit(PandoraLowLevel* pandora)
 {
     Actuator actuator0, actuator1;
     Joint joint0, joint1;
     int i;
-    void** initializationData = athena->initializationData.initalizationDataBlock;
+    void** initializationData = pandora->initializationData.initalizationDataBlock;
     ByteData byteData;
     FloatByteData floatByteData;
     for(i = 0; i < NUMBER_OF_INITIALIZATION_FRAMES; i++)
@@ -510,10 +510,10 @@ void PandoraInit(AthenaLowLevel* athena)
         }
     }
 
-    athena->joint0 = joint0;
-    athena->joint1 = joint1;
-    athena->actuator0 = actuator0;
-    athena->actuator1 = actuator1;
+    pandora->joint0 = joint0;
+    pandora->joint1 = joint1;
+    pandora->actuator0 = actuator0;
+    pandora->actuator1 = actuator1;
 
 //    int j;
 //    for(i = 0; i < NUMBER_OF_INITIALIZATION_FRAMES; i++)
@@ -523,7 +523,7 @@ void PandoraInit(AthenaLowLevel* athena)
 //        free(initializationData + i);
 //    }
 
-    athena->initialized = true;
+    pandora->initialized = true;
 }
 
 void tivaInitEtherCAT()
@@ -541,54 +541,54 @@ void tivaInitEtherCAT()
  * over ethercat and puts all the data in its corresponding
  * index within the frame to send back.
  *
- * @param athena: a pointer to the athena structure,
+ * @param pandora: a pointer to the pandora structure,
  * the data to send is serialized from this structure
  */
-void loadDataForMaster(AthenaLowLevel* athena)
+void loadDataForMaster(PandoraLowLevel* pandora)
 {
-    athena->signalToMaster = athena->signalFromMaster;
-    TivaToMaster.Byte[SIGNAL_INDEX] = (uint8_t)athena->signalToMaster;
-    TivaToMaster.Byte[PROCESS_ID_INDEX] = athena->processIdFromMaster;
-//    printf("%d\n", athena->processIdFromMaster);
+    pandora->signalToMaster = pandora->signalFromMaster;
+    TivaToMaster.Byte[SIGNAL_INDEX] = (uint8_t)pandora->signalToMaster;
+    TivaToMaster.Byte[PROCESS_ID_INDEX] = pandora->processIdFromMaster;
+//    printf("%d\n", pandora->processIdFromMaster);
 
     // Notice how the signals determine how the data gets serialized
-    if(athena->signalFromMaster == LOCATION_DEBUG_SIGNAL && athena->location == athena->masterLocationGuess)
-        TivaToMaster.Byte[MASTER_LOCATION_GUESS] = (uint8_t)(athena->location);
-    if(athena->signalFromMaster == CONTROL_SIGNAL)
+    if(pandora->signalFromMaster == LOCATION_DEBUG_SIGNAL && pandora->location == pandora->masterLocationGuess)
+        TivaToMaster.Byte[MASTER_LOCATION_GUESS] = (uint8_t)(pandora->location);
+    if(pandora->signalFromMaster == CONTROL_SIGNAL)
     {
         FloatByteData tempConversion;
 
         // Package force sensor 0 Newton value
-        tempConversion.floatData = athena->actuator0.forceSensor.newtons;
+        tempConversion.floatData = pandora->actuator0.forceSensor.newtons;
         TivaToMaster.Byte[FORCE0_B1] = tempConversion.Byte[3];
         TivaToMaster.Byte[FORCE0_B2] = tempConversion.Byte[2];
         TivaToMaster.Byte[FORCE0_B3] = tempConversion.Byte[1];
         TivaToMaster.Byte[FORCE0_B4] = tempConversion.Byte[0];
 
         // Package force sensor 1 Newton value
-        tempConversion.floatData = athena->actuator1.forceSensor.newtons;
+        tempConversion.floatData = pandora->actuator1.forceSensor.newtons;
         TivaToMaster.Byte[FORCE1_B1] = tempConversion.Byte[3];
         TivaToMaster.Byte[FORCE1_B2] = tempConversion.Byte[2];
         TivaToMaster.Byte[FORCE1_B3] = tempConversion.Byte[1];
         TivaToMaster.Byte[FORCE1_B4] = tempConversion.Byte[0];
 
         // Package encoder 0 radian value
-        tempConversion.floatData = athena->joint0.encoder.angleRads;
+        tempConversion.floatData = pandora->joint0.encoder.angleRads;
         TivaToMaster.Byte[ENCODER0_B1] = tempConversion.Byte[3];
         TivaToMaster.Byte[ENCODER0_B2] = tempConversion.Byte[2];
         TivaToMaster.Byte[ENCODER0_B3] = tempConversion.Byte[1];
         TivaToMaster.Byte[ENCODER0_B4] = tempConversion.Byte[0];
 
         // Package encoder 1 radian value
-        tempConversion.floatData = athena->joint1.encoder.angleRads;
+        tempConversion.floatData = pandora->joint1.encoder.angleRads;
         TivaToMaster.Byte[ENCODER1_B1] = tempConversion.Byte[3];
         TivaToMaster.Byte[ENCODER1_B2] = tempConversion.Byte[2];
         TivaToMaster.Byte[ENCODER1_B3] = tempConversion.Byte[1];
         TivaToMaster.Byte[ENCODER1_B4] = tempConversion.Byte[0];
     }
-    if(athena->signalFromMaster == INITIALIZATION_SIGNAL)
+    if(pandora->signalFromMaster == INITIALIZATION_SIGNAL)
     {
-        TivaToMaster.Byte[NUMBER_OF_INIT_FRAMES_RECEIVED_INDEX] = athena->initializationData.numberOfInitFramesReceived;
+        TivaToMaster.Byte[NUMBER_OF_INIT_FRAMES_RECEIVED_INDEX] = pandora->initializationData.numberOfInitFramesReceived;
         TivaToMaster.Byte[NUMBER_OF_TOTAL_INIT_FRAMES_INDEX] = NUMBER_OF_INITIALIZATION_FRAMES;
     }
 }
@@ -599,49 +599,49 @@ void loadDataForMaster(AthenaLowLevel* athena)
  * Deserializes the data received from the master
  * and stores the data accordingly.
  *
- * @param athena: a pointer to the athena structure,
+ * @param pandora: a pointer to the pandora structure,
  * all of the data from the master gets stored in this
  * structure
  */
-void storeDataFromMaster(AthenaLowLevel* athena)
+void storeDataFromMaster(PandoraLowLevel* pandora)
 {
-    athena->signalFromMaster = MasterToTiva.Byte[SIGNAL_INDEX];
+    pandora->signalFromMaster = MasterToTiva.Byte[SIGNAL_INDEX];
     // notice how the different control signals effect
     // how the data gets stored
-    if (athena->signalFromMaster == CONTROL_SIGNAL)
+    if (pandora->signalFromMaster == CONTROL_SIGNAL)
     {
         FloatByteData tempConversion;
 
         // Set joint 0 direction
-        athena->actuator0.direction = MasterToTiva.Byte[DIRECTION0];
+        pandora->actuator0.direction = MasterToTiva.Byte[DIRECTION0];
 
         // Set joint 0 duty cycle
         tempConversion.Byte[3] = MasterToTiva.Byte[DUTYCYCLE0_B1];
         tempConversion.Byte[2] = MasterToTiva.Byte[DUTYCYCLE0_B2];
         tempConversion.Byte[1] = MasterToTiva.Byte[DUTYCYCLE0_B3];
         tempConversion.Byte[0] = MasterToTiva.Byte[DUTYCYCLE0_B4];
-        athena->actuator0.dutyCycle = tempConversion.floatData;
+        pandora->actuator0.dutyCycle = tempConversion.floatData;
 
         // Set joint 1 direction
-        athena->actuator1.direction = MasterToTiva.Byte[DIRECTION1];
+        pandora->actuator1.direction = MasterToTiva.Byte[DIRECTION1];
 
         // Set joint 1 duty cycle
         tempConversion.Byte[3] = MasterToTiva.Byte[DUTYCYCLE1_B1];
         tempConversion.Byte[2] = MasterToTiva.Byte[DUTYCYCLE1_B2];
         tempConversion.Byte[1] = MasterToTiva.Byte[DUTYCYCLE1_B3];
         tempConversion.Byte[0] = MasterToTiva.Byte[DUTYCYCLE1_B4];
-        athena->actuator1.dutyCycle = tempConversion.floatData;
+        pandora->actuator1.dutyCycle = tempConversion.floatData;
     }
-    else if (athena->signalFromMaster == LOCATION_DEBUG_SIGNAL)
+    else if (pandora->signalFromMaster == LOCATION_DEBUG_SIGNAL)
     {
-        athena->masterLocationGuess = (TivaLocations)MasterToTiva.Byte[MASTER_LOCATION_GUESS];
+        pandora->masterLocationGuess = (TivaLocations)MasterToTiva.Byte[MASTER_LOCATION_GUESS];
     }
-    else if(athena->signalFromMaster == INITIALIZATION_SIGNAL)
+    else if(pandora->signalFromMaster == INITIALIZATION_SIGNAL)
     {
-        storeInitFrame(athena);
-        if(athena->initializationData.numberOfInitFramesReceived == NUMBER_OF_INITIALIZATION_FRAMES)
+        storeInitFrame(pandora);
+        if(pandora->initializationData.numberOfInitFramesReceived == NUMBER_OF_INITIALIZATION_FRAMES)
         {
-            PandoraInit(athena);
+            PandoraInit(pandora);
         }
     }
 }
@@ -651,19 +651,19 @@ void storeDataFromMaster(AthenaLowLevel* athena)
  *
  * Checks if the motors should be disabled.
  *
- * @param athena: a pointer to the athena structure
+ * @param pandora: a pointer to the pandora structure
  */
-void checkMotorDisable(AthenaLowLevel* athena)
+void checkMotorDisable(PandoraLowLevel* pandora)
 {
     // DO NOT EDIT THIS CODE (please)
     /////
-    if(athena->signalFromMaster != CONTROL_SIGNAL)
+    if(pandora->signalFromMaster != CONTROL_SIGNAL)
     {
         // STOP MOTORS
-        athena->actuator0.dutyCycle = 0;
-        athena->actuator1.dutyCycle = 0;
-        SendPWMSignal(&athena->actuator0);
-        SendPWMSignal(&athena->actuator1);
+        pandora->actuator0.dutyCycle = 0;
+        pandora->actuator1.dutyCycle = 0;
+        SendPWMSignal(&pandora->actuator0);
+        SendPWMSignal(&pandora->actuator1);
     }
     /////
 }
@@ -675,74 +675,74 @@ void checkMotorDisable(AthenaLowLevel* athena)
  * Acts on received master data according to desired TIVA mode
  * Return 1 if estop timer should be run, otherwise return 0.
  *
- * @param athena: a pointer to the athena structure
+ * @param pandora: a pointer to the pandora structure
  */
-bool processDataFromMaster(AthenaLowLevel* athena)
+bool processDataFromMaster(PandoraLowLevel* pandora)
 {
 //    printf("In process data from master\n");
     int run_estop = false;
     // DO NOT REMOVE THIS LINE
     // Ensures motor PWMs are set to 0 in the case signalFromMaster != CONTROL_SIGNAL but motors are still moving
-    checkMotorDisable(athena);
+    checkMotorDisable(pandora);
 
     // Check if we have switched into control mode
-    if (athena->prevSignalFromMaster != CONTROL_SIGNAL && athena->signalFromMaster == CONTROL_SIGNAL)
+    if (pandora->prevSignalFromMaster != CONTROL_SIGNAL && pandora->signalFromMaster == CONTROL_SIGNAL)
     {
         // Reconfigure port F to use SSI1
         disableCheckLocationLEDs();
-        if (!athena->joint1.encoder.enabled)
+        if (!pandora->joint1.encoder.enabled)
         {
-            enableSSIEncoder(&athena->joint1.encoder);
+            enableSSIEncoder(&pandora->joint1.encoder);
         }
     }
 
     // Check if we have switched out of control mode
-    if (athena->prevSignalFromMaster == CONTROL_SIGNAL && athena->signalFromMaster != CONTROL_SIGNAL)
+    if (pandora->prevSignalFromMaster == CONTROL_SIGNAL && pandora->signalFromMaster != CONTROL_SIGNAL)
     {
-        if (athena->joint1.encoder.enabled)
+        if (pandora->joint1.encoder.enabled)
         {
-            disableSSIEncoder(&athena->joint1.encoder);
+            disableSSIEncoder(&pandora->joint1.encoder);
         }
         debugLEDSConfig();
     }
 
 
 
-    if (athena->signalFromMaster == NOT_CONNECTED)
+    if (pandora->signalFromMaster == NOT_CONNECTED)
     {
         // Waiting for master to connect
         notConnectedLEDS(); // Flash red
     }
-    else if (athena->signalFromMaster == HALT_SIGNAL || athena->signalToMaster == HALT_SIGNAL_TM)
+    else if (pandora->signalFromMaster == HALT_SIGNAL || pandora->signalToMaster == HALT_SIGNAL_TM)
     {
         // Stop motors signal received from master
         haltLEDS(); // Solid red
     }
-    else if (athena->signalFromMaster == LOCATION_DEBUG_SIGNAL)
+    else if (pandora->signalFromMaster == LOCATION_DEBUG_SIGNAL)
     {
         // Check if master's guessed TIVA location is the same as TIVA's actual location
-        checkLocationLEDS(athena->masterLocationGuess, athena->location);
+        checkLocationLEDS(pandora->masterLocationGuess, pandora->location);
         // If guess is wrong, solid yellow
         // If guess is correct, flash blue
     }
-    else if (athena->signalFromMaster == IDLE_SIGNAL)
+    else if (pandora->signalFromMaster == IDLE_SIGNAL)
     {
         // Master is active but not sending or receiving anything
         idleLEDS(); // Solid purple
     }
-    else if (athena->signalFromMaster == CONTROL_SIGNAL)
+    else if (pandora->signalFromMaster == CONTROL_SIGNAL)
     {
 //        printf("Sending control signal\n");
         // Send motor PWMs and directions to motor controllers
-        SendPWMSignal(&athena->actuator0);
-        SendPWMSignal(&athena->actuator1);
+        SendPWMSignal(&pandora->actuator0);
+        SendPWMSignal(&pandora->actuator1);
 //        printf("PWM values have been sent!\n");
 
         // Run estop interrupt
         run_estop = true;
     }
 
-    athena->prevSignalFromMaster = athena->signalFromMaster;
+    pandora->prevSignalFromMaster = pandora->signalFromMaster;
 
     return run_estop;
 }
@@ -781,14 +781,14 @@ void disableCheckLocationLEDs()
  *
  * Updates motor controllers with new PWM and direction for each motor.
  *
- * @param athena: a pointer to the athena structure
+ * @param pandora: a pointer to the pandora structure
  */
 /*
-void sendSignal(AthenaLowLevel* athena)
+void sendSignal(pandoraLowLevel* pandora)
 {
     // Send to motor 0 and motor 1
-    setPulseWidth(0,20000,athena->joint0.dutyCycle,SysCtlClockGet(), athena->joint0.direction);
-    setPulseWidth(1,20000,athena->joint1.dutyCycle,SysCtlClockGet(), athena->joint1.direction);
+    setPulseWidth(0,20000,pandora->joint0.dutyCycle,SysCtlClockGet(), pandora->joint0.direction);
+    setPulseWidth(1,20000,pandora->joint1.dutyCycle,SysCtlClockGet(), pandora->joint1.direction);
 }
 */
 /**
@@ -796,17 +796,17 @@ void sendSignal(AthenaLowLevel* athena)
  *
  * Read load cells and update corresponding joint variables.
  *
- * @param athena: a pointer to the athena structure
+ * @param pandora: a pointer to the pandora structure
  */
 /*
-void updateForces(AthenaLowLevel* athena)
+void updateForces(pandoraLowLevel* pandora)
 {
-    readLoadCell(&athena->joint0.forceSensor);
-    readLoadCell(&athena->joint1.forceSensor);
+    readLoadCell(&pandora->joint0.forceSensor);
+    readLoadCell(&pandora->joint1.forceSensor);
 
     // Convert raw force sensor reading to Newtons using known force sensor calibration values
-    athena->joint0.forceSensor.newtons = athena->joint0.forceSensor.raw * athena->joint0.forceSensor.slope + athena->joint0.forceSensor.offset;
-    athena->joint1.forceSensor.newtons = athena->joint1.forceSensor.raw * athena->joint1.forceSensor.slope + athena->joint1.forceSensor.offset;
+    pandora->joint0.forceSensor.newtons = pandora->joint0.forceSensor.raw * pandora->joint0.forceSensor.slope + pandora->joint0.forceSensor.offset;
+    pandora->joint1.forceSensor.newtons = pandora->joint1.forceSensor.raw * pandora->joint1.forceSensor.slope + pandora->joint1.forceSensor.offset;
 }
 */
 
@@ -815,30 +815,30 @@ void updateForces(AthenaLowLevel* athena)
  *
  * Read encoders and update corresponding joint variables.
  *
- * @param athena: a pointer to the athena structure
+ * @param pandora: a pointer to the pandora structure
  */
 /*
-void updateJointAngles(AthenaLowLevel* athena)
+void updateJointAngles(pandoraLowLevel* pandora)
 {
-    readAbsEncoder(&athena->joint0.encoder);
-    readAbsEncoder(&athena->joint1.encoder);
+    readAbsEncoder(&pandora->joint0.encoder);
+    readAbsEncoder(&pandora->joint1.encoder);
 
     // Convert raw encoder sensor reading to radians
-    if (athena->joint0.encoder.encoderBrand == Gurley_Encoder){
-        athena->joint0.encoder.angleRads = athena->joint0.encoder.raw * M_PI / 65535;
+    if (pandora->joint0.encoder.encoderBrand == Gurley_Encoder){
+        pandora->joint0.encoder.angleRads = pandora->joint0.encoder.raw * M_PI / 65535;
     }
-    else if (athena->joint0.encoder.encoderBrand == Orbis_Encoder){
-        athena->joint0.encoder.raw &= 16383;
-        athena->joint0.encoder.angleRads = athena->joint0.encoder.raw * ((2 * M_PI) / 16383);
-        athena->joint0.encoder.angleDegrees = athena->joint0.encoder.raw * (360 / 16383);
+    else if (pandora->joint0.encoder.encoderBrand == Orbis_Encoder){
+        pandora->joint0.encoder.raw &= 16383;
+        pandora->joint0.encoder.angleRads = pandora->joint0.encoder.raw * ((2 * M_PI) / 16383);
+        pandora->joint0.encoder.angleDegrees = pandora->joint0.encoder.raw * (360 / 16383);
     }
-    if (athena->joint1.encoder.encoderBrand == Gurley_Encoder){
-        athena->joint1.encoder.angleRads = athena->joint1.encoder.raw * M_PI / 65535;
+    if (pandora->joint1.encoder.encoderBrand == Gurley_Encoder){
+        pandora->joint1.encoder.angleRads = pandora->joint1.encoder.raw * M_PI / 65535;
     }
-    else if (athena->joint1.encoder.encoderBrand == Orbis_Encoder){  // joint1
-        athena->joint1.encoder.raw &= 16383;
-        athena->joint1.encoder.angleRads = athena->joint1.encoder.raw * ((2 * M_PI) / 16383);
-        athena->joint1.encoder.angleDegrees = athena->joint1.encoder.raw * (360 / 16383);
+    else if (pandora->joint1.encoder.encoderBrand == Orbis_Encoder){  // joint1
+        pandora->joint1.encoder.raw &= 16383;
+        pandora->joint1.encoder.angleRads = pandora->joint1.encoder.raw * ((2 * M_PI) / 16383);
+        pandora->joint1.encoder.angleDegrees = pandora->joint1.encoder.raw * (360 / 16383);
     }
 
 }
@@ -848,13 +848,13 @@ void updateJointAngles(AthenaLowLevel* athena)
  *
  * Read encoders and update corresponding joint variables.
  *
- * @param athena: a pointer to the athena structure
+ * @param pandora: a pointer to the pandora structure
  */
 /*
-void updateMotorPositions(AthenaLowLevel* athena)
+void updateMotorPositions(pandoraLowLevel* pandora)
 {
-    readMotorPosition(&athena->joint0.motorEncoder);
-    readMotorPosition(&athena->joint1.motorEncoder);
+    readMotorPosition(&pandora->joint0.motorEncoder);
+    readMotorPosition(&pandora->joint1.motorEncoder);
 }
 */
 /**
@@ -864,14 +864,14 @@ void updateMotorPositions(AthenaLowLevel* athena)
  * recently calculated quadrature velocity output. The calculation is done at the HAL level within the
  * TivaWare QEI Library.
  *
- * @param athena pointer to the athena structure
+ * @param pandora pointer to the pandora structure
  * @param sample_rate how quickly is the quadrature encoder checked to calculate velocity
  * @param countsPerRotation the number of quadrature encoder counts within a 360 degree rotation
  */
 /*
-void updateMotorVelocities(AthenaLowLevel* athena, int32_t sample_rate, int32_t countsPerRotation)
+void updateMotorVelocities(pandoraLowLevel* pandora, int32_t sample_rate, int32_t countsPerRotation)
 {
-    readMotorVelocity(&athena->actuator0.motorEncoder, sample_rate, countsPerRotation);
-    readMotorVelocity(&athena->actuator1.motorEncoder, sample_rate, countsPerRotation);
+    readMotorVelocity(&pandora->actuator0.motorEncoder, sample_rate, countsPerRotation);
+    readMotorVelocity(&pandora->actuator1.motorEncoder, sample_rate, countsPerRotation);
 }*/
 
