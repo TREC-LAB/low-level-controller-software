@@ -17,9 +17,9 @@
 #define LOCATION_DEBUG_SIGNAL   2 // For determining TIVA location
 #define CONTROL_SIGNAL          3 // When moving motors
 #define IDLE_SIGNAL             4 // When master is active but not sending or receiving anything
-#define MODIFY_FORCES           5
-#define MODIFY_LIMITS           6
-#define INITIALIZATION_SIGNAL   7
+//#define MODIFY_FORCES           5
+//#define MODIFY_LIMITS           6
+#define INITIALIZATION_SIGNAL   5
 
 // Commands that can be sent to master
 #define NOT_CONNECTED           0
@@ -127,5 +127,7 @@
 
 
 // for Initialization
-#define NUMBER_OF_INITIALIZATION_FRAMES     4
+#define NUMBER_OF_INITIALIZATION_FRAMES         4
+#define NUMBER_OF_INIT_FRAMES_RECEIVED_INDEX   2
+#define NUMBER_OF_TOTAL_INIT_FRAMES_INDEX       3
 

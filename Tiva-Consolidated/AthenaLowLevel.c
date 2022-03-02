@@ -106,12 +106,12 @@ AthenaLowLevel athenaConstruct(uint16_t sample_rate)
 
     athena.initialized = false;
     // for the initialization DATA!! Allocate data on the heap to delete it later
-    athena.initializationData.initializationFrameNumberToReceive = 0;
+    athena.initializationData.numberOfInitFramesReceived = 0;
     athena.initializationData.initalizationDataBlock =
             (void**)malloc(sizeof(void**) * NUMBER_OF_INITIALIZATION_FRAMES);
     int i;
     for(i = 0; i < NUMBER_OF_INITIALIZATION_FRAMES; i++)
-            *(athena.initializationData.initalizationDataBlock + i) = (void*)malloc(sizeof(FRAME_SIZE));
+            *(athena.initializationData.initalizationDataBlock + i) = (void*)malloc(FRAME_SIZE);
     return athena;
 }
 
@@ -123,9 +123,9 @@ void storeInitFrame(AthenaLowLevel* athena)
 
     // check to make sure there is no error regarding initialization
     // this is important because sending the wrong initialization data can crash
-    // the tiva
+    // the tiva. Initialization Frame Numbers start counting from zero
     uint8_t initFrameNumber = MasterToTiva.Byte[INITIALIZATION_FRAME_NUMBER_INDEX];
-    if(initFrameNumber != athena->initializationData.initializationFrameNumberToReceive
+    if(initFrameNumber != athena->initializationData.numberOfInitFramesReceived
             || initFrameNumber > NUMBER_OF_INITIALIZATION_FRAMES)
     {
         athena->signalToMaster = HALT_SIGNAL_TM;
@@ -135,10 +135,12 @@ void storeInitFrame(AthenaLowLevel* athena)
     // 3 is the start of the valuable data
     for(i = 3; i < FRAME_SIZE; i++)
     {
+//        printf("%d: %d\n", i, MasterToTiva.Byte[i]);
         *(uint8_t*)(*(uint8_t**)(athena->initializationData.initalizationDataBlock + initFrameNumber) + i) =
                 MasterToTiva.Byte[i];
+ //       printf("Init frame value: %d\n", *(uint8_t*)(*(uint8_t**)(athena->initializationData.initalizationDataBlock + initFrameNumber) + i));
     }
-    athena->initializationData.initializationFrameNumberToReceive++;
+    athena->initializationData.numberOfInitFramesReceived++;
 }
 
 /**
@@ -405,19 +407,25 @@ void PandoraInit(AthenaLowLevel* athena)
     FloatByteData floatByteData;
     for(i = 0; i < NUMBER_OF_INITIALIZATION_FRAMES; i++)
     {
+//        for(j = 0; j < 32; j++)
+//            printf("%d:%d\n", j, *(*(initializationData + i) + j));
         // data stored from the first initialization frame!
         // this frame is for the actuator
         if(i == 0 || i == 1)
         {
             uint8_t QEIBaseNumber = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 3));
-            uint32_t actuatorMotorEncoderQEIBaseInit = QEI0_BASE + ((1 << 16) * QEIBaseNumber);
+            uint32_t actuatorMotorEncoderQEIBaseInit = QEI0_BASE + ((1 << 12) * QEIBaseNumber);
 
+    //        printf("QEIBaseNumber for %d: %d\n", i, QEIBaseNumber);
             byteData.Byte[3] = 0;
             byteData.Byte[2] = 0;
             byteData.Byte[1] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 4));
             byteData.Byte[0] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 5));
 
-            uint16_t sampleRateInit = byteData.Word[0];
+            uint16_t sampleRateInit = (uint16_t)byteData.Word[0];
+     //       printf("sampleRateInit for %d: %d\n", i, sampleRateInit);
+ //           printf("Byte word[0] %d\n", byteData.Word[0]);
+ //           printf("Byte word[1] %d\n", byteData.Word[1]);
 
             byteData.Byte[3] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 6));
             byteData.Byte[2] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 7));
@@ -425,9 +433,11 @@ void PandoraInit(AthenaLowLevel* athena)
             byteData.Byte[0] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 9));
 
             int32_t countsPerRotationInit = byteData.intData;
+      //      printf("countsPerRotationInit: %d\n", countsPerRotationInit);
 
             uint8_t ADCBaseNumber = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 10));
-            uint32_t actuatorForceSensorADCBaseInit = ADC0_BASE + ((1 << 16) * ADCBaseNumber);
+            uint32_t actuatorForceSensorADCBaseInit = ADC0_BASE + ((1 << 12) * ADCBaseNumber);
+     //       printf("ADCBaseNumber for %d: %d\n", i, ADCBaseNumber);
 
             floatByteData.Byte[3] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 11));
             floatByteData.Byte[2] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 12));
@@ -435,6 +445,7 @@ void PandoraInit(AthenaLowLevel* athena)
             floatByteData.Byte[0] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 14));
 
             float forceSensorSlopeInit = floatByteData.floatData;
+    //        printf("forceSensorSlopeInit for %d: %f\n", i, forceSensorSlopeInit);
 
             floatByteData.Byte[3] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 15));
             floatByteData.Byte[2] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 16));
@@ -442,6 +453,7 @@ void PandoraInit(AthenaLowLevel* athena)
             floatByteData.Byte[0] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 18));
 
             float forceSensorOffsetInit = floatByteData.floatData;
+       //     printf("forceSensorOffsetInit for %d: %f\n\n", i, forceSensorOffsetInit);
 
             if(i == 0)
                 actuator0 = actuatorConstruct(actuatorMotorEncoderQEIBaseInit, sampleRateInit, countsPerRotationInit,
@@ -450,12 +462,17 @@ void PandoraInit(AthenaLowLevel* athena)
                 actuator1 = actuatorConstruct(actuatorMotorEncoderQEIBaseInit, sampleRateInit, countsPerRotationInit,
                                           actuatorForceSensorADCBaseInit, forceSensorSlopeInit, forceSensorOffsetInit);
         }
+        // this data is for the joint
         else
         {
             uint8_t SSIBaseNumber = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 3));
-            uint32_t jointEncoderSSIBaseInit = SSI0_BASE + ((1 << 16) * SSIBaseNumber);
+            uint32_t jointEncoderSSIBaseInit = SSI0_BASE + ((1 << 12) * SSIBaseNumber);
+
+ //           printf("SSIBaseNumber for %d: %d\n", i, SSIBaseNumber);
 
             SSIEncoderBrand SSIEncoderBrandInit = (SSIEncoderBrand)(*(uint8_t*)(*(uint8_t**)(initializationData + i) + 4));
+
+ //           printf("SSIEncoderBrandInit for %d: %d\n", i, (int)SSIEncoderBrandInit);
 
             byteData.Byte[3] = 0;
             byteData.Byte[2] = 0;
@@ -464,19 +481,25 @@ void PandoraInit(AthenaLowLevel* athena)
 
             uint16_t sampleRateInit = byteData.Word[0];
 
-            byteData.Byte[3] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 7));
-            byteData.Byte[2] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 8));
-            byteData.Byte[1] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 9));
-            byteData.Byte[0] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 10));
+ //           printf("sampleRateInit for %d: %d\n", i, sampleRateInit);
 
-            uint32_t upperLimitRawInit = byteData.intData;
+            floatByteData.Byte[3] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 7));
+            floatByteData.Byte[2] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 8));
+            floatByteData.Byte[1] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 9));
+            floatByteData.Byte[0] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 10));
 
-            byteData.Byte[3] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 11));
-            byteData.Byte[2] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 12));
-            byteData.Byte[1] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 13));
-            byteData.Byte[0] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 14));
+            uint32_t upperLimitRawInit = floatByteData.floatData * 65535 / 180;     // convert degrees to raw
 
-            uint32_t lowerLimitRawInit = byteData.intData;
+//            printf("upperLimitRawInit for %d: %f\n", i, upperLimitRawInit);
+
+            floatByteData.Byte[3] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 11));
+            floatByteData.Byte[2] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 12));
+            floatByteData.Byte[1] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 13));
+            floatByteData.Byte[0] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 14));
+
+            uint32_t lowerLimitRawInit = floatByteData.intData * 65535 / 180;
+
+  //          printf("lowerLimitRawInit for %d: %f\n\n", i, lowerLimitRawInit);       // convert degrees to raw
 
             if(i == 2)
                 joint0 = jointConstruct(jointEncoderSSIBaseInit, SSIEncoderBrandInit, sampleRateInit,
@@ -492,15 +515,23 @@ void PandoraInit(AthenaLowLevel* athena)
     athena->actuator0 = actuator0;
     athena->actuator1 = actuator1;
 
+//    int j;
+//    for(i = 0; i < NUMBER_OF_INITIALIZATION_FRAMES; i++)
+//    {
+//        for(j = 0; j < FRAME_SIZE; j++)
+//            free((*(void**)(initializationData + i)) + j);
+//        free(initializationData + i);
+//    }
+
     athena->initialized = true;
 }
 
 void tivaInitEtherCAT()
 {
-
+    tivaLocationPinsConfig();
     SSI3_Config_SPI(); // Configure SSI3 for SPI for use with EtherCAT
     int ret = EtherCAT_Init();
-    printf("%d\n", ret);
+   // printf("%d\n", ret);
 }
 
 /**
@@ -517,13 +548,14 @@ void loadDataForMaster(AthenaLowLevel* athena)
 {
     athena->signalToMaster = athena->signalFromMaster;
     TivaToMaster.Byte[SIGNAL_INDEX] = (uint8_t)athena->signalToMaster;
+    TivaToMaster.Byte[PROCESS_ID_INDEX] = athena->processIdFromMaster;
+//    printf("%d\n", athena->processIdFromMaster);
 
     // Notice how the signals determine how the data gets serialized
     if(athena->signalFromMaster == LOCATION_DEBUG_SIGNAL && athena->location == athena->masterLocationGuess)
         TivaToMaster.Byte[MASTER_LOCATION_GUESS] = (uint8_t)(athena->location);
     if(athena->signalFromMaster == CONTROL_SIGNAL)
     {
-
         FloatByteData tempConversion;
 
         // Package force sensor 0 Newton value
@@ -554,7 +586,11 @@ void loadDataForMaster(AthenaLowLevel* athena)
         TivaToMaster.Byte[ENCODER1_B3] = tempConversion.Byte[1];
         TivaToMaster.Byte[ENCODER1_B4] = tempConversion.Byte[0];
     }
-    TivaToMaster.Byte[PROCESS_ID_INDEX] = athena->processIdFromMaster;
+    if(athena->signalFromMaster == INITIALIZATION_SIGNAL)
+    {
+        TivaToMaster.Byte[NUMBER_OF_INIT_FRAMES_RECEIVED_INDEX] = athena->initializationData.numberOfInitFramesReceived;
+        TivaToMaster.Byte[NUMBER_OF_TOTAL_INIT_FRAMES_INDEX] = NUMBER_OF_INITIALIZATION_FRAMES;
+    }
 }
 
 /**
@@ -600,82 +636,10 @@ void storeDataFromMaster(AthenaLowLevel* athena)
     {
         athena->masterLocationGuess = (TivaLocations)MasterToTiva.Byte[MASTER_LOCATION_GUESS];
     }
-    else if (athena->signalFromMaster == MODIFY_FORCES)
-    {
-        // Set force sensor calibration parameters given by master
-
-        FloatByteData tempConversion;
-
-        // Set joint 0 force sensor offset
-        tempConversion.Byte[3] = MasterToTiva.Byte[FORCE_OFFSET0_B1];
-        tempConversion.Byte[2] = MasterToTiva.Byte[FORCE_OFFSET0_B2];
-        tempConversion.Byte[1] = MasterToTiva.Byte[FORCE_OFFSET0_B3];
-        tempConversion.Byte[0] = MasterToTiva.Byte[FORCE_OFFSET0_B4];
-        athena->actuator0.forceSensor.offset = tempConversion.floatData;
-
-        // Set joint 0 force sensor slope
-        tempConversion.Byte[3] = MasterToTiva.Byte[FORCE_SLOPE0_B1];
-        tempConversion.Byte[2] = MasterToTiva.Byte[FORCE_SLOPE0_B2];
-        tempConversion.Byte[1] = MasterToTiva.Byte[FORCE_SLOPE0_B3];
-        tempConversion.Byte[0] = MasterToTiva.Byte[FORCE_SLOPE0_B4];
-        athena->actuator0.forceSensor.slope = tempConversion.floatData;
-
-        // Set joint 1 force sensor offset
-        tempConversion.Byte[3] = MasterToTiva.Byte[FORCE_OFFSET1_B1];
-        tempConversion.Byte[2] = MasterToTiva.Byte[FORCE_OFFSET1_B2];
-        tempConversion.Byte[1] = MasterToTiva.Byte[FORCE_OFFSET1_B3];
-        tempConversion.Byte[0] = MasterToTiva.Byte[FORCE_OFFSET1_B4];
-        athena->actuator1.forceSensor.offset = tempConversion.floatData;
-
-        // Set joint 1 force sensor slope
-        tempConversion.Byte[3] = MasterToTiva.Byte[FORCE_SLOPE1_B1];
-        tempConversion.Byte[2] = MasterToTiva.Byte[FORCE_SLOPE1_B2];
-        tempConversion.Byte[1] = MasterToTiva.Byte[FORCE_SLOPE1_B3];
-        tempConversion.Byte[0] = MasterToTiva.Byte[FORCE_SLOPE1_B4];
-        athena->actuator1.forceSensor.slope = tempConversion.floatData;
-    }
-    else if (athena->signalFromMaster == MODIFY_LIMITS)
-    {
-        // Set joint limits given by master
-
-        FloatByteData tempConversion;
-
-        // Receive joint 0 upper joint limit in degrees
-        tempConversion.Byte[3] = MasterToTiva.Byte[MAX_LIM_RAW0_B1];
-        tempConversion.Byte[2] = MasterToTiva.Byte[MAX_LIM_RAW0_B2];
-        tempConversion.Byte[1] = MasterToTiva.Byte[MAX_LIM_RAW0_B3];
-        tempConversion.Byte[0] = MasterToTiva.Byte[MAX_LIM_RAW0_B4];
-        athena->joint0.upperJointLimitRaw = tempConversion.floatData * 65535 / 180; // Convert degrees to raw
-
-        // Receive joint 0 lower joint limit in degrees
-        tempConversion.Byte[3] = MasterToTiva.Byte[MIN_LIM_RAW0_B1];
-        tempConversion.Byte[2] = MasterToTiva.Byte[MIN_LIM_RAW0_B2];
-        tempConversion.Byte[1] = MasterToTiva.Byte[MIN_LIM_RAW0_B3];
-        tempConversion.Byte[0] = MasterToTiva.Byte[MIN_LIM_RAW0_B4];
-        athena->joint0.lowerJointLimitRaw = tempConversion.floatData * 65535 / 180;
-
-        // Receive joint 1 upper joint limit in degrees
-        tempConversion.Byte[3] = MasterToTiva.Byte[MAX_LIM_RAW1_B1];
-        tempConversion.Byte[2] = MasterToTiva.Byte[MAX_LIM_RAW1_B2];
-        tempConversion.Byte[1] = MasterToTiva.Byte[MAX_LIM_RAW1_B3];
-        tempConversion.Byte[0] = MasterToTiva.Byte[MAX_LIM_RAW1_B4];
-        athena->joint1.upperJointLimitRaw = tempConversion.floatData * 65535 / 180;
-
-        // Receive joint 1 lower joint limit in degrees
-        tempConversion.Byte[3] = MasterToTiva.Byte[MIN_LIM_RAW1_B1];
-        tempConversion.Byte[2] = MasterToTiva.Byte[MIN_LIM_RAW1_B2];
-        tempConversion.Byte[1] = MasterToTiva.Byte[MIN_LIM_RAW1_B3];
-        tempConversion.Byte[0] = MasterToTiva.Byte[MIN_LIM_RAW1_B4];
-        athena->joint1.lowerJointLimitRaw = tempConversion.floatData * 65535 / 180;
-
-        // Initialize Joint position to middle of joint limits
-        athena->joint0.encoder.raw = (athena->joint0.lowerJointLimitRaw + athena->joint0.upperJointLimitRaw)/2;
-        athena->joint1.encoder.raw = (athena->joint1.lowerJointLimitRaw + athena->joint1.upperJointLimitRaw)/2;
-    }
     else if(athena->signalFromMaster == INITIALIZATION_SIGNAL)
     {
         storeInitFrame(athena);
-        if(athena->initializationData.initializationFrameNumberToReceive == NUMBER_OF_INITIALIZATION_FRAMES)
+        if(athena->initializationData.numberOfInitFramesReceived == NUMBER_OF_INITIALIZATION_FRAMES)
         {
             PandoraInit(athena);
         }
@@ -715,6 +679,7 @@ void checkMotorDisable(AthenaLowLevel* athena)
  */
 bool processDataFromMaster(AthenaLowLevel* athena)
 {
+//    printf("In process data from master\n");
     int run_estop = false;
     // DO NOT REMOVE THIS LINE
     // Ensures motor PWMs are set to 0 in the case signalFromMaster != CONTROL_SIGNAL but motors are still moving
@@ -765,16 +730,13 @@ bool processDataFromMaster(AthenaLowLevel* athena)
         // Master is active but not sending or receiving anything
         idleLEDS(); // Solid purple
     }
-    else if (athena->signalFromMaster == MODIFY_FORCES || athena->signalFromMaster == MODIFY_LIMITS)
-    {
-        // Master is modifying force sensor parameters or joint limits
-        modifyLEDs();
-    }
     else if (athena->signalFromMaster == CONTROL_SIGNAL)
     {
+//        printf("Sending control signal\n");
         // Send motor PWMs and directions to motor controllers
         SendPWMSignal(&athena->actuator0);
         SendPWMSignal(&athena->actuator1);
+//        printf("PWM values have been sent!\n");
 
         // Run estop interrupt
         run_estop = true;

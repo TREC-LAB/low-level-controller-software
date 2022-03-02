@@ -179,6 +179,6 @@ void SSI3_Config_SPI()
 
     // Configure SSI clock
     SSIConfigSetExpClk(SSI3_BASE, SysCtlClockGet(), SSI_FRF_MOTO_MODE_0,
-                           SSI_MODE_MASTER, 500000, 8);
+                           SSI_MODE_MASTER, 2000000, 8);
     SSIEnable(SSI3_BASE);
 }

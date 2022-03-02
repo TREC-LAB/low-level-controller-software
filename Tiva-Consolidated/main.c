@@ -208,17 +208,26 @@ int main(void)
     while(!athena.initialized)
     {
         EtherCAT_MainTask();
-        storeDataFromMaster(&athena);
+        athena.prevProcessIdFromMaster = athena.processIdFromMaster;
+        athena.processIdFromMaster = MasterToTiva.Byte[PROCESS_ID_INDEX];
+ //       printf("%d\n", MasterToTiva.Byte[1]);
+
+        if(athena.processIdFromMaster != athena.prevProcessIdFromMaster)
+        {
+            storeDataFromMaster(&athena);
+   //     processDataFromMaster(&athena);
+            loadDataForMaster(&athena);
+        }
     }
 
     tivaInit(&athena);
 
     // Enable processor interrupts
     IntMasterEnable();
-    sendInstruction();
+//    sendInstruction();
 
     startTimer1(estop_rate); // Start vstop timer
-    startTimer2(logging_rate); // Start logging timer
+//    startTimer2(logging_rate); // Start logging timer
     startTimer3(sample_rate); // Start motor timer
 
     while(1)
@@ -232,19 +241,19 @@ int main(void)
  */
 void UART0IntHandler(void)
 {
-    uint32_t ui32Status;
-
-    // Get the interrupt status.
-    ui32Status = UARTIntStatus(UART0_BASE, true);
-
-    // Clear the asserted interrupts.
-    UARTIntClear(UART0_BASE, ui32Status);
-
-    // Loop while there are characters in the receive FIFO.
-    while(UARTCharsAvail(UART0_BASE))
-    {
-        checkKeyboard();
-    }
+//    uint32_t ui32Status;
+//
+//    // Get the interrupt status.
+//    ui32Status = UARTIntStatus(UART0_BASE, true);
+//
+//    // Clear the asserted interrupts.
+//    UARTIntClear(UART0_BASE, ui32Status);
+//
+//    // Loop while there are characters in the receive FIFO.
+//    while(UARTCharsAvail(UART0_BASE))
+//    {
+//        checkKeyboard();
+//    }
 }
 
 /*
@@ -265,19 +274,19 @@ void UART1IntHandler(void)
 /**
  * Logs through serial port
  */
-void logData(void)
-{
-    log_data = true;
-    if (log_data == true) {
-        char p[150];
-
-        // Logging all Connor board data
-        sprintf(&p[0],"f: %d,%d min: %d,%d max: %d,%d e: %d,%d pwm: %d,%d dir: %d,%d motors running: %d\n\r",athena.actuator0.forceSensor.raw,athena.actuator1.forceSensor.raw,athena.joint0.lowerJointLimitRaw,athena.joint1.lowerJointLimitRaw,athena.joint0.upperJointLimitRaw,athena.joint1.upperJointLimitRaw,athena.joint0.encoder.raw,athena.joint1.encoder.raw,(int)athena.actuator0.dutyCycle,(int)athena.actuator1.dutyCycle, athena.actuator0.direction, athena.actuator1.direction, runTimer3);
-//        sprintf(&p[0],"newtons: %d,%d raw: %d,%d slope: %d,%d offset: %d,%d \n\r",athena.joint0.forceSensor.newtons,athena.joint1.forceSensor.newtons,athena.joint0.forceSensor.raw,athena.joint1.forceSensor.raw,athena.joint0.forceSensor.slope,athena.joint1.forceSensor.slope,athena.joint0.encoder.raw,athena.joint1.encoder.raw,athena.joint0.forceSensor.slope,athena.joint1.forceSensor.slope,athena.joint0.forceSensor.offset,athena.joint1.forceSensor.offset);
-
-        UARTSendString(0, p);
-    }
-}
+//void logData(void)
+//{
+//    log_data = true;
+//    if (log_data == true) {
+//        char p[150];
+//
+//        // Logging all Connor board data
+//        sprintf(&p[0],"f: %d,%d min: %d,%d max: %d,%d e: %d,%d pwm: %d,%d dir: %d,%d motors running: %d\n\r",athena.actuator0.forceSensor.raw,athena.actuator1.forceSensor.raw,athena.joint0.lowerJointLimitRaw,athena.joint1.lowerJointLimitRaw,athena.joint0.upperJointLimitRaw,athena.joint1.upperJointLimitRaw,athena.joint0.encoder.raw,athena.joint1.encoder.raw,(int)athena.actuator0.dutyCycle,(int)athena.actuator1.dutyCycle, athena.actuator0.direction, athena.actuator1.direction, runTimer3);
+////        sprintf(&p[0],"newtons: %d,%d raw: %d,%d slope: %d,%d offset: %d,%d \n\r",athena.joint0.forceSensor.newtons,athena.joint1.forceSensor.newtons,athena.joint0.forceSensor.raw,athena.joint1.forceSensor.raw,athena.joint0.forceSensor.slope,athena.joint1.forceSensor.slope,athena.joint0.encoder.raw,athena.joint1.encoder.raw,athena.joint0.forceSensor.slope,athena.joint1.forceSensor.slope,athena.joint0.forceSensor.offset,athena.joint1.forceSensor.offset);
+//
+//        UARTSendString(0, p);
+//    }
+//}
 
 
 /**
@@ -305,7 +314,7 @@ void Timer1AIntHandler(void)
             EtherCAT_MainTask();
 
             // Send message over UART for debugging purposes
-            if (athena.joint0.encoder.raw > athena.joint0.upperJointLimitRaw ||
+/*            if (athena.joint0.encoder.raw > athena.joint0.upperJointLimitRaw ||
                 athena.joint0.encoder.raw < athena.joint0.lowerJointLimitRaw)
             {
                 UARTSendString(0,"Joint 0 limit reached, stop all motors!\r\n");
@@ -314,7 +323,7 @@ void Timer1AIntHandler(void)
                      athena.joint1.encoder.raw < athena.joint1.lowerJointLimitRaw)
             {
                 UARTSendString(0,"Joint 1 limit reached, stop all motors!\r\n");
-            }
+            }*/
         }
         else
         {
@@ -329,6 +338,7 @@ void Timer1AIntHandler(void)
         SendPWMSignal(&athena.actuator0);
         SendPWMSignal(&athena.actuator1);
     }
+    TimerIntClear(TIMER1_BASE, TIMER_TIMA_TIMEOUT);
 }
 
 
@@ -364,7 +374,7 @@ bool EngageVirtualEStop(void) {
 void Timer2AIntHandler(void)
 {
     TimerIntClear(TIMER2_BASE, TIMER_TIMA_TIMEOUT);
-    logData();
+//    logData();
 }
 
 /*
@@ -411,5 +421,6 @@ void Timer3AIntHandler(void)
             loadDataForMaster(&athena);
         }
     }
+    TimerIntClear(TIMER3_BASE, TIMER_TIMA_TIMEOUT);
 }
 

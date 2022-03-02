@@ -70,7 +70,7 @@ typedef struct TivaLocationBitSet TivaLocationBitSet;
 struct InitializationData
 {
     void** initalizationDataBlock;
-    uint8_t initializationFrameNumberToReceive;
+    uint8_t numberOfInitFramesReceived;
 };
 typedef struct InitializationData InitializationData;
 
