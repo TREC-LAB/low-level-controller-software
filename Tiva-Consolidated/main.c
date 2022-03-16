@@ -210,12 +210,10 @@ int main(void)
         EtherCAT_MainTask();
         pandora.prevProcessIdFromMaster = pandora.processIdFromMaster;
         pandora.processIdFromMaster = MasterToTiva.Byte[PROCESS_ID_INDEX];
- //       printf("%d\n", MasterToTiva.Byte[1]);
 
         if(pandora.processIdFromMaster != pandora.prevProcessIdFromMaster)
         {
             storeDataFromMaster(&pandora);
-   //     processDataFromMaster(&pandora);
             loadDataForMaster(&pandora);
         }
     }
@@ -224,10 +222,8 @@ int main(void)
 
     // Enable processor interrupts
     IntMasterEnable();
-//    sendInstruction();
 
     startTimer1(estop_rate); // Start vstop timer
-//    startTimer2(logging_rate); // Start logging timer
     startTimer3(sample_rate); // Start motor timer
 
     while(1)
@@ -348,23 +344,16 @@ void Timer1AIntHandler(void)
  * based on Force, Abs Encoder Angle Ranges.
  */
 bool EngageVirtualEStop(void) {
-    if ((pandora.joint0.encoder.raw != 65535 &&
-            (pandora.joint0.encoder.raw > pandora.joint0.upperJointLimitRaw ||
-        pandora.joint0.encoder.raw < pandora.joint0.lowerJointLimitRaw)) ||
+    return ((pandora.joint0.encoder.raw != 65535 &&
+            (pandora.joint0.actualRaw < -1 * pandora.joint0.rawBackwardRangeOfMotion ||
+        pandora.joint0.actualRaw > pandora.joint0.rawForwardRangeOfMotion)) ||
             (pandora.joint1.encoder.raw != 65535 &&
-        pandora.joint1.encoder.raw > pandora.joint1.upperJointLimitRaw ||
-        pandora.joint1.encoder.raw < pandora.joint1.lowerJointLimitRaw) ||
+        pandora.joint1.actualRaw < -1 * pandora.joint1.rawBackwardRangeOfMotion ||
+        pandora.joint1.actualRaw > pandora.joint1.rawForwardRangeOfMotion) ||
         pandora.actuator0.forceSensor.newtons > pandora.actuator0.forceSensor.upperLimitNewtons ||
         pandora.actuator0.forceSensor.newtons < pandora.actuator0.forceSensor.lowerLimitNewtons ||
         pandora.actuator1.forceSensor.newtons > pandora.actuator1.forceSensor.upperLimitNewtons ||
-        pandora.actuator1.forceSensor.newtons < pandora.actuator1.forceSensor.lowerLimitNewtons)
-    {
-            return true;
-    }
-    else {
-        return false;
-    }
-
+        pandora.actuator1.forceSensor.newtons < pandora.actuator1.forceSensor.lowerLimitNewtons);
 }
 
 /*

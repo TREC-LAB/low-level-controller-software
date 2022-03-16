@@ -134,12 +134,8 @@ void storeInitFrame(PandoraLowLevel* pandora)
     int i;
     // 3 is the start of the valuable data
     for(i = 3; i < FRAME_SIZE; i++)
-    {
-//        printf("%d: %d\n", i, MasterToTiva.Byte[i]);
         *(uint8_t*)(*(uint8_t**)(pandora->initializationData.initalizationDataBlock + initFrameNumber) + i) =
                 MasterToTiva.Byte[i];
- //       printf("Init frame value: %d\n", *(uint8_t*)(*(uint8_t**)(pandora->initializationData.initalizationDataBlock + initFrameNumber) + i));
-    }
     pandora->initializationData.numberOfInitFramesReceived++;
 }
 
@@ -407,8 +403,6 @@ void PandoraInit(PandoraLowLevel* pandora)
     FloatByteData floatByteData;
     for(i = 0; i < NUMBER_OF_INITIALIZATION_FRAMES; i++)
     {
-//        for(j = 0; j < 32; j++)
-//            printf("%d:%d\n", j, *(*(initializationData + i) + j));
         // data stored from the first initialization frame!
         // this frame is for the actuator
         if(i == 0 || i == 1)
@@ -416,16 +410,12 @@ void PandoraInit(PandoraLowLevel* pandora)
             uint8_t QEIBaseNumber = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 3));
             uint32_t actuatorMotorEncoderQEIBaseInit = QEI0_BASE + ((1 << 12) * QEIBaseNumber);
 
-    //        printf("QEIBaseNumber for %d: %d\n", i, QEIBaseNumber);
             byteData.Byte[3] = 0;
             byteData.Byte[2] = 0;
             byteData.Byte[1] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 4));
             byteData.Byte[0] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 5));
 
             uint16_t sampleRateInit = (uint16_t)byteData.Word[0];
-     //       printf("sampleRateInit for %d: %d\n", i, sampleRateInit);
- //           printf("Byte word[0] %d\n", byteData.Word[0]);
- //           printf("Byte word[1] %d\n", byteData.Word[1]);
 
             byteData.Byte[3] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 6));
             byteData.Byte[2] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 7));
@@ -433,11 +423,9 @@ void PandoraInit(PandoraLowLevel* pandora)
             byteData.Byte[0] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 9));
 
             int32_t countsPerRotationInit = byteData.intData;
-      //      printf("countsPerRotationInit: %d\n", countsPerRotationInit);
 
             uint8_t ADCBaseNumber = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 10));
             uint32_t actuatorForceSensorADCBaseInit = ADC0_BASE + ((1 << 12) * ADCBaseNumber);
-     //       printf("ADCBaseNumber for %d: %d\n", i, ADCBaseNumber);
 
             floatByteData.Byte[3] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 11));
             floatByteData.Byte[2] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 12));
@@ -445,7 +433,6 @@ void PandoraInit(PandoraLowLevel* pandora)
             floatByteData.Byte[0] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 14));
 
             float forceSensorSlopeInit = floatByteData.floatData;
-    //        printf("forceSensorSlopeInit for %d: %f\n", i, forceSensorSlopeInit);
 
             floatByteData.Byte[3] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 15));
             floatByteData.Byte[2] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 16));
@@ -453,7 +440,6 @@ void PandoraInit(PandoraLowLevel* pandora)
             floatByteData.Byte[0] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 18));
 
             float forceSensorOffsetInit = floatByteData.floatData;
-       //     printf("forceSensorOffsetInit for %d: %f\n\n", i, forceSensorOffsetInit);
 
             if(i == 0)
                 actuator0 = actuatorConstruct(actuatorMotorEncoderQEIBaseInit, sampleRateInit, countsPerRotationInit,
@@ -468,11 +454,7 @@ void PandoraInit(PandoraLowLevel* pandora)
             uint8_t SSIBaseNumber = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 3));
             uint32_t jointEncoderSSIBaseInit = SSI0_BASE + ((1 << 12) * SSIBaseNumber);
 
- //           printf("SSIBaseNumber for %d: %d\n", i, SSIBaseNumber);
-
             SSIEncoderBrand SSIEncoderBrandInit = (SSIEncoderBrand)(*(uint8_t*)(*(uint8_t**)(initializationData + i) + 4));
-
- //           printf("SSIEncoderBrandInit for %d: %d\n", i, (int)SSIEncoderBrandInit);
 
             byteData.Byte[3] = 0;
             byteData.Byte[2] = 0;
@@ -481,32 +463,37 @@ void PandoraInit(PandoraLowLevel* pandora)
 
             uint16_t sampleRateInit = byteData.Word[0];
 
- //           printf("sampleRateInit for %d: %d\n", i, sampleRateInit);
+            int8_t jointReverseFactor =  (*(int8_t*)(*(int8_t**)(initializationData + i) + 7));
 
-            floatByteData.Byte[3] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 7));
-            floatByteData.Byte[2] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 8));
-            floatByteData.Byte[1] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 9));
-            floatByteData.Byte[0] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 10));
+            floatByteData.Byte[3] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 8));
+            floatByteData.Byte[2] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 9));
+            floatByteData.Byte[1] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 10));
+            floatByteData.Byte[0] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 11));
 
-            uint32_t upperLimitRawInit = floatByteData.floatData * 65535 / 180;     // convert degrees to raw
+            uint16_t jointRawZeroPosition = (uint16_t)(floatByteData.floatData * (65535.0 / 180.0));
 
-//            printf("upperLimitRawInit for %d: %f\n", i, upperLimitRawInit);
+            floatByteData.Byte[3] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 12));
+            floatByteData.Byte[2] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 13));
+            floatByteData.Byte[1] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 14));
+            floatByteData.Byte[0] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 15));
 
-            floatByteData.Byte[3] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 11));
-            floatByteData.Byte[2] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 12));
-            floatByteData.Byte[1] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 13));
-            floatByteData.Byte[0] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 14));
+            uint16_t jointRawForwardRangeOfMotion = (uint16_t)(floatByteData.floatData * (65535.0) / 180.0);
 
-            uint32_t lowerLimitRawInit = floatByteData.intData * 65535 / 180;
+            floatByteData.Byte[3] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 16));
+            floatByteData.Byte[2] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 17));
+            floatByteData.Byte[1] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 18));
+            floatByteData.Byte[0] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 19));
 
-  //          printf("lowerLimitRawInit for %d: %f\n\n", i, lowerLimitRawInit);       // convert degrees to raw
+            uint16_t jointRawBackwardRangeOfMotion = (uint16_t)(floatByteData.floatData * (65535.0 / 180.0));
 
             if(i == 2)
                 joint0 = jointConstruct(jointEncoderSSIBaseInit, SSIEncoderBrandInit, sampleRateInit,
-                                        upperLimitRawInit, lowerLimitRawInit);
+                                        jointReverseFactor, jointRawZeroPosition,
+                                        jointRawForwardRangeOfMotion, jointRawBackwardRangeOfMotion);
             else
                 joint1 = jointConstruct(jointEncoderSSIBaseInit, SSIEncoderBrandInit, sampleRateInit,
-                                        upperLimitRawInit, lowerLimitRawInit);
+                                        jointReverseFactor, jointRawZeroPosition,
+                                        jointRawForwardRangeOfMotion, jointRawBackwardRangeOfMotion);
         }
     }
 
@@ -514,14 +501,6 @@ void PandoraInit(PandoraLowLevel* pandora)
     pandora->joint1 = joint1;
     pandora->actuator0 = actuator0;
     pandora->actuator1 = actuator1;
-
-//    int j;
-//    for(i = 0; i < NUMBER_OF_INITIALIZATION_FRAMES; i++)
-//    {
-//        for(j = 0; j < FRAME_SIZE; j++)
-//            free((*(void**)(initializationData + i)) + j);
-//        free(initializationData + i);
-//    }
 
     pandora->initialized = true;
 }
@@ -549,7 +528,6 @@ void loadDataForMaster(PandoraLowLevel* pandora)
     pandora->signalToMaster = pandora->signalFromMaster;
     TivaToMaster.Byte[SIGNAL_INDEX] = (uint8_t)pandora->signalToMaster;
     TivaToMaster.Byte[PROCESS_ID_INDEX] = pandora->processIdFromMaster;
-//    printf("%d\n", pandora->processIdFromMaster);
 
     // Notice how the signals determine how the data gets serialized
     if(pandora->signalFromMaster == LOCATION_DEBUG_SIGNAL && pandora->location == pandora->masterLocationGuess)
@@ -573,14 +551,14 @@ void loadDataForMaster(PandoraLowLevel* pandora)
         TivaToMaster.Byte[FORCE1_B4] = tempConversion.Byte[0];
 
         // Package encoder 0 radian value
-        tempConversion.floatData = pandora->joint0.encoder.angleRads;
+        tempConversion.floatData = pandora->joint0.angleRads;
         TivaToMaster.Byte[ENCODER0_B1] = tempConversion.Byte[3];
         TivaToMaster.Byte[ENCODER0_B2] = tempConversion.Byte[2];
         TivaToMaster.Byte[ENCODER0_B3] = tempConversion.Byte[1];
         TivaToMaster.Byte[ENCODER0_B4] = tempConversion.Byte[0];
 
         // Package encoder 1 radian value
-        tempConversion.floatData = pandora->joint1.encoder.angleRads;
+        tempConversion.floatData = pandora->joint1.angleRads;
         TivaToMaster.Byte[ENCODER1_B1] = tempConversion.Byte[3];
         TivaToMaster.Byte[ENCODER1_B2] = tempConversion.Byte[2];
         TivaToMaster.Byte[ENCODER1_B3] = tempConversion.Byte[1];
@@ -679,7 +657,6 @@ void checkMotorDisable(PandoraLowLevel* pandora)
  */
 bool processDataFromMaster(PandoraLowLevel* pandora)
 {
-//    printf("In process data from master\n");
     int run_estop = false;
     // DO NOT REMOVE THIS LINE
     // Ensures motor PWMs are set to 0 in the case signalFromMaster != CONTROL_SIGNAL but motors are still moving
@@ -706,8 +683,6 @@ bool processDataFromMaster(PandoraLowLevel* pandora)
         debugLEDSConfig();
     }
 
-
-
     if (pandora->signalFromMaster == NOT_CONNECTED)
     {
         // Waiting for master to connect
@@ -732,11 +707,9 @@ bool processDataFromMaster(PandoraLowLevel* pandora)
     }
     else if (pandora->signalFromMaster == CONTROL_SIGNAL)
     {
-//        printf("Sending control signal\n");
         // Send motor PWMs and directions to motor controllers
         SendPWMSignal(&pandora->actuator0);
         SendPWMSignal(&pandora->actuator1);
-//        printf("PWM values have been sent!\n");
 
         // Run estop interrupt
         run_estop = true;

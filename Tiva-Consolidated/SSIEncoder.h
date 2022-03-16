@@ -43,14 +43,7 @@ struct SSIEncoder
     int32_t rawVelPrev;
     int32_t rawVel;
 
-    float angleRads;
-    float angleDegrees;
 
-    // For encoder localization on a joint
-    float jointReverse;
-    float rawMax;
-    float rawMin;
-    float rawZero;
 };
 typedef struct SSIEncoder SSIEncoder;
 

@@ -120,9 +120,9 @@ void SSI1_Disable()
     // The SSI0 peripheral must be enabled for use.
     SSIDisable(SSI1_BASE);
     SysCtlPeripheralDisable(SYSCTL_PERIPH_SSI1);
-    HWREG(GPIO_PORTF_BASE+GPIO_O_LOCK) = GPIO_LOCK_KEY; //Unlock
-    HWREG(GPIO_PORTF_BASE+GPIO_O_CR) &= 0XFE;           // Enable PF0 AFS
-    HWREG(GPIO_PORTF_BASE+GPIO_O_LOCK) = 0;             // Relock
+//    HWREG(GPIO_PORTF_BASE+GPIO_O_LOCK) = GPIO_LOCK_KEY; //Unlock
+//    HWREG(GPIO_PORTF_BASE+GPIO_O_CR) &= 0XFE;           // Enable PF0 AFS
+//    HWREG(GPIO_PORTF_BASE+GPIO_O_LOCK) = 0;             // Relock
 }
 
 void SSI2_Config(){

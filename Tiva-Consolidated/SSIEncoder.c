@@ -118,3 +118,4 @@ void readAbsEncoderVelocity(SSIEncoder* encoder)
     }
     encoder->rawPrev = encoder->raw;  // Update the previous angle
 }
+

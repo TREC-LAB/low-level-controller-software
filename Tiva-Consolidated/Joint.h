@@ -19,15 +19,23 @@
 struct Joint
 {
     SSIEncoder encoder;
+    float angleRads;
+    float angleDegrees;
+    int32_t actualRaw;
 
-    uint32_t upperJointLimitRaw;
-    uint32_t lowerJointLimitRaw;
+    // For localization on a joint
+    int8_t jointReverseFactor;
+    uint16_t rawZero;
+    uint16_t rawForwardRangeOfMotion;
+    uint16_t rawBackwardRangeOfMotion;
 };
 typedef struct Joint Joint;
 
 Joint jointConstruct(uint32_t SSIBase, SSIEncoderBrand encoderBrand, uint16_t sample_rate,
-                     uint32_t upperLimitRaw, uint32_t lowerLimitRaw);
+                     int8_t jointReverseFactor, uint16_t rawZero,
+                     uint16_t rawForwardRangeOfMotion, uint16_t rawBackwardRangeOfMotion);
 
 void updateJointAngles(Joint* joint);
+void getRawActualValue(Joint* joint);
 
 #endif /* JOINT_H_ */
