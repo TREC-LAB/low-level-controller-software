@@ -27,12 +27,16 @@ void updateJointAngles(Joint* joint)
 {
     readAbsEncoder(&joint->encoder);
 
+//    printf("joint encoder raw: %d\n", joint->encoder.raw);
+
     if (joint->encoder.encoderBrand == Orbis_Encoder){
         joint->encoder.raw &= 16383;
         if(joint->encoder.raw > 65535)
             joint->encoder.raw -= 65535;
     }
     getRawActualValue(joint);
+//    printf("joint actualRaw: %d\n", joint->actualRaw);
+//    printf("joint raw: %d\n", joint->encoder.raw);
     if (joint->encoder.encoderBrand == Gurley_Encoder){
         joint->angleRads = joint->actualRaw * M_PI / 65535;
     }
@@ -41,19 +45,24 @@ void updateJointAngles(Joint* joint)
         joint->angleRads = joint->actualRaw * ((2 * M_PI) / 16383);
         joint->angleDegrees = joint->actualRaw * (360 / 16383);
     }
-    // Convert raw encoder sensor reading to radians
-
 }
 
 // TODO: make more efficient
 void getRawActualValue(Joint* joint)
 {
-    int32_t rawPI = (int32_t) 65535;
+    int32_t rawPI = 0;
+    if (joint->encoder.encoderBrand == Gurley_Encoder)
+        rawPI = (int32_t) 65535;
+    else if (joint->encoder.encoderBrand == Orbis_Encoder)
+        rawPI = (int32_t) 16383;
+
+//    int32_t rawAngleInRange;
 //    if(joint->encoder.raw >= rawPI)
 //        rawAngleInRange = (int32_t)(joint->encoder.raw - rawPI);
 //    else
 //        rawAngleInRange = (int32_t)joint->encoder.raw;
 //
+//    int32_t rawZeroInRange;
 //    if(joint->rawZero >= rawPI)
 //        rawZeroInRange = joint->rawZero - rawPI;
 //    else
@@ -88,7 +97,4 @@ void getRawActualValue(Joint* joint)
         rawAngleAltered += rawPI;
     }
     joint->actualRaw = rawAngleAltered - rawZeroAltered;
-//    printf("rawAngleAltered: %d\n", rawAngleAltered);
-//    printf("rawZeroAltered: %d\n", rawZeroAltered);
-//    printf("joint actual Raw: %d\n", joint->actualRaw);
 }

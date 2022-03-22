@@ -60,7 +60,7 @@
 extern void logData(void);
 extern void checkKeyboard(void);
 extern void runMotor();
-extern bool EngageVirtualEStop(void);
+//extern bool EngageVirtualEStop(PandoraLowLevel* pandora);
 
 //Actuator References
 extern const uint8_t actuator_0; // Knee and Ankle 0

@@ -7,76 +7,6 @@
 #include "PandoraLowLevel.h"
 
 /**
- * joint0Config
- *
- * Configures Joint 0 for this Tiva on pandora.
- *
- * @param sample_rate: The sample rate of the Encoder for this joint
- * @return: an initialized joint for position 0
- */
-/*
-Joint joint0Config(uint16_t sample_rate,  TivaLocations tivaLocation)
-{
-    Joint joint;
-
-    // Initialize correct Absolute Encoder based on Tiva Location for the 0th board side.
-    enum EncoderBrand absEncoderBrand = checkAbsoluteEncoderBrand(0, tivaLocation);
-
-    joint.forceSensor   = forceSensorConstruct(ADC0_BASE);
-    joint.encoder       = encoderConstruct(SSI0_BASE, QEI0_BASE, SSI_Encoder, sample_rate, absEncoderBrand);
-    joint.motorEncoder  = encoderConstruct(SSI0_BASE, QEI0_BASE, QEI_Encoder, sample_rate, Motor_Encoder);
-
-    joint.dutyCycle = 0.0;
-    joint.direction = 0;
-
-    if (joint.encoder.encoderBrand == Gurley_Encoder){
-        joint.upperJointLimitRaw = 65535;
-    }
-    // Orbis has 14 bit resolution
-    else if (joint.encoder.encoderBrand == Orbis_Encoder){
-        joint.upperJointLimitRaw = 16383;
-    }
-    joint.lowerJointLimitRaw = 0;
-
-    return joint;
-}
-*/
-/**
- * joint1Config
- *
- * Configures Joint 1 for this Tiva on pandora.
- *
- * @param sample_rate: The sample rate of the Encoder for this joint
- * @return: an initialized joint for position 1
- */
-/*
-Joint joint1Config(uint16_t sample_rate, TivaLocations tivaLocation)
-{
-    Joint joint;
-
-    // Initialize correct Absolute Encoder based on Tiva Location for the 1th board side.
-    enum EncoderBrand absEncoderBrand = checkAbsoluteEncoderBrand(1, tivaLocation);
-
-    joint.forceSensor   = forceSensorConstruct(ADC1_BASE);
-    joint.encoder       = encoderConstruct(SSI1_BASE, QEI1_BASE, SSI_Encoder, sample_rate, absEncoderBrand);
-    joint.motorEncoder  = encoderConstruct(SSI1_BASE, QEI1_BASE, QEI_Encoder, sample_rate, Motor_Encoder);
-
-    joint.dutyCycle = 0.0;
-    joint.direction = 0;
-
-    if (joint.encoder.encoderBrand == Gurley_Encoder){
-        joint.upperJointLimitRaw = 65535;
-    }
-    // Orbis has 14 bit resolution
-    else if (joint.encoder.encoderBrand == Orbis_Encoder){
-        joint.upperJointLimitRaw = 16383;
-    }
-    joint.lowerJointLimitRaw = 0;
-
-    return joint;
-}
-*/
-/**
  * pandoraConstruct
  *
  * Constructs the pandoraLowLevel structure and initializes
@@ -384,7 +314,7 @@ void tivaInit(PandoraLowLevel* pandora)
     enableSSIEncoder(&pandora->joint1.encoder);
     enableQEIEncoder(&pandora->actuator0.motorEncoder);
     enableQEIEncoder(&pandora->actuator1.motorEncoder);
-    debugLEDSConfig();
+//    debugLEDSConfig();
     timer1A_Config();
     timer2A_Config();
     timer3A_Config();
@@ -470,21 +400,34 @@ void PandoraInit(PandoraLowLevel* pandora)
             floatByteData.Byte[1] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 10));
             floatByteData.Byte[0] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 11));
 
-            uint16_t jointRawZeroPosition = (uint16_t)(floatByteData.floatData * (65535.0 / 180.0));
+            uint16_t jointRawZeroPosition;
+            if(SSIEncoderBrandInit == Gurley_Encoder)
+                jointRawZeroPosition = (uint16_t)(floatByteData.floatData * (65535.0 / 180.0));
+            else if(SSIEncoderBrandInit == Orbis_Encoder)
+                jointRawZeroPosition = (uint16_t)(floatByteData.floatData * (16383.0 / 360.0));
 
             floatByteData.Byte[3] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 12));
             floatByteData.Byte[2] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 13));
             floatByteData.Byte[1] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 14));
             floatByteData.Byte[0] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 15));
 
-            uint16_t jointRawForwardRangeOfMotion = (uint16_t)(floatByteData.floatData * (65535.0) / 180.0);
+            uint16_t jointRawForwardRangeOfMotion;
+            if(SSIEncoderBrandInit == Gurley_Encoder)
+                jointRawForwardRangeOfMotion = (uint16_t)(floatByteData.floatData * (65535.0) / 180.0);
+            else if(SSIEncoderBrandInit == Orbis_Encoder)
+                jointRawForwardRangeOfMotion = (uint16_t)(floatByteData.floatData * (16383.0 / 360.0));
 
             floatByteData.Byte[3] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 16));
             floatByteData.Byte[2] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 17));
             floatByteData.Byte[1] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 18));
             floatByteData.Byte[0] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 19));
 
-            uint16_t jointRawBackwardRangeOfMotion = (uint16_t)(floatByteData.floatData * (65535.0 / 180.0));
+            uint16_t jointRawBackwardRangeOfMotion;
+            if(SSIEncoderBrandInit == Gurley_Encoder)
+                jointRawBackwardRangeOfMotion = (uint16_t)(floatByteData.floatData * (65535.0 / 180.0));
+            else if(SSIEncoderBrandInit == Orbis_Encoder)
+                jointRawBackwardRangeOfMotion = (uint16_t)(floatByteData.floatData * (16383.0 / 360.0));
+
 
             if(i == 2)
                 joint0 = jointConstruct(jointEncoderSSIBaseInit, SSIEncoderBrandInit, sampleRateInit,
