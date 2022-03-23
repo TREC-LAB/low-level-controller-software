@@ -189,17 +189,17 @@ int main(void)
     //Set the system clock to 80Mhz
     SysCtlClockSet(SYSCTL_SYSDIV_2_5|SYSCTL_USE_PLL|SYSCTL_OSC_MAIN|SYSCTL_XTAL_16MHZ);
 
-    SysCtlPeripheralEnable(LED_PERIPH);
+//    SysCtlPeripheralEnable(LED_PERIPH);
 //    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB);
     SysCtlDelay(30);
 
     //Set the pin of your choice to output
-    GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED);
+//    GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED);
 
     SysCtlDelay(2000);
 
     // Populate pandora object
-    pandora = pandoraConstruct(sample_rate);
+    pandora = pandoraConstruct();
 
     // Initialize tiva
 
@@ -258,13 +258,13 @@ void UART0IntHandler(void)
  */
 void UART1IntHandler(void)
 {
-    uint32_t ui32Status;
+/*    uint32_t ui32Status;
 
     // Get the interrrupt status.
     ui32Status = UARTIntStatus(UART1_BASE, true);
 
     // Clear the asserted interrupts.
-    UARTIntClear(UART1_BASE, ui32Status);
+    UARTIntClear(UART1_BASE, ui32Status); */
 }
 
 
@@ -334,12 +334,24 @@ void Timer1AIntHandler(void)
  */
 bool EngageVirtualEStop(PandoraLowLevel* pandora) {
 /*    bool retVal = false;
+    printf("SIGNAL: %d\n", pandora->signalFromMaster);
+    printf("joint0 raw: %d\n", pandora->joint0.encoder.raw);
+    printf("joint0 actualRaw: %d\n", pandora->joint0.actualRaw);
+    printf("joint0 zero: %d\n", pandora->joint0.rawZero);
+    printf("joint0 actualRad: %f\n", pandora->joint0.angleRads);
+    printf("joint1 raw: %d\n", pandora->joint1.encoder.raw);
+    printf("joint1 actualRaw: %d\n", pandora->joint1.actualRaw);
+    printf("joint1 zero: %d\n", pandora->joint1.rawZero);
+    printf("joint1 actualRad: %f\n", pandora->joint1.angleRads);
+    printf("joint1 -1 * backward range of motion: %d\n", -1 * pandora->joint1.rawBackwardRangeOfMotion);
     if(pandora->joint0.actualRaw < -1 * pandora->joint0.rawBackwardRangeOfMotion && pandora->signalFromMaster == CONTROL_SIGNAL)
     {
         retVal = true;
         printf("SIGNAL: %d\n", pandora->signalFromMaster);
         printf("ESTOP TRIGGERED: joint0 actualRaw < -1 * joint0 backward range of motion\n");
+        printf("joint0 raw: %d\n", pandora->joint0.encoder.raw);
         printf("joint0 actualRaw: %d\n", pandora->joint0.actualRaw);
+        printf("joint0 zero: %d\n", pandora->joint0.rawZero);
         printf("joint0 actualRad: %f\n", pandora->joint0.angleRads);
         printf("joint0 -1 * backward range of motion: %d\n", -1 * pandora->joint0.rawBackwardRangeOfMotion);
     }
@@ -348,7 +360,9 @@ bool EngageVirtualEStop(PandoraLowLevel* pandora) {
         retVal = true;
         printf("SIGNAL: %d\n", pandora->signalFromMaster);
         printf("ESTOP TRIGGERED: joint0 actualRaw > joint0 forward range of motion\n");
+        printf("joint0 raw: %d\n", pandora->joint0.encoder.raw);
         printf("joint0 actualRaw: %d\n", pandora->joint0.actualRaw);
+        printf("joint0 zero: %d\n", pandora->joint0.rawZero);
         printf("joint0 actualRad: %f\n", pandora->joint0.angleRads);
         printf("joint0 forwardRangeOfMotion: %d\n", pandora->joint0.rawForwardRangeOfMotion);
     }
@@ -357,7 +371,9 @@ bool EngageVirtualEStop(PandoraLowLevel* pandora) {
         retVal = true;
         printf("SIGNAL: %d\n", pandora->signalFromMaster);
         printf("ESTOP TRIGGERED: joint1 actualRaw < -1 * joint1 backward range of motion\n");
+        printf("joint1 raw: %d\n", pandora->joint1.encoder.raw);
         printf("joint1 actualRaw: %d\n", pandora->joint1.actualRaw);
+        printf("joint1 zero: %d\n", pandora->joint1.rawZero);
         printf("joint1 actualRad: %f\n", pandora->joint1.angleRads);
         printf("joint1 -1 * backward range of motion: %d\n", -1 * pandora->joint1.rawBackwardRangeOfMotion);
     }
@@ -366,7 +382,9 @@ bool EngageVirtualEStop(PandoraLowLevel* pandora) {
         retVal = true;
         printf("SIGNAL: %d\n", pandora->signalFromMaster);
         printf("ESTOP TRIGGERED: joint1 actualRaw > joint1 forward range of motion\n");
+        printf("joint1 raw: %d\n", pandora->joint1.encoder.raw);
         printf("joint1 actualRaw: %d\n", pandora->joint1.actualRaw);
+        printf("joint1 zero: %d\n", pandora->joint1.rawZero);
         printf("joint1 actualRad: %f\n", pandora->joint1.angleRads);
         printf("joint1 forwardRangeOfMotion: %d\n", pandora->joint1.rawForwardRangeOfMotion);
     }
@@ -387,11 +405,7 @@ bool EngageVirtualEStop(PandoraLowLevel* pandora) {
  * Timer2A interrupt handler
  * Used for data logging to serial port
  */
-void Timer2AIntHandler(void)
-{
-    TimerIntClear(TIMER2_BASE, TIMER_TIMA_TIMEOUT);
-//    logData();
-}
+void Timer2AIntHandler(void) {}
 
 /*
  * Timer3A interrupt handler
@@ -415,6 +429,7 @@ void Timer3AIntHandler(void)
     if (runTimer3)
     {
         // Send TivaToMaster and receive MasterToTiva
+        loadDataForMaster(&pandora);
         EtherCAT_MainTask();
 
         pandora.prevProcessIdFromMaster = pandora.processIdFromMaster;
@@ -429,12 +444,12 @@ void Timer3AIntHandler(void)
             // Turns off estop timer if necessary
             runTimer1 = processDataFromMaster(&pandora);
              // Populate TivaToMaster data frame
-            loadDataForMaster(&pandora);
+        //    loadDataForMaster(&pandora);
         }
         else
         {
             runTimer1 = processDataFromMaster(&pandora);
-            loadDataForMaster(&pandora);
+     //       loadDataForMaster(&pandora);
         }
     }
     TimerIntClear(TIMER3_BASE, TIMER_TIMA_TIMEOUT);

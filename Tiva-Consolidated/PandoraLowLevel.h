@@ -1,8 +1,8 @@
 /**
- * AthenaLowLevel.h
- * @author: Nick Tremaroli and Sam Schoedel
+ * PandoraLowLevel.h
+ * @author: Nick Tremaroli
  * Contains all of the low-level features and functions
- * of Athena
+ * of Pandora
  */
 
 #ifndef PANDORALOWLEVEL_H
@@ -48,7 +48,7 @@ enum TivaLocations
     thighR,
     ankleL,
     ankleR,
-    DEBUG
+    DEBUG   // a location for debugging
 };
 typedef enum TivaLocations TivaLocations;
 
@@ -67,18 +67,24 @@ struct TivaLocationBitSet
 };
 typedef struct TivaLocationBitSet TivaLocationBitSet;
 
+/**
+ * InitializationData
+ * Contains a dynamically allocated 2D array of the raw initialization
+ * data sent by the master.
+ */
 struct InitializationData
 {
-    void** initalizationDataBlock;
-    uint8_t numberOfInitFramesReceived;
+    void** initalizationDataBlock;      // a pointer to the 2D array
+    uint8_t numberOfInitFramesReceived; // the number of initialization frames received
 };
 typedef struct InitializationData InitializationData;
 
 /**
- * AthenaLowLevel
+ * PandoraLowLevel
  * A structure consisting of all of the low level
  * variables needed for ONE Tiva. Each Tiva has 2 joints,
- * a location, and variables to keep track of the processID
+ * 2 actuators,a location, and variables to keep track
+ * of the processID
  */
 struct PandoraLowLevel
 {
@@ -113,6 +119,10 @@ union FloatByteData
 };
 typedef union FloatByteData FloatByteData;
 
+/**
+ * ByteData
+ * A union to help with int conversions
+ */
 union ByteData
 {
     uint8_t Byte[4];
@@ -121,60 +131,66 @@ union ByteData
 };
 typedef union ByteData ByteData;
 
-/*-----------Initialization function----------- */
 
-// Configure the Joints
-Joint joint0Config(uint16_t sample_rate, TivaLocations tivaLocation);
-Joint joint1Config(uint16_t sample_rate, TivaLocations tivaLocation);
-enum EncoderBrand checkAbsoluteEncoderBrand(int boardSide, TivaLocations tivaLocation);
-// Get the Tiva Location from the set of pins
-TivaLocations getLocationsFromPins(void);
+/*----------------------Initialization functions---------------------*/
+
+// Construct and init the PandoraLowLevel object
+PandoraLowLevel pandoraConstruct();
+
 // Configure the location pins
 void tivaLocationPinsConfig();
-// Construct and init the AthenaLowLevel object
-PandoraLowLevel pandoraConstruct(uint16_t sample_rate);
-void tivaInit(PandoraLowLevel* athena);
 
-/*-----------LED functions-----------*/
+// Get the Tiva Location from the set of pins
+TivaLocations getLocationsFromPins(void);
 
-// Configure the debug LEDS which are used for debugging purposes
-void debugLEDSConfig();
-// The different functions which generate different LED colors
-// depending on what the Tiva is doing
-void checkLocationLEDS(TivaLocations locationGuess, TivaLocations actualLocation);
-void disableCheckLocationLEDs();
-void notConnectedLEDS();
-void idleLEDS();
-void controlsLEDS();
-void haltLEDS();
-void modifyLEDs();
-
-/*-----------Low Level Tiva Functions-----------*/
-
-// Emit a PWM signal
-//void sendSignal(AthenaLowLevel* athena);
-// Read the Forces and Joint angles
-//void updateForces(AthenaLowLevel* athena);
-//void updateJointAngles(AthenaLowLevel* athena);
-//void updateMotorPositions(AthenaLowLevel* athena);
-//void updateMotorVelocities(AthenaLowLevel* athena, int32_t sample_rate, int32_t countsPerRotation);
-// Create the ethercat Frame to send data to the master
+// Only initializes the Tiva's ethercat capabilities
+// so it can read initialization data from the master.
+// This function is meant to be called before tivaInit
 void tivaInitEtherCAT();
 
-void loadDataForMaster(PandoraLowLevel* athena);
-// Decode the ethercat Frame which was sent form the master
+// store the raw initialization frame from the master
+void storeInitFrame(PandoraLowLevel* pandora);
+
+// initialize all of the tiva's peripherals needed
+// after the initialization frame has been parsed
+void tivaInit(PandoraLowLevel* pandora);
+
+// parses the initialization data block and applies the settings
+// to the tiva
+void ApplyInitializationSettings(PandoraLowLevel* pandora);
+
+/*----------------------LED functions----------------------*/
+
+// enable the LEDS which are used for debugging purposes
+void enableDebugLEDS();
+
+// disable the debug LEDS
+void disableDebugLEDs();
+
+// LED patterns for when the master is pinging a tiva location
+void checkLocationLEDS(TivaLocations locationGuess, TivaLocations actualLocation);
+
+// LED patterns for when the Tiva is not connected to the master
+void notConnectedLEDS();
+
+// LED patterns for when the Tiva is in idle mode
+void idleLEDS();
+
+// LED patterns for when the Tiva is in halt mode
+void haltLEDS();
+
+/*----------------------Low Level Tiva Functions----------------------*/
+
+// Check if the actuators should be disabled
+void checkActuatorDisable(PandoraLowLevel* athena);
+
+// Decode the ethercat frame which was sent form the master
 void storeDataFromMaster(PandoraLowLevel* athena);
+
 // Process the data which was received from the master
 bool processDataFromMaster(PandoraLowLevel* athena);
-// Check if the motors should be disabled
-void checkMotorDisable(PandoraLowLevel* athena);
 
-void storeInitFrame(PandoraLowLevel* athena);
+// load data in the ethercat frame to sent to the master
+void loadDataForMaster(PandoraLowLevel* athena);
 
-void PandoraInit(PandoraLowLevel* athena);
-
-// TODO: Move this to HAL/SSI_TIVA!!
-void disableSSI1();
-
-
-#endif /* ATHENALOWLEVEL_H */
+#endif /* PANDORALOWLEVEL_H */

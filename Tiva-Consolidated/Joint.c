@@ -30,7 +30,7 @@ void updateJointAngles(Joint* joint)
 //    printf("joint encoder raw: %d\n", joint->encoder.raw);
 
     if (joint->encoder.encoderBrand == Orbis_Encoder){
-        joint->encoder.raw &= 16383;
+        joint->encoder.raw %= 8191;
         if(joint->encoder.raw > 65535)
             joint->encoder.raw -= 65535;
     }
@@ -54,7 +54,7 @@ void getRawActualValue(Joint* joint)
     if (joint->encoder.encoderBrand == Gurley_Encoder)
         rawPI = (int32_t) 65535;
     else if (joint->encoder.encoderBrand == Orbis_Encoder)
-        rawPI = (int32_t) 16383;
+        rawPI = (int32_t) 8191;
 
 //    int32_t rawAngleInRange;
 //    if(joint->encoder.raw >= rawPI)

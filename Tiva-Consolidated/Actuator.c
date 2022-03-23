@@ -6,10 +6,13 @@
  */
 #include "Actuator.h"
 
-Actuator actuatorConstruct(uint32_t QEIBase, uint16_t QEISampleRate, int32_t QEICountsPerRotation,
-                           uint32_t ADCBase, float ForceSensorSlope, float ForceSensorOffset)
+Actuator actuatorConstruct(uint8_t actuatorNumber, uint32_t QEIBase, uint16_t QEISampleRate,
+                           int32_t QEICountsPerRotation, uint32_t ADCBase,
+                           float ForceSensorSlope, float ForceSensorOffset)
 {
     Actuator actuator;
+
+    actuator.actuatorNumber = actuatorNumber;
 
     actuator.motorEncoder = qeiEncoderConstruct(QEIBase, QEISampleRate, QEICountsPerRotation);
 
@@ -24,7 +27,8 @@ Actuator actuatorConstruct(uint32_t QEIBase, uint16_t QEISampleRate, int32_t QEI
 
 void SendPWMSignal(Actuator* actuator)
 {
-    setPulseWidth(0,20000,actuator->dutyCycle,SysCtlClockGet(),actuator->direction);
+    setPulseWidth(actuator->actuatorNumber,20000,actuator->dutyCycle,SysCtlClockGet(),actuator->direction);
+//    printf("duty cycle for actuator %d: %f\n", actuator->actuatorNumber, actuator->dutyCycle);
 }
 
 void updateActuatorPosition(Actuator* actuator)
