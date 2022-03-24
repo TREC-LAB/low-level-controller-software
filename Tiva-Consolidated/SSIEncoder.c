@@ -1,24 +1,22 @@
 /**
- * Encoder.c
- * @author: Nick Tremaroli and Sam Schoedel
- * Contains the code for all of the functions defined
- * in Encoder.h
+ * SSIEncoder.c
+ * @author: Nick Tremaroli
+ * Contains all of the low-level code for SSI encoder related functions
  */
 #include "SSIEncoder.h"
 
 const float alpha = 0.99;
 
 /**
- * encoderConstruct
- * Constructs an encoder object for the Tiva, by default
- * after this encoder is constructed, it is disabled.
- * @param SSIBase: The SSIBase the encoder is connected too
- * @param QEIBase: The QEIBase the encoder is connected too
- * @param encoderType: The type of encoder base which is used by the Tiva
- * @param sampleRate: The sample rate used by the encoders
- * @returns: an encoder structure
+ * ssiEncoderConstruct
+ * Constructs a SSI encoder given the corresponding input parameters
+ * @param SSIBase: the SSI base of the encoder
+ * @param sampleRate: the sample rate of the encoder
+ * @param encoderBrand: the encoder brand of the encoder
+ *
+ * @return: an initialized SSI encoder structure
  */
-SSIEncoder encoderConstruct(uint32_t SSIBase, uint16_t sampleRate, SSIEncoderBrand encoderBrand)
+SSIEncoder ssiEncoderConstruct(uint32_t SSIBase, uint16_t sampleRate, SSIEncoderBrand encoderBrand)
 {
     SSIEncoder encoder;
 
@@ -38,13 +36,13 @@ SSIEncoder encoderConstruct(uint32_t SSIBase, uint16_t sampleRate, SSIEncoderBra
 }
 
 /**
- * encoderEncoder
- * enables an encoder on the Tiva
- * @param encoder: a pointer to the encoder structure you want to enable
+ * encoderSSIEncoder
+ * enables the SSI encoder on the Tiva
+ * @param encoder: a pointer to the SSI encoder to enable
  */
 void enableSSIEncoder(SSIEncoder* encoder)
 {
-    // TODO: Add error checking if the SSIBase or QEIBase is not correct
+    // TODO: Add error checking if the SSIBase is not correct
     if (encoder->SSIBase == SSI0_BASE) {
         if (encoder->encoderBrand == Gurley_Encoder)
             SSI0_Gurley_Config();
@@ -67,9 +65,9 @@ void enableSSIEncoder(SSIEncoder* encoder)
 }
 
 /**
- * disableEncoder
- * disables an encoder on the Tiva
- * @param encoder: A pointer to the encoder structure to disable
+ * disableSSIEncoder
+ * disables the SSI Encoder
+ * @param encoder: A pointer to the SSI encoder to disable
  */
 void disableSSIEncoder(SSIEncoder* encoder)
 {
@@ -89,8 +87,9 @@ void disableSSIEncoder(SSIEncoder* encoder)
 
 /**
  * readAbsEncoder
- * reads the ABS values from the encoder
- * @param encoder: a pointer to the encoder structure to read from
+ * reads the raw position value
+ *
+ * @param encoder: a pointer to the SSI encoder to read from
  */
 void readAbsEncoder(SSIEncoder* encoder)
 {
@@ -102,8 +101,8 @@ void readAbsEncoder(SSIEncoder* encoder)
 
 /**
  * readAbsEncoderVelocity
- * reds the ABS Velocity of the encoder
- * @param encoder: the encoder to read the ABS Velocity from
+ * reds the velocity of the SSI encoder
+ * @param encoder: a pointer to the SSI encoder to read the velocity from
  */
 void readAbsEncoderVelocity(SSIEncoder* encoder)
 {

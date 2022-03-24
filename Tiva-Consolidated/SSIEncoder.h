@@ -1,22 +1,18 @@
 /**
- * Encoder.h
- * @author: Nick Tremaroli and Sam Schoedel
- * Contains all of the structures and functions needed
- * to use an encoder on the Tiva
+ * SSIEncoder.h
+ * @author: Nick Tremaroli
+ * Contains the layout and functions regarding a SSI Encoder
  */
 #ifndef ENCODER_H
 #define ENCODER_H
 
 #include "HAL/SSI_TIVA.h"
 
-// The different types of encoders
-enum EncoderType
-{
-    SSI_Encoder,
-    QEI_Encoder
-};
-typedef enum EncoderType EncoderType;
-
+/**
+ * SSIEncoderBrand
+ * The different SSI encoder brands which are
+ * used on the Tivas
+ */
 enum SSIEncoderBrand
 {
     Gurley_Encoder,
@@ -25,9 +21,9 @@ enum SSIEncoderBrand
 typedef enum SSIEncoderBrand SSIEncoderBrand;
 
 /**
- * Encoder
- * Contains all of the data and features of
- * an encoder connected to the Tiva
+ * SSIEncoder
+ * Contains all of the data needed by a SSI encoder
+ * on the Tiva
  */
 struct SSIEncoder
 {
@@ -36,24 +32,28 @@ struct SSIEncoder
     uint16_t sampleRate;
     bool enabled;
 
-    // Data received from reading from the encoder
     uint32_t raw;
     uint32_t rawPrev;
     int32_t rawVelF;
     int32_t rawVelPrev;
     int32_t rawVel;
 
-
 };
 typedef struct SSIEncoder SSIEncoder;
 
-// Constructs an encoder object
-SSIEncoder encoderConstruct(uint32_t SSIBase, uint16_t sampleRate, SSIEncoderBrand encoderBrand);
-// Enable or Disable the encoder
+// Constructs the SSI Encoder
+SSIEncoder ssiEncoderConstruct(uint32_t SSIBase, uint16_t sampleRate, SSIEncoderBrand encoderBrand);
+
+// Enable the SSI encoder
 void enableSSIEncoder(SSIEncoder* encoder);
+
+// Disable the SSI encoder
 void disableSSIEncoder(SSIEncoder* encoder);
-// Read data from the abs/motor encoder
+
+// Read the raw position from the SSI encoder
 void readAbsEncoder(SSIEncoder* encoder);
+
+// Read the raw velocity from the SSI encoder
 void readAbsEncoderVelocity(SSIEncoder* encoder);
 
 #endif /* ENCODER_H */

@@ -1,5 +1,5 @@
 /**
- * pandoraLowLevel.c
+ * PandoraLowLevel.c
  * @author: Nick Tremaroli
  * Defines all of the low-level features and functions
  * of pandora
@@ -9,8 +9,9 @@
 /**
  * pandoraConstruct
  *
- * Constructs the pandoraLowLevel structure and initializes
- * all of the starting values to 0.
+ * Constructs the pandoraLowLevel structure and sets
+ * all of the starting values to 0. Initialization does
+ * not happen at this stage
  *
  * @return: a basic pandoraLowLevel structure
  */
@@ -49,7 +50,6 @@ PandoraLowLevel pandoraConstruct()
  * Configures the location pins which the
  * Tiva uses to determine which location
  * it is in.
- *
  */
 void tivaLocationPinsConfig()
 {
@@ -108,6 +108,14 @@ TivaLocations getLocationsFromPins()
     return tivaLocation;
 }
 
+/**
+ * tivaInitEtherCAT
+ *
+ * Initializes the ethercat board on the Tiva. Note that this function
+ * is called before the other peripheral based initialization functions.
+ * This is because the Tiva must read the initialization input data
+ * from the master first to know how to configure the rest of its peripherals
+ */
 void tivaInitEtherCAT()
 {
     tivaLocationPinsConfig();
@@ -116,6 +124,14 @@ void tivaInitEtherCAT()
    // printf("%d\n", ret);
 }
 
+/**
+ * storeInitFrame
+ *
+ * Stores the most recent raw initialization frame that was sent from the
+ * master by adding it to the dynamically allocated 2D array.
+ *
+ * @param pandora: a pointer to the pandora Tiva struct
+ */
 void storeInitFrame(PandoraLowLevel* pandora)
 {
     // check to make sure the conditions match up
@@ -141,31 +157,15 @@ void storeInitFrame(PandoraLowLevel* pandora)
 }
 
 /**
- * tivaInit
+ * ApplyInitializationSettings
  *
- * The intalization function with inits all of the
- * Tiva's peripherals needed.
+ * Called after the Tiva received all of the initialziation frames
+ * from the master. This functions deserializes the initialization frames
+ * and initializes the pandora struct passed from the initialization data
  *
- * @param pandora: a pointer to the pandora structure
+ * @param pandora: a pointer to the pandora Tiva struct which
+ * will be initialized with the deserialized data
  */
-void tivaInit(PandoraLowLevel* pandora)
-{
-    PWMConfig();
-    enableForceSensor(&pandora->actuator0.forceSensor);
-    enableForceSensor(&pandora->actuator1.forceSensor);
-    enableSSIEncoder(&pandora->joint0.encoder);
-    enableSSIEncoder(&pandora->joint1.encoder);
-    enableQEIEncoder(&pandora->actuator0.motorEncoder);
-    enableQEIEncoder(&pandora->actuator1.motorEncoder);
-//    debugLEDSConfig();
-    timer1A_Config();
-    timer2A_Config();
-    timer3A_Config();
-//    UART1Config();
-
-//    printf("ret: %d\n", ret);
-}
-
 void ApplyInitializationSettings(PandoraLowLevel* pandora)
 {
     Actuator actuator0, actuator1;
@@ -283,7 +283,6 @@ void ApplyInitializationSettings(PandoraLowLevel* pandora)
                                         jointRawForwardRangeOfMotion, jointRawBackwardRangeOfMotion);
         }
     }
-
     pandora->joint0 = joint0;
     pandora->joint1 = joint1;
     pandora->actuator0 = actuator0;
@@ -291,6 +290,32 @@ void ApplyInitializationSettings(PandoraLowLevel* pandora)
 
     pandora->initialized = true;
 }
+
+/**
+ * tivaInit
+ *
+ * The initialization function with inits all of the
+ * Tiva's peripherals needed.
+ *
+ * @param pandora: a pointer to the pandora structure
+ */
+void tivaInit(PandoraLowLevel* pandora)
+{
+    PWMConfig();
+    enableForceSensor(&pandora->actuator0.forceSensor);
+    enableForceSensor(&pandora->actuator1.forceSensor);
+    enableSSIEncoder(&pandora->joint0.encoder);
+    enableSSIEncoder(&pandora->joint1.encoder);
+    enableQEIEncoder(&pandora->actuator0.motorEncoder);
+    enableQEIEncoder(&pandora->actuator1.motorEncoder);
+//    debugLEDSConfig();    TODO: uncomment when LEDS are moved to different pins
+    timer1A_Config();
+    timer2A_Config();
+    timer3A_Config();
+
+//    printf("ret: %d\n", ret);
+}
+
 /**
  * enableDebugLEDS
  *
@@ -372,7 +397,6 @@ void checkLocationLEDS(TivaLocations locationGuess, TivaLocations actualLocation
  *
  * Configures the LEDS to act a certain
  * way when the Tiva is not connected to the master.
- *
  */
 void notConnectedLEDS()
 {
@@ -406,7 +430,6 @@ void notConnectedLEDS()
  * Configures the LEDS to act a certain
  * way when the master is sending an idle
  * signal to the Tiva.
- *
  */
 void idleLEDS()
 {
@@ -422,7 +445,6 @@ void idleLEDS()
  * configures the LEDS to act a certain
  * way when the master sends a halt signal
  * to the Tiva.
- *
  */
 void haltLEDS()
 {
@@ -437,7 +459,7 @@ void haltLEDS()
  *
  * Checks if the actuators should be disabled.
  *
- * @param pandora: a pointer to the pandora structure
+ * @param pandora: a pointer to the pandora Tiva struct
  */
 void checkActuatorDisable(PandoraLowLevel* pandora)
 {
@@ -500,9 +522,11 @@ void storeDataFromMaster(PandoraLowLevel* pandora)
     else if(pandora->signalFromMaster == INITIALIZATION_SIGNAL)
     {
         storeInitFrame(pandora);
+        // once all of the initialization frames are received
         if(pandora->initializationData.numberOfInitFramesReceived == NUMBER_OF_INITIALIZATION_FRAMES)
         {
             ApplyInitializationSettings(pandora);
+            // TODO: free all of the dynamically allocated memory from initialization
         }
     }
 }
@@ -512,9 +536,9 @@ void storeDataFromMaster(PandoraLowLevel* pandora)
  *
  * Processes the data received form the master
  * Acts on received master data according to desired TIVA mode
- * Return 1 if estop timer should be run, otherwise return 0.
  *
  * @param pandora: a pointer to the pandora structure
+ * @return: 1 if estop timer should be run, otherwise return 0.
  */
 bool processDataFromMaster(PandoraLowLevel* pandora)
 {

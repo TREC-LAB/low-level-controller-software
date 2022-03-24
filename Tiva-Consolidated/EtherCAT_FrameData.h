@@ -1,5 +1,12 @@
 #pragma once
 
+/**
+ * EtherCAT_FrameData.h
+ *
+ * A header file which contains all of the constants
+ * needed for the EtherCAT communication on the Tiva
+ */
+
 #define FRAME_SIZE  32
 
 // frame[0] determines how to interpret incoming data

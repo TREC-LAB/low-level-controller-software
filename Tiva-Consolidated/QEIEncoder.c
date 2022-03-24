@@ -1,11 +1,26 @@
+/**
+ * QEIEncoder.c
+ * @author: Nick Tremaroli
+ * Contains all of the low-level code for QEI encoder related functions
+ */
 #include "QEIEncoder.h"
 
-QEIEncoder qeiEncoderConstruct(uint32_t QEIBase, uint16_t sample_rate, int32_t countsPerRotation)
+/**
+ * qeiEncoderConstruct
+ * Construct a QEI encoder given the corresponding input parameters
+ *
+ * @param QEIBase: the QEI Base of the encoder
+ * @param sampleRate: the sample rate of the QEI encoder
+ * @param countsPerRotation: the counts per rotation of the QEI encoder
+ *
+ * @return: an initialized QEI encoder structure
+ */
+QEIEncoder qeiEncoderConstruct(uint32_t QEIBase, uint16_t sampleRate, int32_t countsPerRotation)
 {
     QEIEncoder encoder;
 
     encoder.QEIBase = QEIBase;
-    encoder.sampleRate = sample_rate;
+    encoder.sampleRate = sampleRate;
 
     encoder.enabled = false;
 
@@ -19,6 +34,12 @@ QEIEncoder qeiEncoderConstruct(uint32_t QEIBase, uint16_t sample_rate, int32_t c
     return encoder;
 }
 
+/**
+ * enableQEIEncoder
+ * enables the QEI Encoder
+ *
+ * @param encoder: a pointer to the QEI encoder to enable
+ */
 void enableQEIEncoder(QEIEncoder* encoder)
 {
     if(encoder->QEIBase == QEI0_BASE)
@@ -29,11 +50,23 @@ void enableQEIEncoder(QEIEncoder* encoder)
     encoder->enabled = true;
 }
 
+/**
+ * readQEIEncoderPosition
+ * reads the raw encoder position
+ *
+ * @param encoder: a pointer to the QEI encoder to read its position
+ */
 void readQEIEncoderPosition(QEIEncoder* encoder)
 {
     encoder->raw = QEIPositionGet(encoder->QEIBase);
 }
 
+/**
+ * readQEIEncoderVelocity
+ * reads the velocity of the QEI Encoder
+ *
+ * @param encoder: a pointer to the QEI encoder to read its velocity
+ */
 void readQEIEncoderVelocity(QEIEncoder* encoder)
 {
     encoder->speed = QEIVelocityGet(encoder->QEIBase);

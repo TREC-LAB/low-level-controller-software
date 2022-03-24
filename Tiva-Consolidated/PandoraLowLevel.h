@@ -55,9 +55,8 @@ typedef enum TivaLocations TivaLocations;
 /**
  * TivaLocationBitSet
  * The bits that are used to determine which location
- * the Tiva is at during start up. These boolean values
- * are determined by the pin configuration of the Tiva
- * at startup
+ * the Tiva is at. These boolean values are determined
+ * by the pin configuration of the Tiva at startup
  */
 struct TivaLocationBitSet
 {
@@ -83,7 +82,7 @@ typedef struct InitializationData InitializationData;
  * PandoraLowLevel
  * A structure consisting of all of the low level
  * variables needed for ONE Tiva. Each Tiva has 2 joints,
- * 2 actuators,a location, and variables to keep track
+ * 2 actuators, a location on pandora, and variables to keep track
  * of the processID
  */
 struct PandoraLowLevel
@@ -151,13 +150,13 @@ void tivaInitEtherCAT();
 // store the raw initialization frame from the master
 void storeInitFrame(PandoraLowLevel* pandora);
 
+// parses the initialization data block and applies the settings
+// to the Tiva
+void ApplyInitializationSettings(PandoraLowLevel* pandora);
+
 // initialize all of the tiva's peripherals needed
 // after the initialization frame has been parsed
 void tivaInit(PandoraLowLevel* pandora);
-
-// parses the initialization data block and applies the settings
-// to the tiva
-void ApplyInitializationSettings(PandoraLowLevel* pandora);
 
 /*----------------------LED functions----------------------*/
 
@@ -167,7 +166,7 @@ void enableDebugLEDS();
 // disable the debug LEDS
 void disableDebugLEDs();
 
-// LED patterns for when the master is pinging a tiva location
+// LED patterns for when the master is pinging a Tiva location
 void checkLocationLEDS(TivaLocations locationGuess, TivaLocations actualLocation);
 
 // LED patterns for when the Tiva is not connected to the master

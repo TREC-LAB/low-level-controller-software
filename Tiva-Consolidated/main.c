@@ -214,7 +214,6 @@ int main(void)
         if(pandora.processIdFromMaster != pandora.prevProcessIdFromMaster)
         {
             storeDataFromMaster(&pandora);
- //           processDataFromMaster(&pandora);
             loadDataForMaster(&pandora);
         }
     }
@@ -236,55 +235,12 @@ int main(void)
 /*
  * UART0 interrupt to handle communication between Tiva MCU and the computer
  */
-void UART0IntHandler(void)
-{
-//    uint32_t ui32Status;
-//
-//    // Get the interrupt status.
-//    ui32Status = UARTIntStatus(UART0_BASE, true);
-//
-//    // Clear the asserted interrupts.
-//    UARTIntClear(UART0_BASE, ui32Status);
-//
-//    // Loop while there are characters in the receive FIFO.
-//    while(UARTCharsAvail(UART0_BASE))
-//    {
-//        checkKeyboard();
-//    }
-}
+void UART0IntHandler(void) {}
 
 /*
  * UART1 interrupt handler triggers if Tiva receives information from motor controller
  */
-void UART1IntHandler(void)
-{
-/*    uint32_t ui32Status;
-
-    // Get the interrrupt status.
-    ui32Status = UARTIntStatus(UART1_BASE, true);
-
-    // Clear the asserted interrupts.
-    UARTIntClear(UART1_BASE, ui32Status); */
-}
-
-
-/**
- * Logs through serial port
- */
-//void logData(void)
-//{
-//    log_data = true;
-//    if (log_data == true) {
-//        char p[150];
-//
-//        // Logging all Connor board data
-//        sprintf(&p[0],"f: %d,%d min: %d,%d max: %d,%d e: %d,%d pwm: %d,%d dir: %d,%d motors running: %d\n\r",pandora.actuator0.forceSensor.raw,pandora.actuator1.forceSensor.raw,pandora.joint0.lowerJointLimitRaw,pandora.joint1.lowerJointLimitRaw,pandora.joint0.upperJointLimitRaw,pandora.joint1.upperJointLimitRaw,pandora.joint0.encoder.raw,pandora.joint1.encoder.raw,(int)pandora.actuator0.dutyCycle,(int)pandora.actuator1.dutyCycle, pandora.actuator0.direction, pandora.actuator1.direction, runTimer3);
-////        sprintf(&p[0],"newtons: %d,%d raw: %d,%d slope: %d,%d offset: %d,%d \n\r",pandora.joint0.forceSensor.newtons,pandora.joint1.forceSensor.newtons,pandora.joint0.forceSensor.raw,pandora.joint1.forceSensor.raw,pandora.joint0.forceSensor.slope,pandora.joint1.forceSensor.slope,pandora.joint0.encoder.raw,pandora.joint1.encoder.raw,pandora.joint0.forceSensor.slope,pandora.joint1.forceSensor.slope,pandora.joint0.forceSensor.offset,pandora.joint1.forceSensor.offset);
-//
-//        UARTSendString(0, p);
-//    }
-//}
-
+void UART1IntHandler(void) {}
 
 /**
  * Timer1A interrupt handler
@@ -331,65 +287,13 @@ void Timer1AIntHandler(void)
  * EngageVirtualEStop
  * Checks conditions to decide whether to engage Virtual EStop
  * based on Force, Abs Encoder Angle Ranges.
+ *
+ * @param pandora: a pointer to the pandora struct which contains all of the
+ * values to check
+ * @return: if the virtual estop should be triggered
  */
-bool EngageVirtualEStop(PandoraLowLevel* pandora) {
-/*    bool retVal = false;
-    printf("SIGNAL: %d\n", pandora->signalFromMaster);
-    printf("joint0 raw: %d\n", pandora->joint0.encoder.raw);
-    printf("joint0 actualRaw: %d\n", pandora->joint0.actualRaw);
-    printf("joint0 zero: %d\n", pandora->joint0.rawZero);
-    printf("joint0 actualRad: %f\n", pandora->joint0.angleRads);
-    printf("joint1 raw: %d\n", pandora->joint1.encoder.raw);
-    printf("joint1 actualRaw: %d\n", pandora->joint1.actualRaw);
-    printf("joint1 zero: %d\n", pandora->joint1.rawZero);
-    printf("joint1 actualRad: %f\n", pandora->joint1.angleRads);
-    printf("joint1 -1 * backward range of motion: %d\n", -1 * pandora->joint1.rawBackwardRangeOfMotion);
-    if(pandora->joint0.actualRaw < -1 * pandora->joint0.rawBackwardRangeOfMotion && pandora->signalFromMaster == CONTROL_SIGNAL)
-    {
-        retVal = true;
-        printf("SIGNAL: %d\n", pandora->signalFromMaster);
-        printf("ESTOP TRIGGERED: joint0 actualRaw < -1 * joint0 backward range of motion\n");
-        printf("joint0 raw: %d\n", pandora->joint0.encoder.raw);
-        printf("joint0 actualRaw: %d\n", pandora->joint0.actualRaw);
-        printf("joint0 zero: %d\n", pandora->joint0.rawZero);
-        printf("joint0 actualRad: %f\n", pandora->joint0.angleRads);
-        printf("joint0 -1 * backward range of motion: %d\n", -1 * pandora->joint0.rawBackwardRangeOfMotion);
-    }
-    if(pandora->joint0.actualRaw > pandora->joint0.rawForwardRangeOfMotion && pandora->signalFromMaster == CONTROL_SIGNAL)
-    {
-        retVal = true;
-        printf("SIGNAL: %d\n", pandora->signalFromMaster);
-        printf("ESTOP TRIGGERED: joint0 actualRaw > joint0 forward range of motion\n");
-        printf("joint0 raw: %d\n", pandora->joint0.encoder.raw);
-        printf("joint0 actualRaw: %d\n", pandora->joint0.actualRaw);
-        printf("joint0 zero: %d\n", pandora->joint0.rawZero);
-        printf("joint0 actualRad: %f\n", pandora->joint0.angleRads);
-        printf("joint0 forwardRangeOfMotion: %d\n", pandora->joint0.rawForwardRangeOfMotion);
-    }
-    if(pandora->joint1.actualRaw < -1 * pandora->joint1.rawBackwardRangeOfMotion && pandora->signalFromMaster == CONTROL_SIGNAL)
-    {
-        retVal = true;
-        printf("SIGNAL: %d\n", pandora->signalFromMaster);
-        printf("ESTOP TRIGGERED: joint1 actualRaw < -1 * joint1 backward range of motion\n");
-        printf("joint1 raw: %d\n", pandora->joint1.encoder.raw);
-        printf("joint1 actualRaw: %d\n", pandora->joint1.actualRaw);
-        printf("joint1 zero: %d\n", pandora->joint1.rawZero);
-        printf("joint1 actualRad: %f\n", pandora->joint1.angleRads);
-        printf("joint1 -1 * backward range of motion: %d\n", -1 * pandora->joint1.rawBackwardRangeOfMotion);
-    }
-    if(pandora->joint1.actualRaw > pandora->joint1.rawForwardRangeOfMotion && pandora->signalFromMaster == CONTROL_SIGNAL)
-    {
-        retVal = true;
-        printf("SIGNAL: %d\n", pandora->signalFromMaster);
-        printf("ESTOP TRIGGERED: joint1 actualRaw > joint1 forward range of motion\n");
-        printf("joint1 raw: %d\n", pandora->joint1.encoder.raw);
-        printf("joint1 actualRaw: %d\n", pandora->joint1.actualRaw);
-        printf("joint1 zero: %d\n", pandora->joint1.rawZero);
-        printf("joint1 actualRad: %f\n", pandora->joint1.angleRads);
-        printf("joint1 forwardRangeOfMotion: %d\n", pandora->joint1.rawForwardRangeOfMotion);
-    }
-    return retVal;*/
-
+bool EngageVirtualEStop(PandoraLowLevel* pandora)
+{
    return (((pandora->joint0.actualRaw < -1 * pandora->joint0.rawBackwardRangeOfMotion ||
         pandora->joint0.actualRaw > pandora->joint0.rawForwardRangeOfMotion)) ||
             (pandora->joint1.actualRaw < -1 * pandora->joint1.rawBackwardRangeOfMotion ||
@@ -429,7 +333,6 @@ void Timer3AIntHandler(void)
     if (runTimer3)
     {
         // Send TivaToMaster and receive MasterToTiva
-        loadDataForMaster(&pandora);
         EtherCAT_MainTask();
 
         pandora.prevProcessIdFromMaster = pandora.processIdFromMaster;
@@ -444,12 +347,12 @@ void Timer3AIntHandler(void)
             // Turns off estop timer if necessary
             runTimer1 = processDataFromMaster(&pandora);
              // Populate TivaToMaster data frame
-        //    loadDataForMaster(&pandora);
+            loadDataForMaster(&pandora);
         }
         else
         {
             runTimer1 = processDataFromMaster(&pandora);
-     //       loadDataForMaster(&pandora);
+            loadDataForMaster(&pandora);
         }
     }
     TimerIntClear(TIMER3_BASE, TIMER_TIMA_TIMEOUT);
