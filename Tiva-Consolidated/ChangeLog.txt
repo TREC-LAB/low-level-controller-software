@@ -1,3 +1,15 @@
-Nick Tremaroli changes to this commit:
+Pandora-Tiva-v2.0
 
-Cleaning up Main.h
+Changes made:
+	-Divided functionality more into respective files to help with organization
+	-Added more support for json initilization. The Tiva now is informed of which pins
+	to use by the master computer
+	-Increased the speed for SPI communication to the EasyCAT board
+	-Started using the Virtual E-Stop
+	-Added encoder zeroing algorithm to the low-level code
+
+Changes to Make:
+	-Make all of the structures class-based
+	-clean up main.h and main.c
+	-Integrate the CAN-ATI sensor
+	-Organize the HAL files more
