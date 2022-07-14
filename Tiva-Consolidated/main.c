@@ -209,7 +209,7 @@ int main(void)
     {
         EtherCAT_MainTask();
         pandora.prevProcessIdFromMaster = pandora.processIdFromMaster;
-        pandora.processIdFromMaster = MasterToTiva.Byte[PROCESS_ID_INDEX];
+        pandora.processIdFromMaster = etherCATInputFrames.rawBytes[PROCESS_ID_INDEX];
 
         if(pandora.processIdFromMaster != pandora.prevProcessIdFromMaster)
         {
@@ -302,7 +302,8 @@ bool EngageVirtualEStop(PandoraLowLevel* pandora)
         pandora->actuator0.forceSensor.newtons < pandora->actuator0.forceSensor.lowerLimitNewtons ||
         pandora->actuator1.forceSensor.newtons > pandora->actuator1.forceSensor.upperLimitNewtons ||
         pandora->actuator1.forceSensor.newtons < pandora->actuator1.forceSensor.lowerLimitNewtons) &&
-        pandora->signalFromMaster == CONTROL_SIGNAL;
+        pandora->signalFromMaster == CONTROL_SIGNAL
+        && 0;       // NOTE: THIS 0 BYPASSES THE EMERGENCY E-STOP, TAKE THIS OUT WHEN YOU PUT IT ON THE ROBOT!!!
 }
 
 /*
@@ -336,7 +337,7 @@ void Timer3AIntHandler(void)
         EtherCAT_MainTask();
 
         pandora.prevProcessIdFromMaster = pandora.processIdFromMaster;
-        pandora.processIdFromMaster = MasterToTiva.Byte[PROCESS_ID_INDEX];
+        pandora.processIdFromMaster = etherCATInputFrames.rawBytes[PROCESS_ID_INDEX];
 
         if(pandora.processIdFromMaster != pandora.prevProcessIdFromMaster)
         {

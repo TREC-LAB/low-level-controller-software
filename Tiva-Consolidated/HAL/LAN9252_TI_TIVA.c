@@ -65,7 +65,7 @@ uint16_t EtherCAT_MainTask(void)
   {
     for (i=0; i < TOT_BYTE_NUM_OUT ; i++)
     {
-      MasterToTiva.Byte[i] = 0;
+      etherCATInputFrames.rawBytes[i] = 0;
     }
   }
   else
@@ -304,7 +304,7 @@ void SPIReadProcRamFifo(void)
     // Receive data from EasyCat
     for (i=0; i< FST_BYTE_NUM_ROUND_OUT; i++)
     {
-      MasterToTiva.Byte[i] = SPI_Transfer(DUMMY_BYTE);
+      etherCATInputFrames.rawBytes[i] = SPI_Transfer(DUMMY_BYTE);
     }
 
     // SPI chip select disable

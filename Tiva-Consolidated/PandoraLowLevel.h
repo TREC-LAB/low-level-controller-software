@@ -29,8 +29,9 @@
 
 
 // For ethercat communication
-struct PROCBUFFER_OUT MasterToTiva;
+//struct PROCBUFFER_OUT MasterToTiva;
 struct PROCBUFFER_IN TivaToMaster;
+union EtherCATFrames_IN etherCATInputFrames;
 
 
 /**

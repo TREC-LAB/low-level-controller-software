@@ -141,7 +141,7 @@ void storeInitFrame(PandoraLowLevel* pandora)
     // check to make sure there is no error regarding initialization
     // this is important because sending the wrong initialization data can crash
     // the tiva. Initialization Frame Numbers start counting from zero
-    uint8_t initFrameNumber = MasterToTiva.Byte[INITIALIZATION_FRAME_NUMBER_INDEX];
+    uint8_t initFrameNumber = etherCATInputFrames.rawBytes[INITIALIZATION_FRAME_NUMBER_INDEX];
     if(initFrameNumber != pandora->initializationData.numberOfInitFramesReceived
             || initFrameNumber > NUMBER_OF_INITIALIZATION_FRAMES)
     {
@@ -152,7 +152,7 @@ void storeInitFrame(PandoraLowLevel* pandora)
     // 3 is the start of the valuable data
     for(i = 3; i < FRAME_SIZE; i++)
         *(uint8_t*)(*(uint8_t**)(pandora->initializationData.initalizationDataBlock + initFrameNumber) + i) =
-                MasterToTiva.Byte[i];
+                etherCATInputFrames.rawBytes[i];
     pandora->initializationData.numberOfInitFramesReceived++;
 }
 
@@ -488,36 +488,26 @@ void checkActuatorDisable(PandoraLowLevel* pandora)
  */
 void storeDataFromMaster(PandoraLowLevel* pandora)
 {
-    pandora->signalFromMaster = MasterToTiva.Byte[SIGNAL_INDEX];
+    pandora->signalFromMaster = etherCATInputFrames.rawBytes[SIGNAL_INDEX];
     // notice how the different control signals effect
     // how the data gets stored
     if (pandora->signalFromMaster == CONTROL_SIGNAL)
     {
-        FloatByteData tempConversion;
-
         // Set joint 0 direction
-        pandora->actuator0.direction = MasterToTiva.Byte[DIRECTION0];
+        pandora->actuator0.direction = etherCATInputFrames.controlSignalFrame.joint0Direction;
 
         // Set joint 0 duty cycle
-        tempConversion.Byte[3] = MasterToTiva.Byte[DUTYCYCLE0_B1];
-        tempConversion.Byte[2] = MasterToTiva.Byte[DUTYCYCLE0_B2];
-        tempConversion.Byte[1] = MasterToTiva.Byte[DUTYCYCLE0_B3];
-        tempConversion.Byte[0] = MasterToTiva.Byte[DUTYCYCLE0_B4];
-        pandora->actuator0.dutyCycle = tempConversion.floatData;
+        pandora->actuator0.dutyCycle = etherCATInputFrames.controlSignalFrame.joint0DutyCycle;
 
         // Set joint 1 direction
-        pandora->actuator1.direction = MasterToTiva.Byte[DIRECTION1];
+        pandora->actuator1.direction = etherCATInputFrames.controlSignalFrame.joint1Direction;
 
         // Set joint 1 duty cycle
-        tempConversion.Byte[3] = MasterToTiva.Byte[DUTYCYCLE1_B1];
-        tempConversion.Byte[2] = MasterToTiva.Byte[DUTYCYCLE1_B2];
-        tempConversion.Byte[1] = MasterToTiva.Byte[DUTYCYCLE1_B3];
-        tempConversion.Byte[0] = MasterToTiva.Byte[DUTYCYCLE1_B4];
-        pandora->actuator1.dutyCycle = tempConversion.floatData;
+        pandora->actuator1.dutyCycle = etherCATInputFrames.controlSignalFrame.joint1DutyCycle;
     }
     else if (pandora->signalFromMaster == LOCATION_DEBUG_SIGNAL)
     {
-        pandora->masterLocationGuess = (TivaLocations)MasterToTiva.Byte[MASTER_LOCATION_GUESS];
+        pandora->masterLocationGuess = (TivaLocations)etherCATInputFrames.locationDebugSignalFrame.masterLocationGuess;
     }
     else if(pandora->signalFromMaster == INITIALIZATION_SIGNAL)
     {
