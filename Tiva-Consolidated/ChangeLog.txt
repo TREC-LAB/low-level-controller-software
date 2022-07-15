@@ -13,3 +13,4 @@ Changes to Make:
 	-clean up main.h and main.c
 	-Integrate the CAN-ATI sensor
 	-Organize the HAL files more
+	-Clean up EtherCAT sending using unions

@@ -147,7 +147,7 @@ uint16_t EtherCAT_Init(void)
   // Clear the input buffer
   for (i=0; i < TOT_BYTE_NUM_IN ; i++)
   {
-    TivaToMaster.Byte[i] = 0;
+    etherCATOutputFrames.rawBytes[i] = 0;
   }
 
   // Initalization completed
@@ -382,11 +382,11 @@ void SPIWriteProcRamFifo()
     // Transfer data to EasyCat
     for (i=0; i< (FST_BYTE_NUM_ROUND_IN - 1 ); i++)
     {
-        SPI_Transfer (TivaToMaster.Byte[i]);
+        SPI_Transfer (etherCATOutputFrames.rawBytes[i]);
     }
 
     // Transfer last byte
-    SPI_Transfer (TivaToMaster.Byte[i]);
+    SPI_Transfer (etherCATOutputFrames.rawBytes[i]);
 
     // Disable SPI chip select
     GPIOPinWrite(GPIO_PORTB_BASE, GPIO_PIN_3, GPIO_PIN_3);

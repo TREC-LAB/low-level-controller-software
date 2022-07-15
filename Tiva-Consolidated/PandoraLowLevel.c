@@ -494,16 +494,16 @@ void storeDataFromMaster(PandoraLowLevel* pandora)
     if (pandora->signalFromMaster == CONTROL_SIGNAL)
     {
         // Set joint 0 direction
-        pandora->actuator0.direction = etherCATInputFrames.controlSignalFrame.joint0Direction;
+        pandora->actuator0.direction = etherCATInputFrames.controlSignalFrame.actuator0Direction;
 
         // Set joint 0 duty cycle
-        pandora->actuator0.dutyCycle = etherCATInputFrames.controlSignalFrame.joint0DutyCycle;
+        pandora->actuator0.dutyCycle = etherCATInputFrames.controlSignalFrame.actuator0DutyCycle;
 
         // Set joint 1 direction
-        pandora->actuator1.direction = etherCATInputFrames.controlSignalFrame.joint1Direction;
+        pandora->actuator1.direction = etherCATInputFrames.controlSignalFrame.actuator1Direction;
 
         // Set joint 1 duty cycle
-        pandora->actuator1.dutyCycle = etherCATInputFrames.controlSignalFrame.joint1DutyCycle;
+        pandora->actuator1.dutyCycle = etherCATInputFrames.controlSignalFrame.actuator1DutyCycle;
     }
     else if (pandora->signalFromMaster == LOCATION_DEBUG_SIGNAL)
     {
@@ -608,48 +608,30 @@ bool processDataFromMaster(PandoraLowLevel* pandora)
 void loadDataForMaster(PandoraLowLevel* pandora)
 {
     pandora->signalToMaster = pandora->signalFromMaster;
-    TivaToMaster.Byte[SIGNAL_INDEX] = (uint8_t)pandora->signalToMaster;
-    TivaToMaster.Byte[PROCESS_ID_INDEX] = pandora->processIdFromMaster;
+    etherCATOutputFrames.rawBytes[SIGNAL_INDEX] = (uint8_t)pandora->signalToMaster;
+    etherCATOutputFrames.rawBytes[PROCESS_ID_INDEX] = pandora->processIdFromMaster;
 
     // Notice how the signals determine how the data gets serialized
     if(pandora->signalFromMaster == LOCATION_DEBUG_SIGNAL && pandora->location == pandora->masterLocationGuess)
-        TivaToMaster.Byte[MASTER_LOCATION_GUESS] = (uint8_t)(pandora->location);
+        etherCATOutputFrames.locationDebugSignalFrame.masterLocationGuess = (uint8_t)(pandora->location);
     if(pandora->signalFromMaster == CONTROL_SIGNAL)
     {
-        FloatByteData tempConversion;
-
         // Package force sensor 0 Newton value
-        tempConversion.floatData = pandora->actuator0.forceSensor.newtons;
-        TivaToMaster.Byte[FORCE0_B1] = tempConversion.Byte[3];
-        TivaToMaster.Byte[FORCE0_B2] = tempConversion.Byte[2];
-        TivaToMaster.Byte[FORCE0_B3] = tempConversion.Byte[1];
-        TivaToMaster.Byte[FORCE0_B4] = tempConversion.Byte[0];
+        etherCATOutputFrames.controlSignalFrame.actuator0ForceInNewtons = pandora->actuator0.forceSensor.newtons;
 
         // Package force sensor 1 Newton value
-        tempConversion.floatData = pandora->actuator1.forceSensor.newtons;
-        TivaToMaster.Byte[FORCE1_B1] = tempConversion.Byte[3];
-        TivaToMaster.Byte[FORCE1_B2] = tempConversion.Byte[2];
-        TivaToMaster.Byte[FORCE1_B3] = tempConversion.Byte[1];
-        TivaToMaster.Byte[FORCE1_B4] = tempConversion.Byte[0];
+        etherCATOutputFrames.controlSignalFrame.actuator1ForceInNewtons = pandora->actuator1.forceSensor.newtons;
 
         // Package encoder 0 radian value
-        tempConversion.floatData = pandora->joint0.angleRads;
-        TivaToMaster.Byte[ENCODER0_B1] = tempConversion.Byte[3];
-        TivaToMaster.Byte[ENCODER0_B2] = tempConversion.Byte[2];
-        TivaToMaster.Byte[ENCODER0_B3] = tempConversion.Byte[1];
-        TivaToMaster.Byte[ENCODER0_B4] = tempConversion.Byte[0];
+        etherCATOutputFrames.controlSignalFrame.joint0angleRadians = pandora->joint0.angleRads;
 
         // Package encoder 1 radian value
-        tempConversion.floatData = pandora->joint1.angleRads;
-        TivaToMaster.Byte[ENCODER1_B1] = tempConversion.Byte[3];
-        TivaToMaster.Byte[ENCODER1_B2] = tempConversion.Byte[2];
-        TivaToMaster.Byte[ENCODER1_B3] = tempConversion.Byte[1];
-        TivaToMaster.Byte[ENCODER1_B4] = tempConversion.Byte[0];
+        etherCATOutputFrames.controlSignalFrame.joint1angleRadians = pandora->joint1.angleRads;
     }
     if(pandora->signalFromMaster == INITIALIZATION_SIGNAL)
     {
-        TivaToMaster.Byte[NUMBER_OF_INIT_FRAMES_RECEIVED_INDEX] = pandora->initializationData.numberOfInitFramesReceived;
-        TivaToMaster.Byte[NUMBER_OF_TOTAL_INIT_FRAMES_INDEX] = NUMBER_OF_INITIALIZATION_FRAMES;
+        etherCATOutputFrames.initSignalFrame.numInitializationFramesReceived = pandora->initializationData.numberOfInitFramesReceived;
+        etherCATOutputFrames.initSignalFrame.totalNumberOfInitializationFrames = NUMBER_OF_INITIALIZATION_FRAMES;
     }
 }
 
