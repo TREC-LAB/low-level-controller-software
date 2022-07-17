@@ -509,16 +509,6 @@ void storeDataFromMaster(PandoraLowLevel* pandora)
     {
         pandora->masterLocationGuess = (TivaLocations)etherCATInputFrames.locationDebugSignalFrame.masterLocationGuess;
     }
-    else if(pandora->signalFromMaster == INITIALIZATION_SIGNAL)
-    {
-        storeInitFrame(pandora);
-        // once all of the initialization frames are received
-        if(pandora->initializationData.numberOfInitFramesReceived == NUMBER_OF_INITIALIZATION_FRAMES)
-        {
-            ApplyInitializationSettings(pandora);
-            // TODO: free all of the dynamically allocated memory from initialization
-        }
-    }
 }
 
 /**
@@ -532,7 +522,25 @@ void storeDataFromMaster(PandoraLowLevel* pandora)
  */
 bool processDataFromMaster(PandoraLowLevel* pandora)
 {
+    // check for initialization or reinitialization and handle the case correctly
+    if(pandora->signalFromMaster == INITIALIZATION_SIGNAL && !pandora->initialized)
+    {
+        storeInitFrame(pandora);
+        // once all of the initialization frames are received
+        if(pandora->initializationData.numberOfInitFramesReceived == NUMBER_OF_INITIALIZATION_FRAMES)
+        {
+            ApplyInitializationSettings(pandora);
+            pandora->initialized = true;
+            // TODO: free all of the dynamically allocated memory from initialization
+        }
+        return false;
+    }
+
+    if(!pandora->initialized)
+        return false;
+
     int run_estop = false;
+
     // DO NOT REMOVE THIS LINE
     // Ensures motor PWMs are set to 0 in the case signalFromMaster != CONTROL_SIGNAL but motors are still moving
     checkActuatorDisable(pandora);
