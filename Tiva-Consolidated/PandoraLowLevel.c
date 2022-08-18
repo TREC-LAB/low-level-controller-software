@@ -168,6 +168,7 @@ void storeInitFrame(PandoraLowLevel* pandora)
  */
 void ApplyInitializationSettings(PandoraLowLevel* pandora)
 {
+    // TODO: validate the initialization settings
     Actuator actuator0, actuator1;
     Joint joint0, joint1;
     int i;
@@ -522,9 +523,15 @@ void storeDataFromMaster(PandoraLowLevel* pandora)
  */
 bool processDataFromMaster(PandoraLowLevel* pandora)
 {
+
     // check for initialization or reinitialization and handle the case correctly
-    if(pandora->signalFromMaster == INITIALIZATION_SIGNAL && !pandora->initialized)
+    if(pandora->signalFromMaster == INITIALIZATION_SIGNAL)
     {
+        if (pandora->initialized)
+        {
+            pandora->initialized = false;
+            pandora->initializationData.numberOfInitFramesReceived = 0;
+        }
         storeInitFrame(pandora);
         // once all of the initialization frames are received
         if(pandora->initializationData.numberOfInitFramesReceived == NUMBER_OF_INITIALIZATION_FRAMES)
