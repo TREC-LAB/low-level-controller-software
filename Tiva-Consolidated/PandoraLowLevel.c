@@ -168,6 +168,7 @@ void storeInitFrame(PandoraLowLevel* pandora)
  */
 void ApplyInitializationSettings(PandoraLowLevel* pandora)
 {
+    // TODO: validate the initialization settings
     Actuator actuator0, actuator1;
     Joint joint0, joint1;
     int i;
@@ -509,16 +510,6 @@ void storeDataFromMaster(PandoraLowLevel* pandora)
     {
         pandora->masterLocationGuess = (TivaLocations)etherCATInputFrames.locationDebugSignalFrame.masterLocationGuess;
     }
-    else if(pandora->signalFromMaster == INITIALIZATION_SIGNAL)
-    {
-        storeInitFrame(pandora);
-        // once all of the initialization frames are received
-        if(pandora->initializationData.numberOfInitFramesReceived == NUMBER_OF_INITIALIZATION_FRAMES)
-        {
-            ApplyInitializationSettings(pandora);
-            // TODO: free all of the dynamically allocated memory from initialization
-        }
-    }
 }
 
 /**
@@ -532,7 +523,42 @@ void storeDataFromMaster(PandoraLowLevel* pandora)
  */
 bool processDataFromMaster(PandoraLowLevel* pandora)
 {
+
+    // check for initialization or reinitialization and handle the case correctly
+    if(pandora->signalFromMaster == INITIALIZATION_SIGNAL)
+    {
+        // for re-initialization
+        if (pandora->initialized)
+        {
+            pandora->initialized = false;
+            pandora->initializationData.numberOfInitFramesReceived = 0;
+
+            // re-allocate data on the heap to store the incoming init data
+            pandora->initializationData.initalizationDataBlock = (void**)malloc(sizeof(void**) * NUMBER_OF_INITIALIZATION_FRAMES);
+            int i;
+            for(i = 0; i < NUMBER_OF_INITIALIZATION_FRAMES; i++)
+                *(pandora->initializationData.initalizationDataBlock + i) = (void*)malloc(FRAME_SIZE);
+        }
+        storeInitFrame(pandora);
+        // once all of the initialization frames are received
+        if(pandora->initializationData.numberOfInitFramesReceived == NUMBER_OF_INITIALIZATION_FRAMES)
+        {
+            ApplyInitializationSettings(pandora);
+            pandora->initialized = true;
+            // free all temp init data after it is no longer needed
+            int i;
+            for(i = 0; i < NUMBER_OF_INITIALIZATION_FRAMES; i++)
+                free((pandora->initializationData.initalizationDataBlock + i));
+            free(pandora->initializationData.initalizationDataBlock);
+        }
+        return false;
+    }
+
+    if(!pandora->initialized)
+        return false;
+
     int run_estop = false;
+
     // DO NOT REMOVE THIS LINE
     // Ensures motor PWMs are set to 0 in the case signalFromMaster != CONTROL_SIGNAL but motors are still moving
     checkActuatorDisable(pandora);
@@ -598,7 +624,7 @@ bool processDataFromMaster(PandoraLowLevel* pandora)
 /**
  * loadDataForMaster
  *
- * serializes the data to send back to the master
+ * serializes the data to send back to the masteri
  * over ethercat and puts all the data in its corresponding
  * index within the frame to send back.
  *
