@@ -320,7 +320,7 @@ void Timer2AIntHandler(void) {}
  */
 void Timer3AIntHandler(void)
 {
-    if (pandora.signalFromMaster == CONTROL_SIGNAL)
+    if (pandora.signalFromMaster == CONTROL_SIGNAL && pandora.initialized)
     {
         updateForces(&pandora.actuator0.forceSensor);
         updateForces(&pandora.actuator1.forceSensor);
