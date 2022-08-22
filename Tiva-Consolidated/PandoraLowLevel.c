@@ -259,7 +259,7 @@ void tivaInit(PandoraLowLevel* pandora)
     enableSSIEncoder(&pandora->joint1.encoder);
     enableQEIEncoder(&pandora->actuator0.motorEncoder);
     enableQEIEncoder(&pandora->actuator1.motorEncoder);
-//    debugLEDSConfig();    TODO: uncomment when LEDS are moved to different pins
+    enableDebugLEDS();
     timer1A_Config();
     timer2A_Config();
     timer3A_Config();
@@ -278,9 +278,9 @@ void enableDebugLEDS()
 {
     SysCtlPeripheralEnable(LED_PERIPH);
     GPIOPinTypeGPIOOutput(LED_BASE, RED_LED | BLUE_LED | GREEN_LED);
-    GPIOPinWrite(GPIO_PORTF_BASE, RED_LED, 0);
-    GPIOPinWrite(GPIO_PORTF_BASE, GREEN_LED, 0);
-    GPIOPinWrite(GPIO_PORTF_BASE, BLUE_LED, 0);
+    GPIOPinWrite(GPIO_PORTB_BASE, RED_LED, 0);
+    GPIOPinWrite(GPIO_PORTB_BASE, GREEN_LED, 0);
+    GPIOPinWrite(GPIO_PORTB_BASE, BLUE_LED, 0);
 }
 
 /**
@@ -290,9 +290,9 @@ void enableDebugLEDS()
  */
 void disableDebugLEDs()
 {
-    GPIOPinWrite(GPIO_PORTF_BASE, RED_LED, 0);
-    GPIOPinWrite(GPIO_PORTF_BASE, GREEN_LED, 0);
-    GPIOPinWrite(GPIO_PORTF_BASE, BLUE_LED, 0);
+    GPIOPinWrite(GPIO_PORTB_BASE, RED_LED, 0);
+    GPIOPinWrite(GPIO_PORTB_BASE, GREEN_LED, 0);
+    GPIOPinWrite(GPIO_PORTB_BASE, BLUE_LED, 0);
     SysCtlPeripheralDisable(LED_PERIPH);
 }
 
@@ -315,9 +315,9 @@ void checkLocationLEDS(TivaLocations locationGuess, TivaLocations actualLocation
     if(locationGuess != actualLocation || locationGuess == notValidLocation)
     {
         // if the location guess is wrong or not value, turn the LEDS to yellow
-        GPIOPinWrite(GPIO_PORTF_BASE, RED_LED, RED_LED);
-        GPIOPinWrite(GPIO_PORTF_BASE, GREEN_LED, GREEN_LED);
-        GPIOPinWrite(GPIO_PORTF_BASE, BLUE_LED, 0);
+        GPIOPinWrite(GPIO_PORTB_BASE, RED_LED, RED_LED);
+        GPIOPinWrite(GPIO_PORTB_BASE, GREEN_LED, GREEN_LED);
+        GPIOPinWrite(GPIO_PORTB_BASE, BLUE_LED, 0);
     }
     else
     {
@@ -325,16 +325,16 @@ void checkLocationLEDS(TivaLocations locationGuess, TivaLocations actualLocation
         // then blink blue
         if (!led_on && (abs(led_current - led_start) > 100))
         {
-            GPIOPinWrite(GPIO_PORTF_BASE, RED_LED, 0);
-            GPIOPinWrite(GPIO_PORTF_BASE, GREEN_LED, 0);
-            GPIOPinWrite(GPIO_PORTF_BASE, BLUE_LED, BLUE_LED);
+            GPIOPinWrite(GPIO_PORTB_BASE, RED_LED, 0);
+            GPIOPinWrite(GPIO_PORTB_BASE, GREEN_LED, 0);
+            GPIOPinWrite(GPIO_PORTB_BASE, BLUE_LED, BLUE_LED);
             led_on = true;
             led_start = 0;
             led_current = 0;
         }
         else if (led_on && (abs(led_current - led_start) > 50))
         {
-            GPIOPinWrite(GPIO_PORTF_BASE, BLUE_LED, 0);
+            GPIOPinWrite(GPIO_PORTB_BASE, BLUE_LED, 0);
             led_on = false;
             led_start = 0;
             led_current = 0;
@@ -358,16 +358,16 @@ void notConnectedLEDS()
     // Blink Red
     if (!led_on && (abs(led_current - led_start) > 100))
     {
-        GPIOPinWrite(GPIO_PORTF_BASE, GREEN_LED, 0);
-        GPIOPinWrite(GPIO_PORTF_BASE, BLUE_LED, 0);
-        GPIOPinWrite(GPIO_PORTF_BASE, RED_LED, RED_LED);
+        GPIOPinWrite(GPIO_PORTB_BASE, GREEN_LED, 0);
+        GPIOPinWrite(GPIO_PORTB_BASE, BLUE_LED, 0);
+        GPIOPinWrite(GPIO_PORTB_BASE, RED_LED, RED_LED);
         led_on = true;
         led_start = 0;
         led_current = 0;
     }
     else if (led_on && (abs(led_current - led_start) > 50))
     {
-        GPIOPinWrite(GPIO_PORTF_BASE, RED_LED, 0);
+        GPIOPinWrite(GPIO_PORTB_BASE, RED_LED, 0);
         led_on = false;
         led_start = 0;
         led_current = 0;
@@ -385,9 +385,9 @@ void notConnectedLEDS()
 void idleLEDS()
 {
     // solid purple
-    GPIOPinWrite(GPIO_PORTF_BASE, GREEN_LED, 0);
-    GPIOPinWrite(GPIO_PORTF_BASE, BLUE_LED, BLUE_LED);
-    GPIOPinWrite(GPIO_PORTF_BASE, RED_LED, RED_LED);
+    GPIOPinWrite(GPIO_PORTB_BASE, GREEN_LED, 0);
+    GPIOPinWrite(GPIO_PORTB_BASE, BLUE_LED, BLUE_LED);
+    GPIOPinWrite(GPIO_PORTB_BASE, RED_LED, RED_LED);
 }
 
 /**
@@ -400,9 +400,9 @@ void idleLEDS()
 void haltLEDS()
 {
     // solid red
-    GPIOPinWrite(GPIO_PORTF_BASE, RED_LED, RED_LED);
-    GPIOPinWrite(GPIO_PORTF_BASE, BLUE_LED, 0);
-    GPIOPinWrite(GPIO_PORTF_BASE, GREEN_LED, 0);
+    GPIOPinWrite(GPIO_PORTB_BASE, RED_LED, RED_LED);
+    GPIOPinWrite(GPIO_PORTB_BASE, BLUE_LED, 0);
+    GPIOPinWrite(GPIO_PORTB_BASE, GREEN_LED, 0);
 }
 
 /**
