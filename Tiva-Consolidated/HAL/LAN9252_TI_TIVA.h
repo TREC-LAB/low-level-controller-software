@@ -346,10 +346,10 @@ struct __attribute__((__packed__)) InitSignal2EtherCATFrame_IN
     uint8_t joint0_SSIEncoderBrandRaw;
     uint16_t joint0_SSISampleRate;
     int8_t joint0_ReverseFactor;
-    uint16_t joint0_RawZeroPosition;
-    uint16_t joint0_RawForwardRangeOfMotion;
-    uint16_t joint0_RamBackwardRangeOfMotion;
-    uint8_t remainingBytes[17];
+    float joint0_RawZeroPosition;
+    float joint0_RawForwardRangeOfMotion;
+    float joint0_RawBackwardRangeOfMotion;
+    uint8_t remainingBytes[12];
 };
 typedef struct InitSignal2EtherCATFrame_IN InitSignal2EtherCATFrame_IN;
 
