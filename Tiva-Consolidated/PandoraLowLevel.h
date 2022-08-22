@@ -17,12 +17,12 @@
 
 #include "Actuator.h"
 #include "Joint.h"
-#define RED_LED GPIO_PIN_1
-#define BLUE_LED GPIO_PIN_2
-#define GREEN_LED GPIO_PIN_3
+#define RED_LED GPIO_PIN_0
+#define BLUE_LED GPIO_PIN_1
+#define GREEN_LED GPIO_PIN_7
 
-#define LED_PERIPH SYSCTL_PERIPH_GPIOF
-#define LED_BASE GPIO_PORTF_BASE
+#define LED_PERIPH SYSCTL_PERIPH_GPION
+#define LED_BASE GPIO_PORTB_BASE
 
 #define LED_ON_DELAY_TIME 1000
 #define LED_OFF_DELAY_TIME 500
@@ -69,18 +69,6 @@ struct TivaLocationBitSet
 typedef struct TivaLocationBitSet TivaLocationBitSet;
 
 /**
- * InitializationData
- * Contains a dynamically allocated 2D array of the raw initialization
- * data sent by the master.
- */
-struct InitializationData
-{
-    void** initalizationDataBlock;      // a pointer to the 2D array
-    uint8_t numberOfInitFramesReceived; // the number of initialization frames received
-};
-typedef struct InitializationData InitializationData;
-
-/**
  * PandoraLowLevel
  * A structure consisting of all of the low level
  * variables needed for ONE Tiva. Each Tiva has 2 joints,
@@ -103,7 +91,7 @@ struct PandoraLowLevel
     uint8_t prevProcessIdFromMaster;
     uint8_t processIdFromMaster;
 
-    InitializationData initializationData;
+    uint8_t numberOfInitFramesReceived;
     bool initialized;
 };
 typedef struct PandoraLowLevel PandoraLowLevel;
@@ -149,12 +137,8 @@ TivaLocations getLocationsFromPins(void);
 // This function is meant to be called before tivaInit
 void tivaInitEtherCAT();
 
-// store the raw initialization frame from the master
-void storeInitFrame(PandoraLowLevel* pandora);
-
-// parses the initialization data block and applies the settings
-// to the Tiva
-void ApplyInitializationSettings(PandoraLowLevel* pandora);
+// store the current initialization frame
+void StoreCurrentInitFrame(PandoraLowLevel* pandora);
 
 // initialize all of the tiva's peripherals needed
 // after the initialization frame has been parsed

@@ -35,12 +35,7 @@ PandoraLowLevel pandoraConstruct()
 
     pandora.initialized = false;
     // for the initialization DATA!! Allocate data on the heap to delete it later
-    pandora.initializationData.numberOfInitFramesReceived = 0;
-    pandora.initializationData.initalizationDataBlock =
-            (void**)malloc(sizeof(void**) * NUMBER_OF_INITIALIZATION_FRAMES);
-    int i;
-    for(i = 0; i < NUMBER_OF_INITIALIZATION_FRAMES; i++)
-            *(pandora.initializationData.initalizationDataBlock + i) = (void*)malloc(FRAME_SIZE);
+    pandora.numberOfInitFramesReceived = 0;
     return pandora;
 }
 
@@ -125,171 +120,126 @@ void tivaInitEtherCAT()
 }
 
 /**
- * storeInitFrame
+ * ProcessCurrentInitFrame
  *
- * Stores the most recent raw initialization frame that was sent from the
- * master by adding it to the dynamically allocated 2D array.
- *
- * @param pandora: a pointer to the pandora Tiva struct
+ * Processes the current initialization frame and applies it to
+ * the PandoraLowLevel structure
  */
-void storeInitFrame(PandoraLowLevel* pandora)
+void StoreCurrentInitFrame(PandoraLowLevel* pandora)
 {
-    // check to make sure the conditions match up
-    if(pandora->signalFromMaster != INITIALIZATION_SIGNAL)
-        return;
-
-    // check to make sure there is no error regarding initialization
-    // this is important because sending the wrong initialization data can crash
-    // the tiva. Initialization Frame Numbers start counting from zero
-    uint8_t initFrameNumber = etherCATInputFrames.rawBytes[INITIALIZATION_FRAME_NUMBER_INDEX];
-    if(initFrameNumber != pandora->initializationData.numberOfInitFramesReceived
-            || initFrameNumber > NUMBER_OF_INITIALIZATION_FRAMES)
+    // actuator0 is the first initialization frame received
+    uint8_t currentInitFrame = etherCATInputFrames.initSignalHeader.currentInitFrame;
+    if(currentInitFrame == 0)
     {
-        pandora->signalToMaster = HALT_SIGNAL_TM;
-        return;
-    }
-    int i;
-    // 3 is the start of the valuable data
-    for(i = 3; i < FRAME_SIZE; i++)
-        *(uint8_t*)(*(uint8_t**)(pandora->initializationData.initalizationDataBlock + initFrameNumber) + i) =
-                etherCATInputFrames.rawBytes[i];
-    pandora->initializationData.numberOfInitFramesReceived++;
-}
+        uint8_t actuatorNumber = 0;
 
-/**
- * ApplyInitializationSettings
- *
- * Called after the Tiva received all of the initialziation frames
- * from the master. This functions deserializes the initialization frames
- * and initializes the pandora struct passed from the initialization data
- *
- * @param pandora: a pointer to the pandora Tiva struct which
- * will be initialized with the deserialized data
- */
-void ApplyInitializationSettings(PandoraLowLevel* pandora)
-{
-    // TODO: validate the initialization settings
-    Actuator actuator0, actuator1;
-    Joint joint0, joint1;
-    int i;
-    void** initializationData = pandora->initializationData.initalizationDataBlock;
-    ByteData byteData;
-    FloatByteData floatByteData;
-    for(i = 0; i < NUMBER_OF_INITIALIZATION_FRAMES; i++)
+        uint8_t rawQEIBase = etherCATInputFrames.initSignal0Frame.actuator0_QEIBaseNumber;
+        uint32_t actuator0_QEIBase = QEI0_BASE + ((1 << 12) * rawQEIBase);
+
+        uint16_t actuator0_QEISampleRate = etherCATInputFrames.initSignal0Frame.actuator0_QEISampleRate;
+        uint32_t actuator0_QEICountsPerRotation = etherCATInputFrames.initSignal0Frame.actuator0_QEICountsPerRotation;
+
+        uint8_t rawADCBase = etherCATInputFrames.initSignal0Frame.actuator0_ForceSensorADCBaseNumber;
+        uint32_t actuator0_ADCBase = ADC0_BASE + ((1 << 12) * rawADCBase);
+
+        float actuator0_ForceSensorSlope = etherCATInputFrames.initSignal0Frame.actuator0_ForceSensorSlope;
+        float actuator0_ForceSensorOffset = etherCATInputFrames.initSignal0Frame.actuator0_ForceSensorOffset;
+
+        Actuator actuator0 = actuatorConstruct(actuatorNumber, actuator0_QEIBase,
+                                                actuator0_QEISampleRate, actuator0_QEICountsPerRotation,
+                                                actuator0_ADCBase, actuator0_ForceSensorSlope,
+                                                actuator0_ForceSensorOffset);
+        pandora->actuator0 = actuator0;
+
+    }
+    else if(currentInitFrame == 1)
     {
-        // data stored from the first initialization frame!
-        // this frame is for the actuator
-        if(i == 0 || i == 1)
-        {
-            uint8_t QEIBaseNumber = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 3));
-            uint32_t actuatorMotorEncoderQEIBaseInit = QEI0_BASE + ((1 << 12) * QEIBaseNumber);
+        uint8_t actuatorNumber = 1;
 
-            byteData.Byte[3] = 0;
-            byteData.Byte[2] = 0;
-            byteData.Byte[1] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 4));
-            byteData.Byte[0] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 5));
+        uint8_t rawQEIBase = etherCATInputFrames.initSignal1Frame.actuator1_QEIBaseNumber;
+        uint32_t actuator1_QEIBase = QEI0_BASE + ((1 << 12) * rawQEIBase);
 
-            uint16_t sampleRateInit = (uint16_t)byteData.Word[0];
+        uint16_t actuator1_QEISampleRate = etherCATInputFrames.initSignal1Frame.actuator1_QEISampleRate;
+        uint32_t actuator1_QEICountsPerRotation = etherCATInputFrames.initSignal1Frame.actuator1_QEICountsPerRotation;
 
-            byteData.Byte[3] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 6));
-            byteData.Byte[2] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 7));
-            byteData.Byte[1] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 8));
-            byteData.Byte[0] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 9));
+        uint8_t rawADCBase = etherCATInputFrames.initSignal1Frame.actuator1_ForceSensorADCBaseNumber;
+        uint32_t actuator1_ADCBase = ADC0_BASE + ((1 << 12) * rawADCBase);
 
-            int32_t countsPerRotationInit = byteData.intData;
 
-            uint8_t ADCBaseNumber = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 10));
-            uint32_t actuatorForceSensorADCBaseInit = ADC0_BASE + ((1 << 12) * ADCBaseNumber);
+        float actuator1_ForceSensorSlope = etherCATInputFrames.initSignal1Frame.actuator1_ForceSensorSlope;
+        float actuator1_ForceSensorOffset = etherCATInputFrames.initSignal1Frame.actuator1_ForceSensorOffset;
 
-            floatByteData.Byte[3] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 11));
-            floatByteData.Byte[2] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 12));
-            floatByteData.Byte[1] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 13));
-            floatByteData.Byte[0] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 14));
-
-            float forceSensorSlopeInit = floatByteData.floatData;
-
-            floatByteData.Byte[3] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 15));
-            floatByteData.Byte[2] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 16));
-            floatByteData.Byte[1] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 17));
-            floatByteData.Byte[0] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 18));
-
-            float forceSensorOffsetInit = floatByteData.floatData;
-
-            if(i == 0)
-                // 0 for actuator 0
-                actuator0 = actuatorConstruct(0, actuatorMotorEncoderQEIBaseInit, sampleRateInit, countsPerRotationInit,
-                                          actuatorForceSensorADCBaseInit, forceSensorSlopeInit, forceSensorOffsetInit);
-            else
-                // 1 for actuator 1
-                actuator1 = actuatorConstruct(1, actuatorMotorEncoderQEIBaseInit, sampleRateInit, countsPerRotationInit,
-                                          actuatorForceSensorADCBaseInit, forceSensorSlopeInit, forceSensorOffsetInit);
-        }
-        // this data is for the joint
-        else
-        {
-            uint8_t SSIBaseNumber = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 3));
-            uint32_t jointEncoderSSIBaseInit = SSI0_BASE + ((1 << 12) * SSIBaseNumber);
-
-            SSIEncoderBrand SSIEncoderBrandInit = (SSIEncoderBrand)(*(uint8_t*)(*(uint8_t**)(initializationData + i) + 4));
-
-            byteData.Byte[3] = 0;
-            byteData.Byte[2] = 0;
-            byteData.Byte[1] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 5));
-            byteData.Byte[0] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 6));
-
-            uint16_t sampleRateInit = byteData.Word[0];
-
-            int8_t jointReverseFactor =  (*(int8_t*)(*(int8_t**)(initializationData + i) + 7));
-
-            floatByteData.Byte[3] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 8));
-            floatByteData.Byte[2] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 9));
-            floatByteData.Byte[1] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 10));
-            floatByteData.Byte[0] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 11));
-
-            uint16_t jointRawZeroPosition;
-            if(SSIEncoderBrandInit == Gurley_Encoder)
-                jointRawZeroPosition = (uint16_t)(floatByteData.floatData * (65535.0 / 180.0));
-            else if(SSIEncoderBrandInit == Orbis_Encoder)
-                jointRawZeroPosition = (uint16_t)(floatByteData.floatData * (16383.0 / 360.0));
-
-            floatByteData.Byte[3] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 12));
-            floatByteData.Byte[2] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 13));
-            floatByteData.Byte[1] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 14));
-            floatByteData.Byte[0] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 15));
-
-            uint16_t jointRawForwardRangeOfMotion;
-            if(SSIEncoderBrandInit == Gurley_Encoder)
-                jointRawForwardRangeOfMotion = (uint16_t)(floatByteData.floatData * (65535.0) / 180.0);
-            else if(SSIEncoderBrandInit == Orbis_Encoder)
-                jointRawForwardRangeOfMotion = (uint16_t)(floatByteData.floatData * (16383.0 / 360.0));
-
-            floatByteData.Byte[3] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 16));
-            floatByteData.Byte[2] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 17));
-            floatByteData.Byte[1] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 18));
-            floatByteData.Byte[0] = (*(uint8_t*)(*(uint8_t**)(initializationData + i) + 19));
-
-            uint16_t jointRawBackwardRangeOfMotion;
-            if(SSIEncoderBrandInit == Gurley_Encoder)
-                jointRawBackwardRangeOfMotion = (uint16_t)(floatByteData.floatData * (65535.0 / 180.0));
-            else if(SSIEncoderBrandInit == Orbis_Encoder)
-                jointRawBackwardRangeOfMotion = (uint16_t)(floatByteData.floatData * (16383.0 / 360.0));
-
-            if(i == 2)
-                joint0 = jointConstruct(jointEncoderSSIBaseInit, SSIEncoderBrandInit, sampleRateInit,
-                                        jointReverseFactor, jointRawZeroPosition,
-                                        jointRawForwardRangeOfMotion, jointRawBackwardRangeOfMotion);
-            else
-                joint1 = jointConstruct(jointEncoderSSIBaseInit, SSIEncoderBrandInit, sampleRateInit,
-                                        jointReverseFactor, jointRawZeroPosition,
-                                        jointRawForwardRangeOfMotion, jointRawBackwardRangeOfMotion);
-        }
+        Actuator actuator1 = actuatorConstruct(actuatorNumber, actuator1_QEIBase,
+                                                actuator1_QEISampleRate, actuator1_QEICountsPerRotation,
+                                                actuator1_ADCBase, actuator1_ForceSensorSlope,
+                                                actuator1_ForceSensorOffset);
+        pandora->actuator1 = actuator1;
     }
-    pandora->joint0 = joint0;
-    pandora->joint1 = joint1;
-    pandora->actuator0 = actuator0;
-    pandora->actuator1 = actuator1;
+    else if(currentInitFrame == 2)
+    {
+        uint8_t rawSSIBaseNumber = etherCATInputFrames.initSignal2Frame.joint0_SSIBaseNumber;
+        uint32_t joint0_SSIBaseNumber = SSI0_BASE + ((1 << 12) * rawSSIBaseNumber);
 
-    pandora->initialized = true;
+        uint8_t ssiEncoderBrandRaw = etherCATInputFrames.initSignal2Frame.joint0_SSIEncoderBrandRaw;
+        SSIEncoderBrand joint0_SSIEncoderBrand = (SSIEncoderBrand)ssiEncoderBrandRaw;
+
+        uint16_t joint0_SSIEncoderSampleRate = etherCATInputFrames.initSignal2Frame.joint0_SSISampleRate;
+        int8_t joint0_jointReverseFactor = etherCATInputFrames.initSignal2Frame.joint0_ReverseFactor;
+
+        float rawZero = etherCATInputFrames.initSignal2Frame.joint0_RawZeroPosition;
+        float rawForwardRangeOfMotion = etherCATInputFrames.initSignal2Frame.joint0_RawForwardRangeOfMotion;
+        float rawBackwardRangeOfMotion = etherCATInputFrames.initSignal2Frame.joint0_RawBackwardRangeOfMotion;
+        uint16_t joint0_rawZero, joint0_rawForwardRangeOfMotion, joint0_rawBackwardRangeOfMotion;
+        if(joint0_SSIEncoderBrand == Gurley_Encoder)
+        {
+            joint0_rawZero = (uint16_t)(rawZero * (65535.0 / 180.0));
+            joint0_rawForwardRangeOfMotion = (uint16_t)(rawForwardRangeOfMotion * (65535.0 / 180.0));
+            joint0_rawBackwardRangeOfMotion = (uint16_t)(rawBackwardRangeOfMotion * (65535.0 / 180.0));
+        }
+        else if(joint0_SSIEncoderBrand == Orbis_Encoder)
+        {
+            joint0_rawZero = (uint16_t)(rawZero * (16383.0 / 360.0));
+            joint0_rawForwardRangeOfMotion = (uint16_t)(rawForwardRangeOfMotion * (16383.0 / 360.0));
+            joint0_rawBackwardRangeOfMotion = (uint16_t)(rawBackwardRangeOfMotion * (16383.0 / 360.0));
+        }
+        Joint joint0 = jointConstruct(joint0_SSIBaseNumber, joint0_SSIEncoderBrand, joint0_SSIEncoderSampleRate,
+                                      joint0_jointReverseFactor, joint0_rawZero,
+                                      joint0_rawForwardRangeOfMotion, joint0_rawBackwardRangeOfMotion);
+        pandora->joint0 = joint0;
+
+    }
+    else if(currentInitFrame == 3)
+    {
+        uint8_t rawSSIBaseNumber = etherCATInputFrames.initSignal3Frame.joint1_SSIBaseNumber;
+        uint32_t joint1_SSIBaseNumber = SSI0_BASE + ((1 << 12) * rawSSIBaseNumber);
+
+        uint8_t ssiEncoderBrandRaw = etherCATInputFrames.initSignal3Frame.joint1_SSIEncoderBrandRaw;
+        SSIEncoderBrand joint1_SSIEncoderBrand = (SSIEncoderBrand)ssiEncoderBrandRaw;
+
+        uint16_t joint1_SSIEncoderSampleRate = etherCATInputFrames.initSignal3Frame.joint1_SSISampleRate;
+        int8_t joint1_jointReverseFactor = etherCATInputFrames.initSignal3Frame.joint1_ReverseFactor;
+
+        float rawZero = etherCATInputFrames.initSignal3Frame.joint1_RawZeroPosition;
+        float rawForwardRangeOfMotion = etherCATInputFrames.initSignal3Frame.joint1_RawForwardRangeOfMotion;
+        float rawBackwardRangeOfMotion = etherCATInputFrames.initSignal3Frame.joint1_RamBackwardRangeOfMotion;
+        uint16_t joint1_rawZero, joint1_rawForwardRangeOfMotion, joint1_rawBackwardRangeOfMotion;
+        if(joint1_SSIEncoderBrand == Gurley_Encoder)
+        {
+            joint1_rawZero = (uint16_t)(rawZero * (65535.0 / 180.0));
+            joint1_rawForwardRangeOfMotion = (uint16_t)(rawForwardRangeOfMotion * (65535.0 / 180.0));
+            joint1_rawBackwardRangeOfMotion = (uint16_t)(rawBackwardRangeOfMotion * (65535.0 / 180.0));
+        }
+        else if(joint1_SSIEncoderBrand == Orbis_Encoder)
+        {
+            joint1_rawZero = (uint16_t)(rawZero * (16383.0 / 360.0));
+            joint1_rawForwardRangeOfMotion = (uint16_t)(rawForwardRangeOfMotion * (16383.0 / 360.0));
+            joint1_rawBackwardRangeOfMotion = (uint16_t)(rawBackwardRangeOfMotion * (16383.0 / 360.0));
+        }
+        Joint joint1 = jointConstruct(joint1_SSIBaseNumber, joint1_SSIEncoderBrand, joint1_SSIEncoderSampleRate,
+                                      joint1_jointReverseFactor, joint1_rawZero,
+                                      joint1_rawForwardRangeOfMotion, joint1_rawBackwardRangeOfMotion);
+        pandora->joint1 = joint1;
+    }
 }
 
 /**
@@ -309,7 +259,7 @@ void tivaInit(PandoraLowLevel* pandora)
     enableSSIEncoder(&pandora->joint1.encoder);
     enableQEIEncoder(&pandora->actuator0.motorEncoder);
     enableQEIEncoder(&pandora->actuator1.motorEncoder);
-//    debugLEDSConfig();    TODO: uncomment when LEDS are moved to different pins
+    enableDebugLEDS();
     timer1A_Config();
     timer2A_Config();
     timer3A_Config();
@@ -328,9 +278,9 @@ void enableDebugLEDS()
 {
     SysCtlPeripheralEnable(LED_PERIPH);
     GPIOPinTypeGPIOOutput(LED_BASE, RED_LED | BLUE_LED | GREEN_LED);
-    GPIOPinWrite(GPIO_PORTF_BASE, RED_LED, 0);
-    GPIOPinWrite(GPIO_PORTF_BASE, GREEN_LED, 0);
-    GPIOPinWrite(GPIO_PORTF_BASE, BLUE_LED, 0);
+    GPIOPinWrite(GPIO_PORTB_BASE, RED_LED, 0);
+    GPIOPinWrite(GPIO_PORTB_BASE, GREEN_LED, 0);
+    GPIOPinWrite(GPIO_PORTB_BASE, BLUE_LED, 0);
 }
 
 /**
@@ -340,9 +290,9 @@ void enableDebugLEDS()
  */
 void disableDebugLEDs()
 {
-    GPIOPinWrite(GPIO_PORTF_BASE, RED_LED, 0);
-    GPIOPinWrite(GPIO_PORTF_BASE, GREEN_LED, 0);
-    GPIOPinWrite(GPIO_PORTF_BASE, BLUE_LED, 0);
+    GPIOPinWrite(GPIO_PORTB_BASE, RED_LED, 0);
+    GPIOPinWrite(GPIO_PORTB_BASE, GREEN_LED, 0);
+    GPIOPinWrite(GPIO_PORTB_BASE, BLUE_LED, 0);
     SysCtlPeripheralDisable(LED_PERIPH);
 }
 
@@ -365,9 +315,9 @@ void checkLocationLEDS(TivaLocations locationGuess, TivaLocations actualLocation
     if(locationGuess != actualLocation || locationGuess == notValidLocation)
     {
         // if the location guess is wrong or not value, turn the LEDS to yellow
-        GPIOPinWrite(GPIO_PORTF_BASE, RED_LED, RED_LED);
-        GPIOPinWrite(GPIO_PORTF_BASE, GREEN_LED, GREEN_LED);
-        GPIOPinWrite(GPIO_PORTF_BASE, BLUE_LED, 0);
+        GPIOPinWrite(GPIO_PORTB_BASE, RED_LED, RED_LED);
+        GPIOPinWrite(GPIO_PORTB_BASE, GREEN_LED, GREEN_LED);
+        GPIOPinWrite(GPIO_PORTB_BASE, BLUE_LED, 0);
     }
     else
     {
@@ -375,16 +325,16 @@ void checkLocationLEDS(TivaLocations locationGuess, TivaLocations actualLocation
         // then blink blue
         if (!led_on && (abs(led_current - led_start) > 100))
         {
-            GPIOPinWrite(GPIO_PORTF_BASE, RED_LED, 0);
-            GPIOPinWrite(GPIO_PORTF_BASE, GREEN_LED, 0);
-            GPIOPinWrite(GPIO_PORTF_BASE, BLUE_LED, BLUE_LED);
+            GPIOPinWrite(GPIO_PORTB_BASE, RED_LED, 0);
+            GPIOPinWrite(GPIO_PORTB_BASE, GREEN_LED, 0);
+            GPIOPinWrite(GPIO_PORTB_BASE, BLUE_LED, BLUE_LED);
             led_on = true;
             led_start = 0;
             led_current = 0;
         }
         else if (led_on && (abs(led_current - led_start) > 50))
         {
-            GPIOPinWrite(GPIO_PORTF_BASE, BLUE_LED, 0);
+            GPIOPinWrite(GPIO_PORTB_BASE, BLUE_LED, 0);
             led_on = false;
             led_start = 0;
             led_current = 0;
@@ -408,16 +358,16 @@ void notConnectedLEDS()
     // Blink Red
     if (!led_on && (abs(led_current - led_start) > 100))
     {
-        GPIOPinWrite(GPIO_PORTF_BASE, GREEN_LED, 0);
-        GPIOPinWrite(GPIO_PORTF_BASE, BLUE_LED, 0);
-        GPIOPinWrite(GPIO_PORTF_BASE, RED_LED, RED_LED);
+        GPIOPinWrite(GPIO_PORTB_BASE, GREEN_LED, 0);
+        GPIOPinWrite(GPIO_PORTB_BASE, BLUE_LED, 0);
+        GPIOPinWrite(GPIO_PORTB_BASE, RED_LED, RED_LED);
         led_on = true;
         led_start = 0;
         led_current = 0;
     }
     else if (led_on && (abs(led_current - led_start) > 50))
     {
-        GPIOPinWrite(GPIO_PORTF_BASE, RED_LED, 0);
+        GPIOPinWrite(GPIO_PORTB_BASE, RED_LED, 0);
         led_on = false;
         led_start = 0;
         led_current = 0;
@@ -435,9 +385,9 @@ void notConnectedLEDS()
 void idleLEDS()
 {
     // solid purple
-    GPIOPinWrite(GPIO_PORTF_BASE, GREEN_LED, 0);
-    GPIOPinWrite(GPIO_PORTF_BASE, BLUE_LED, BLUE_LED);
-    GPIOPinWrite(GPIO_PORTF_BASE, RED_LED, RED_LED);
+    GPIOPinWrite(GPIO_PORTB_BASE, GREEN_LED, 0);
+    GPIOPinWrite(GPIO_PORTB_BASE, BLUE_LED, BLUE_LED);
+    GPIOPinWrite(GPIO_PORTB_BASE, RED_LED, RED_LED);
 }
 
 /**
@@ -450,9 +400,9 @@ void idleLEDS()
 void haltLEDS()
 {
     // solid red
-    GPIOPinWrite(GPIO_PORTF_BASE, RED_LED, RED_LED);
-    GPIOPinWrite(GPIO_PORTF_BASE, BLUE_LED, 0);
-    GPIOPinWrite(GPIO_PORTF_BASE, GREEN_LED, 0);
+    GPIOPinWrite(GPIO_PORTB_BASE, RED_LED, RED_LED);
+    GPIOPinWrite(GPIO_PORTB_BASE, BLUE_LED, 0);
+    GPIOPinWrite(GPIO_PORTB_BASE, GREEN_LED, 0);
 }
 
 /**
@@ -510,6 +460,10 @@ void storeDataFromMaster(PandoraLowLevel* pandora)
     {
         pandora->masterLocationGuess = (TivaLocations)etherCATInputFrames.locationDebugSignalFrame.masterLocationGuess;
     }
+    else if (pandora->signalFromMaster == INITIALIZATION_SIGNAL)
+    {
+        pandora->numberOfInitFramesReceived = etherCATInputFrames.initSignalHeader.currentInitFrame + 1;
+    }
 }
 
 /**
@@ -524,65 +478,37 @@ void storeDataFromMaster(PandoraLowLevel* pandora)
 bool processDataFromMaster(PandoraLowLevel* pandora)
 {
 
-    // check for initialization or reinitialization and handle the case correctly
+    /***********FOR INITIALIZATION***********/
+    // if initialization is done but the master is still processing
+    // TODO: Find a better fix for this
+    if(pandora->prevSignalFromMaster == INITIALIZATION_SIGNAL && pandora->signalFromMaster == INITIALIZATION_SIGNAL && pandora->initialized)
+        return false;
     if(pandora->signalFromMaster == INITIALIZATION_SIGNAL)
     {
         // for re-initialization
         if (pandora->initialized)
-        {
             pandora->initialized = false;
-            pandora->initializationData.numberOfInitFramesReceived = 0;
-
-            // re-allocate data on the heap to store the incoming init data
-            pandora->initializationData.initalizationDataBlock = (void**)malloc(sizeof(void**) * NUMBER_OF_INITIALIZATION_FRAMES);
-            int i;
-            for(i = 0; i < NUMBER_OF_INITIALIZATION_FRAMES; i++)
-                *(pandora->initializationData.initalizationDataBlock + i) = (void*)malloc(FRAME_SIZE);
-        }
-        storeInitFrame(pandora);
-        // once all of the initialization frames are received
-        if(pandora->initializationData.numberOfInitFramesReceived == NUMBER_OF_INITIALIZATION_FRAMES)
+        StoreCurrentInitFrame(pandora);
+        if(pandora->numberOfInitFramesReceived == NUMBER_OF_INITIALIZATION_FRAMES)
         {
-            ApplyInitializationSettings(pandora);
             pandora->initialized = true;
-            // free all temp init data after it is no longer needed
-            int i;
-            for(i = 0; i < NUMBER_OF_INITIALIZATION_FRAMES; i++)
-                free((pandora->initializationData.initalizationDataBlock + i));
-            free(pandora->initializationData.initalizationDataBlock);
         }
+        pandora->prevSignalFromMaster = pandora->signalFromMaster;
         return false;
     }
 
     if(!pandora->initialized)
+    {
+        pandora->prevSignalFromMaster = pandora->signalFromMaster;
         return false;
+    }
+
+    /***********FOR ALL OTHER SIGNALS***********/
 
     int run_estop = false;
-
     // DO NOT REMOVE THIS LINE
     // Ensures motor PWMs are set to 0 in the case signalFromMaster != CONTROL_SIGNAL but motors are still moving
     checkActuatorDisable(pandora);
-
-    // Check if we have switched into control mode
-    if (pandora->prevSignalFromMaster != CONTROL_SIGNAL && pandora->signalFromMaster == CONTROL_SIGNAL)
-    {
-        // Reconfigure port F to use SSI1
-        disableDebugLEDs();
-        if (!pandora->joint1.encoder.enabled)
-        {
-            enableSSIEncoder(&pandora->joint1.encoder);
-        }
-    }
-
-    // Check if we have switched out of control mode
-    if (pandora->prevSignalFromMaster == CONTROL_SIGNAL && pandora->signalFromMaster != CONTROL_SIGNAL)
-    {
-        if (pandora->joint1.encoder.enabled)
-        {
-            disableSSIEncoder(&pandora->joint1.encoder);
-        }
-        enableDebugLEDS();
-    }
 
     if (pandora->signalFromMaster == NOT_CONNECTED)
     {
@@ -617,7 +543,6 @@ bool processDataFromMaster(PandoraLowLevel* pandora)
     }
 
     pandora->prevSignalFromMaster = pandora->signalFromMaster;
-
     return run_estop;
 }
 
@@ -656,8 +581,10 @@ void loadDataForMaster(PandoraLowLevel* pandora)
     }
     if(pandora->signalFromMaster == INITIALIZATION_SIGNAL)
     {
-        etherCATOutputFrames.initSignalFrame.numInitializationFramesReceived = pandora->initializationData.numberOfInitFramesReceived;
+        etherCATOutputFrames.initSignalFrame.numInitializationFramesReceived = pandora->numberOfInitFramesReceived;
         etherCATOutputFrames.initSignalFrame.totalNumberOfInitializationFrames = NUMBER_OF_INITIALIZATION_FRAMES;
+        if(pandora->initialized)
+            pandora->numberOfInitFramesReceived = 0;
     }
 }
 

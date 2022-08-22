@@ -346,10 +346,10 @@ struct __attribute__((__packed__)) InitSignal2EtherCATFrame_IN
     uint8_t joint0_SSIEncoderBrandRaw;
     uint16_t joint0_SSISampleRate;
     int8_t joint0_ReverseFactor;
-    uint16_t joint0_RawZeroPosition;
-    uint16_t joint0_RawForwardRangeOfMotion;
-    uint16_t joint0_RamBackwardRangeOfMotion;
-    uint8_t remainingBytes[17];
+    float joint0_RawZeroPosition;
+    float joint0_RawForwardRangeOfMotion;
+    float joint0_RawBackwardRangeOfMotion;
+    uint8_t remainingBytes[12];
 };
 typedef struct InitSignal2EtherCATFrame_IN InitSignal2EtherCATFrame_IN;
 
@@ -362,13 +362,22 @@ struct __attribute__((__packed__)) InitSignal3EtherCATFrame_IN
     uint8_t joint1_SSIEncoderBrandRaw;
     uint16_t joint1_SSISampleRate;
     int8_t joint1_ReverseFactor;
-    uint16_t joint1_RawZeroPosition;
-    uint16_t joint1_RawForwardRangeOfMotion;
-    uint16_t joint1_RamBackwardRangeOfMotion;
-    uint8_t remainingBytes[17];
+    float joint1_RawZeroPosition;
+    float joint1_RawForwardRangeOfMotion;
+    float joint1_RamBackwardRangeOfMotion;
+    uint8_t remainingBytes[12];
 };
 typedef struct InitSignal3EtherCATFrame_IN InitSignal3EtherCATFrame_IN;
 
+
+struct __attribute__((__packed__)) InitSignalHeaderEtherCATFrame_IN
+{
+    uint8_t signalFromMaster;
+    uint8_t masterProcessID;
+    uint8_t currentInitFrame;
+    uint8_t remainingBytes[29];
+};
+typedef struct InitSignalHeaderEtherCATFrame_IN InitSignalHeaderEtherCATFrame_IN;
 
 // OutputFrames
 
@@ -411,6 +420,7 @@ union EtherCATFrames_IN
 {
     ControlSignalEtherCATFrame_IN controlSignalFrame;
     LocationDebugSignalEtherCATFrame_IN locationDebugSignalFrame;
+    InitSignalHeaderEtherCATFrame_IN initSignalHeader;
     InitSignal0EtherCATFrame_IN initSignal0Frame;
     InitSignal1EtherCATFrame_IN initSignal1Frame;
     InitSignal2EtherCATFrame_IN initSignal2Frame;
