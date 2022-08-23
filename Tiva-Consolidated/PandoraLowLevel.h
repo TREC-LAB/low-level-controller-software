@@ -176,6 +176,9 @@ void idleLEDS();
 // LED patterns for when the Tiva is in halt mode
 void haltLEDS();
 
+// LED patterns for when the Tiva is in control mode
+void controlLEDS();
+
 /*----------------------Low Level Tiva Functions----------------------*/
 
 // Check if the actuators should be disabled

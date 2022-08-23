@@ -412,6 +412,14 @@ void haltLEDS()
     GPIOPinWrite(GPIO_PORTB_BASE, GREEN_LED, 0);
 }
 
+void controlLEDS()
+{
+    // solid blue
+    GPIOPinWrite(GPIO_PORTB_BASE, RED_LED, 0);
+    GPIOPinWrite(GPIO_PORTB_BASE, BLUE_LED, BLUE_LED);
+    GPIOPinWrite(GPIO_PORTB_BASE, GREEN_LED, 0);
+}
+
 /**
  * checkActuatorDisable
  *
@@ -540,6 +548,7 @@ bool processDataFromMaster(PandoraLowLevel* pandora)
     }
     else if (pandora->signalFromMaster == CONTROL_SIGNAL)
     {
+        controlLEDS();
         // Send motor PWMs and directions to motor controllers
         SendPWMSignal(&pandora->actuator0);
         SendPWMSignal(&pandora->actuator1);
