@@ -265,6 +265,7 @@ void Timer1AIntHandler(void)
             SendPWMSignal(&pandora.actuator1);
 
             // Send shutdown signal to master
+            haltLEDS();
             EtherCAT_MainTask();
         }
         else
