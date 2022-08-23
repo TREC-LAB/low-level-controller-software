@@ -486,10 +486,6 @@ bool processDataFromMaster(PandoraLowLevel* pandora)
 {
 
     /***********FOR INITIALIZATION***********/
-    // if initialization is done but the master is still processing
-    // TODO: Find a better fix for this
-    if(pandora->prevSignalFromMaster == INITIALIZATION_SIGNAL && pandora->signalFromMaster == INITIALIZATION_SIGNAL && pandora->initialized)
-        return false;
     if(pandora->signalFromMaster == INITIALIZATION_SIGNAL)
     {
         // for re-initialization
@@ -499,10 +495,13 @@ bool processDataFromMaster(PandoraLowLevel* pandora)
         if(pandora->numberOfInitFramesReceived == NUMBER_OF_INITIALIZATION_FRAMES)
         {
             pandora->initialized = true;
+            return true;
         }
         pandora->prevSignalFromMaster = pandora->signalFromMaster;
         return false;
     }
+    else if(pandora->signalFromMaster != INITIALIZATION_SIGNAL && pandora->initialized)
+        pandora->numberOfInitFramesReceived = 0;
 
     if(!pandora->initialized)
     {
@@ -590,8 +589,6 @@ void loadDataForMaster(PandoraLowLevel* pandora)
     {
         etherCATOutputFrames.initSignalFrame.numInitializationFramesReceived = pandora->numberOfInitFramesReceived;
         etherCATOutputFrames.initSignalFrame.totalNumberOfInitializationFrames = NUMBER_OF_INITIALIZATION_FRAMES;
-        if(pandora->initialized)
-            pandora->numberOfInitFramesReceived = 0;
     }
 }
 

@@ -320,6 +320,8 @@ void Timer2AIntHandler(void) {}
  */
 void Timer3AIntHandler(void)
 {
+    EtherCAT_MainTask();
+    pandora.signalFromMaster = etherCATInputFrames.rawBytes[SIGNAL_INDEX];
     if (pandora.signalFromMaster == CONTROL_SIGNAL && pandora.initialized)
     {
         updateForces(&pandora.actuator0.forceSensor);
@@ -332,10 +334,9 @@ void Timer3AIntHandler(void)
         readQEIEncoderVelocity(&pandora.actuator1.motorEncoder);
     }
 
-    if (runTimer3)
+    // Send TivaToMaster and receive MasterToTiva
+    if (runTimer3 || pandora.signalFromMaster != CONTROL_SIGNAL)
     {
-        // Send TivaToMaster and receive MasterToTiva
-        EtherCAT_MainTask();
 
         pandora.prevProcessIdFromMaster = pandora.processIdFromMaster;
         pandora.processIdFromMaster = etherCATInputFrames.rawBytes[PROCESS_ID_INDEX];
