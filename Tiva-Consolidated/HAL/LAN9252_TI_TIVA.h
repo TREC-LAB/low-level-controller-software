@@ -369,6 +369,15 @@ struct __attribute__((__packed__)) InitSignal3EtherCATFrame_IN
 };
 typedef struct InitSignal3EtherCATFrame_IN InitSignal3EtherCATFrame_IN;
 
+struct __attribute__((__packed__)) InitSignal4EtherCATFrame_IN
+{
+    uint8_t signalFromMaster;
+    uint8_t masterProcessID;
+    uint8_t currentInitFrame;
+    uint8_t softwareEStopEnable;
+    uint8_t remainingBytes[28];
+};
+typedef struct InitSignal4EtherCATFrame_IN InitSignal4EtherCATFrame_IN;
 
 struct __attribute__((__packed__)) InitSignalHeaderEtherCATFrame_IN
 {
@@ -425,6 +434,7 @@ union EtherCATFrames_IN
     InitSignal1EtherCATFrame_IN initSignal1Frame;
     InitSignal2EtherCATFrame_IN initSignal2Frame;
     InitSignal3EtherCATFrame_IN initSignal3Frame;
+    InitSignal4EtherCATFrame_IN initSignal4Frame;
     uint8_t rawBytes[BYTE_NUM];
 };
 typedef union EtherCATFrames_IN EtherCATFrames_IN;

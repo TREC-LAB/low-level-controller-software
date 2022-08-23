@@ -240,6 +240,13 @@ void StoreCurrentInitFrame(PandoraLowLevel* pandora)
                                       joint1_rawForwardRangeOfMotion, joint1_rawBackwardRangeOfMotion);
         pandora->joint1 = joint1;
     }
+    else if(currentInitFrame == 4)
+    {
+        uint8_t softwareEStopEnable = etherCATInputFrames.initSignal4Frame.softwareEStopEnable;
+        PandoraLowLevelSettings settings;
+        settings.softwareEStopEnable = softwareEStopEnable;
+        pandora->settings = settings;
+    }
 }
 
 /**
@@ -479,10 +486,6 @@ bool processDataFromMaster(PandoraLowLevel* pandora)
 {
 
     /***********FOR INITIALIZATION***********/
-    // if initialization is done but the master is still processing
-    // TODO: Find a better fix for this
-    if(pandora->prevSignalFromMaster == INITIALIZATION_SIGNAL && pandora->signalFromMaster == INITIALIZATION_SIGNAL && pandora->initialized)
-        return false;
     if(pandora->signalFromMaster == INITIALIZATION_SIGNAL)
     {
         // for re-initialization
@@ -492,10 +495,13 @@ bool processDataFromMaster(PandoraLowLevel* pandora)
         if(pandora->numberOfInitFramesReceived == NUMBER_OF_INITIALIZATION_FRAMES)
         {
             pandora->initialized = true;
+            return true;
         }
         pandora->prevSignalFromMaster = pandora->signalFromMaster;
         return false;
     }
+    else if(pandora->signalFromMaster != INITIALIZATION_SIGNAL && pandora->initialized)
+        pandora->numberOfInitFramesReceived = 0;
 
     if(!pandora->initialized)
     {
@@ -583,8 +589,6 @@ void loadDataForMaster(PandoraLowLevel* pandora)
     {
         etherCATOutputFrames.initSignalFrame.numInitializationFramesReceived = pandora->numberOfInitFramesReceived;
         etherCATOutputFrames.initSignalFrame.totalNumberOfInitializationFrames = NUMBER_OF_INITIALIZATION_FRAMES;
-        if(pandora->initialized)
-            pandora->numberOfInitFramesReceived = 0;
     }
 }
 

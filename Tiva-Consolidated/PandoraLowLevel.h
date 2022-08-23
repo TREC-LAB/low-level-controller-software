@@ -69,6 +69,17 @@ struct TivaLocationBitSet
 typedef struct TivaLocationBitSet TivaLocationBitSet;
 
 /**
+ * PandoraLowLevelSettings
+ * A structure which holds settings regarding how
+ * the microcontroller should operate
+ */
+struct PandoraLowLevelSettings
+{
+    bool softwareEStopEnable;
+};
+typedef struct PandoraLowLevelSettings PandoraLowLevelSettings;
+
+/**
  * PandoraLowLevel
  * A structure consisting of all of the low level
  * variables needed for ONE Tiva. Each Tiva has 2 joints,
@@ -83,6 +94,7 @@ struct PandoraLowLevel
     Actuator actuator1;
     TivaLocations location;
     TivaLocations masterLocationGuess;
+    PandoraLowLevelSettings settings;
     uint8_t signalToMaster;
     uint8_t signalFromMaster;
     uint8_t prevSignalFromMaster;
