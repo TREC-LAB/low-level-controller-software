@@ -270,6 +270,7 @@ void Timer1AIntHandler(void)
         }
         else
         {
+            runTimer3 = true;
             pandora.signalToMaster = NORMAL_OPERATION;
         }
     }
@@ -304,8 +305,7 @@ bool EngageVirtualEStop(PandoraLowLevel* pandora)
         pandora->actuator0.forceSensor.newtons < pandora->actuator0.forceSensor.lowerLimitNewtons ||
         pandora->actuator1.forceSensor.newtons > pandora->actuator1.forceSensor.upperLimitNewtons ||
         pandora->actuator1.forceSensor.newtons < pandora->actuator1.forceSensor.lowerLimitNewtons) &&
-        pandora->signalFromMaster == CONTROL_SIGNAL
-        && 0;       // NOTE: THIS 0 BYPASSES THE EMERGENCY E-STOP, TAKE THIS OUT WHEN YOU PUT IT ON THE ROBOT!!!
+        pandora->signalFromMaster == CONTROL_SIGNAL && pandora->settings.softwareEStopEnable;
 }
 
 /*
