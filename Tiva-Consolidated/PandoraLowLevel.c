@@ -240,6 +240,13 @@ void StoreCurrentInitFrame(PandoraLowLevel* pandora)
                                       joint1_rawForwardRangeOfMotion, joint1_rawBackwardRangeOfMotion);
         pandora->joint1 = joint1;
     }
+    else if(currentInitFrame == 4)
+    {
+        uint8_t softwareEStopEnable = etherCATInputFrames.initSignal4Frame.softwareEStopEnable;
+        PandoraLowLevelSettings settings;
+        settings.softwareEStopEnable = softwareEStopEnable;
+        pandora->settings = settings;
+    }
 }
 
 /**
