@@ -7,9 +7,13 @@ Changes made:
 	-Increased the speed for SPI communication to the EasyCAT board
 	-Started using the Virtual E-Stop
 	-Added encoder zeroing algorithm to the low-level code
+	-Edited how EtherCAT is handled by creating a union of
+	structs. This makes the code easier to read and potentially faster
 
 Changes to Make:
 	-Make all of the structures class-based
 	-clean up main.h and main.c
 	-Integrate the CAN-ATI sensor
 	-Organize the HAL files more
+	-Add support for re-initialization
+	-Add support for getting out of an e-stop fault

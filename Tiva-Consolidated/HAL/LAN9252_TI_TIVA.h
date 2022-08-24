@@ -268,20 +268,189 @@ typedef union
 //    uint16_t  Word [BYTE_NUM];                 //
 //  } PROCBUFFER_IN;                            //
 
-  struct PROCBUFFER_OUT                             //-- output buffer -----------------
-  {                                           //
+struct PROCBUFFER_OUT                             //-- output buffer -----------------
+{                                           //
     uint8_t  Byte [BYTE_NUM];                 //
-  };
-  typedef struct PROCBUFFER_OUT PROCBUFFER_OUT;
+};
+typedef struct PROCBUFFER_OUT PROCBUFFER_OUT;
 
-  struct PROCBUFFER_IN                             //-- input buffer ------------------
-  {                                           //
+struct PROCBUFFER_IN                             //-- input buffer ------------------
+{                                           //
     uint8_t  Byte [BYTE_NUM];                 //
-  };
-  typedef struct PROCBUFFER_IN PROCBUFFER_IN;
+};
+typedef struct PROCBUFFER_IN PROCBUFFER_IN;
 
-  PROCBUFFER_OUT MasterToTiva;
-  PROCBUFFER_IN TivaToMaster;
+//PROCBUFFER_OUT MasterToTiva;
+//PROCBUFFER_IN TivaToMaster;
+
+// InputFrames
+struct __attribute__((__packed__)) ControlSignalEtherCATFrame_IN
+{
+    uint8_t signalFromMaster;
+    uint8_t masterProcessID;
+    uint8_t actuator0Direction;
+    float actuator0DutyCycle;
+    uint8_t actuator1Direction;
+    float actuator1DutyCycle;
+    uint8_t reaminingBytes[20];
+};
+typedef struct ControlSignalEtherCATFrame_IN ControlSignalEtherCATFrame_IN;
+
+
+struct __attribute__((__packed__)) LocationDebugSignalEtherCATFrame_IN
+{
+    uint8_t signalFromMaster;
+    uint8_t masterProcessID;
+    uint8_t masterLocationGuess;
+    uint8_t remainingBytes[29];
+};
+typedef struct LocationDebugSignalEtherCATFrame_IN LocationDebugSignalEtherCATFrame_IN;
+
+
+struct __attribute__((__packed__)) InitSignal0EtherCATFrame_IN
+{
+    uint8_t signalFromMaster;
+    uint8_t masterProcessID;
+    uint8_t currentInitFrame;
+    uint8_t actuator0_QEIBaseNumber;
+    uint16_t actuator0_QEISampleRate;
+    int32_t actuator0_QEICountsPerRotation;
+    uint8_t actuator0_ForceSensorADCBaseNumber;
+    float actuator0_ForceSensorSlope;
+    float actuator0_ForceSensorOffset;
+    uint8_t remainingBytes[13];
+};
+typedef struct InitSignal0EtherCATFrame_IN InitSignal0EtherCATFrame_IN;
+
+struct __attribute__((__packed__)) InitSignal1EtherCATFrame_IN
+{
+    uint8_t signalFromMaster;
+    uint8_t masterProcessID;
+    uint8_t currentInitFrame;
+    uint8_t actuator1_QEIBaseNumber;
+    uint16_t actuator1_QEISampleRate;
+    int32_t actuator1_QEICountsPerRotation;
+    uint8_t actuator1_ForceSensorADCBaseNumber;
+    float actuator1_ForceSensorSlope;
+    float actuator1_ForceSensorOffset;
+    uint8_t remainingBytes[13];
+};
+typedef struct InitSignal1EtherCATFrame_IN InitSignal1EtherCATFrame_IN;
+
+struct __attribute__((__packed__)) InitSignal2EtherCATFrame_IN
+{
+    uint8_t signalFromMaster;
+    uint8_t masterProcessID;
+    uint8_t currentInitFrame;
+    uint8_t joint0_SSIBaseNumber;
+    uint8_t joint0_SSIEncoderBrandRaw;
+    uint16_t joint0_SSISampleRate;
+    int8_t joint0_ReverseFactor;
+    float joint0_RawZeroPosition;
+    float joint0_RawForwardRangeOfMotion;
+    float joint0_RawBackwardRangeOfMotion;
+    uint8_t remainingBytes[12];
+};
+typedef struct InitSignal2EtherCATFrame_IN InitSignal2EtherCATFrame_IN;
+
+struct __attribute__((__packed__)) InitSignal3EtherCATFrame_IN
+{
+    uint8_t signalFromMaster;
+    uint8_t masterProcessID;
+    uint8_t currentInitFrame;
+    uint8_t joint1_SSIBaseNumber;
+    uint8_t joint1_SSIEncoderBrandRaw;
+    uint16_t joint1_SSISampleRate;
+    int8_t joint1_ReverseFactor;
+    float joint1_RawZeroPosition;
+    float joint1_RawForwardRangeOfMotion;
+    float joint1_RamBackwardRangeOfMotion;
+    uint8_t remainingBytes[12];
+};
+typedef struct InitSignal3EtherCATFrame_IN InitSignal3EtherCATFrame_IN;
+
+struct __attribute__((__packed__)) InitSignal4EtherCATFrame_IN
+{
+    uint8_t signalFromMaster;
+    uint8_t masterProcessID;
+    uint8_t currentInitFrame;
+    uint8_t softwareEStopEnable;
+    uint8_t remainingBytes[28];
+};
+typedef struct InitSignal4EtherCATFrame_IN InitSignal4EtherCATFrame_IN;
+
+struct __attribute__((__packed__)) InitSignalHeaderEtherCATFrame_IN
+{
+    uint8_t signalFromMaster;
+    uint8_t masterProcessID;
+    uint8_t currentInitFrame;
+    uint8_t remainingBytes[29];
+};
+typedef struct InitSignalHeaderEtherCATFrame_IN InitSignalHeaderEtherCATFrame_IN;
+
+// OutputFrames
+
+//#pragma pack(1)     // used to avoid padding
+struct __attribute__((__packed__)) ControlSignalEtherCATFrame_OUT
+{
+    uint8_t signalToMaster;
+    uint8_t masterProcessId;
+    float actuator0ForceInNewtons;
+    float actuator1ForceInNewtons;
+    float joint0angleRadians;
+    float joint1angleRadians;
+    uint8_t remainingBytes[14];
+};
+typedef struct ControlSignalEtherCATFrame_OUT ControlSignalEtherCATFrame_OUT;
+
+//#pragma pack(1)     // used to avoid padding
+struct __attribute__((__packed__)) LocationDebugSignalEtherCATFrame_OUT
+{
+    uint8_t signalFromMaster;
+    uint8_t masterProcessId;
+    uint8_t masterLocationGuess;
+    uint8_t remainingBytes[29];
+};
+typedef struct LocationDebugSignalEtherCATFrame_OUT LocationDebugSignalEtherCATFrame_OUT;
+
+//#pragma pack(1)     // used to avoid padding
+struct __attribute__((__packed__)) InitSignalEtherCATFrame_OUT
+{
+    uint8_t signalFromMaster;
+    uint8_t masterProcessId;
+    uint8_t numInitializationFramesReceived;
+    uint8_t totalNumberOfInitializationFrames;
+    uint8_t remainingBytes[28];
+};
+typedef struct InitSignalEtherCATFrame_OUT InitSignalEtherCATFrame_OUT;
+
+// the input frames which come from the master
+union EtherCATFrames_IN
+{
+    ControlSignalEtherCATFrame_IN controlSignalFrame;
+    LocationDebugSignalEtherCATFrame_IN locationDebugSignalFrame;
+    InitSignalHeaderEtherCATFrame_IN initSignalHeader;
+    InitSignal0EtherCATFrame_IN initSignal0Frame;
+    InitSignal1EtherCATFrame_IN initSignal1Frame;
+    InitSignal2EtherCATFrame_IN initSignal2Frame;
+    InitSignal3EtherCATFrame_IN initSignal3Frame;
+    InitSignal4EtherCATFrame_IN initSignal4Frame;
+    uint8_t rawBytes[BYTE_NUM];
+};
+typedef union EtherCATFrames_IN EtherCATFrames_IN;
+
+//#pragma pack(1)
+union EtherCATFrames_OUT
+{
+    ControlSignalEtherCATFrame_OUT controlSignalFrame;
+    LocationDebugSignalEtherCATFrame_OUT locationDebugSignalFrame;
+    InitSignalEtherCATFrame_OUT initSignalFrame;
+    uint8_t rawBytes[BYTE_NUM];
+};
+typedef union EtherCATFrames_Out EtherCATFrames_OUT;
+
+//EtherCATFrames_IN etherCATInputFrames;
+//EtherCATFrames_OUT etherCATOutputFrames;
 
 #endif
 

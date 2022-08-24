@@ -209,11 +209,12 @@ int main(void)
     {
         EtherCAT_MainTask();
         pandora.prevProcessIdFromMaster = pandora.processIdFromMaster;
-        pandora.processIdFromMaster = MasterToTiva.Byte[PROCESS_ID_INDEX];
+        pandora.processIdFromMaster = etherCATInputFrames.rawBytes[PROCESS_ID_INDEX];
 
         if(pandora.processIdFromMaster != pandora.prevProcessIdFromMaster)
         {
             storeDataFromMaster(&pandora);
+            processDataFromMaster(&pandora);
             loadDataForMaster(&pandora);
         }
     }
@@ -264,10 +265,12 @@ void Timer1AIntHandler(void)
             SendPWMSignal(&pandora.actuator1);
 
             // Send shutdown signal to master
+            haltLEDS();
             EtherCAT_MainTask();
         }
         else
         {
+            runTimer3 = true;
             pandora.signalToMaster = NORMAL_OPERATION;
         }
     }
@@ -302,7 +305,7 @@ bool EngageVirtualEStop(PandoraLowLevel* pandora)
         pandora->actuator0.forceSensor.newtons < pandora->actuator0.forceSensor.lowerLimitNewtons ||
         pandora->actuator1.forceSensor.newtons > pandora->actuator1.forceSensor.upperLimitNewtons ||
         pandora->actuator1.forceSensor.newtons < pandora->actuator1.forceSensor.lowerLimitNewtons) &&
-        pandora->signalFromMaster == CONTROL_SIGNAL;
+        pandora->signalFromMaster == CONTROL_SIGNAL && pandora->settings.softwareEStopEnable;
 }
 
 /*
@@ -318,7 +321,9 @@ void Timer2AIntHandler(void) {}
  */
 void Timer3AIntHandler(void)
 {
-    if (pandora.signalFromMaster == CONTROL_SIGNAL)
+    EtherCAT_MainTask();
+    pandora.signalFromMaster = etherCATInputFrames.rawBytes[SIGNAL_INDEX];
+    if (pandora.signalFromMaster == CONTROL_SIGNAL && pandora.initialized)
     {
         updateForces(&pandora.actuator0.forceSensor);
         updateForces(&pandora.actuator1.forceSensor);
@@ -330,13 +335,12 @@ void Timer3AIntHandler(void)
         readQEIEncoderVelocity(&pandora.actuator1.motorEncoder);
     }
 
-    if (runTimer3)
+    // Send TivaToMaster and receive MasterToTiva
+    if (runTimer3 || pandora.signalFromMaster != CONTROL_SIGNAL)
     {
-        // Send TivaToMaster and receive MasterToTiva
-        EtherCAT_MainTask();
 
         pandora.prevProcessIdFromMaster = pandora.processIdFromMaster;
-        pandora.processIdFromMaster = MasterToTiva.Byte[PROCESS_ID_INDEX];
+        pandora.processIdFromMaster = etherCATInputFrames.rawBytes[PROCESS_ID_INDEX];
 
         if(pandora.processIdFromMaster != pandora.prevProcessIdFromMaster)
         {
