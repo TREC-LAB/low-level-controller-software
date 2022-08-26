@@ -1,4 +1,5 @@
-<img src="https://uploads-ssl.webflow.com/5eea7449e8feaa669ef05b29/621010e435b9e48b50133758_TREC.png"     style="display: block; 
+![TREC LAB LOGO](https://uploads-ssl.webflow.com/5eea7449e8feaa669ef05b29/621010e435b9e48b50133758_TREC.png)
+<! -- <img src="https://uploads-ssl.webflow.com/5eea7449e8feaa669ef05b29/621010e435b9e48b50133758_TREC.png"     style="display: block; 
            margin-left: auto;
            margin-right: auto;
            alt="drawing"
@@ -7,7 +8,7 @@
 # Pandora Tiva Low-Level Code
 
 ## Purpose:
-Designed for the [Virginia Tech TREC Lab](trecvt.org) by [Nick Tremaroli](nicktrem@vt.edu)
+Designed for the [Virginia Tech TREC Lab](https://trecvt.org) by [Nick Tremaroli](nicktrem@vt.edu)
 Low-level code which allows for the controlling of pandora
 
 ---
