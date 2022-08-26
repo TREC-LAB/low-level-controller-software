@@ -4,8 +4,8 @@
 
 ## Purpose:
 Designed for the [Virginia Tech TREC Lab](https://trecvt.org) by [Nick Tremaroli](nicktrem@vt.edu)
-Low-level code which allows for the controlling of pandora
 
+Low-level code which allows for the controlling of pandora
 ---
 
 <!-- Vertsions of code -->
