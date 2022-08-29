@@ -33,6 +33,8 @@ PandoraLowLevel pandoraConstruct()
     pandora.prevProcessIdFromMaster = 0;
     pandora.processIdFromMaster = 0;
 
+    pandora.imu = IMU_Struct_Config();
+
     pandora.initialized = false;
     // for the initialization DATA!! Allocate data on the heap to delete it later
     pandora.numberOfInitFramesReceived = 0;
@@ -259,6 +261,7 @@ void StoreCurrentInitFrame(PandoraLowLevel* pandora)
  */
 void tivaInit(PandoraLowLevel* pandora)
 {
+
     PWMConfig();
     enableForceSensor(&pandora->actuator0.forceSensor);
     enableForceSensor(&pandora->actuator1.forceSensor);
@@ -267,6 +270,7 @@ void tivaInit(PandoraLowLevel* pandora)
     enableQEIEncoder(&pandora->actuator0.motorEncoder);
     enableQEIEncoder(&pandora->actuator1.motorEncoder);
     enableDebugLEDS();
+    MPU_START();
     timer1A_Config();
     timer2A_Config();
     timer3A_Config();

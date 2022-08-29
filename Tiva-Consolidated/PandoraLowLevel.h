@@ -100,6 +100,8 @@ struct PandoraLowLevel
     uint8_t signalFromMaster;
     uint8_t prevSignalFromMaster;
 
+    IMU imu;
+
     // for synchronizing frames from the master and the Tiva
     uint8_t prevProcessIdFromMaster;
     uint8_t processIdFromMaster;
