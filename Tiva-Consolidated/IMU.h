@@ -1,32 +1,17 @@
 #ifndef IMU_IMU_TIVA_H_
 #define IMU_IMU_TIVA_H_
 
-#include <stdarg.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include <math.h>
-#include <string.h>
 #include "inc/hw_memmap.h"
-#include "inc/hw_types.h"
 
-#include "inc/hw_ints.h"
-#include "driverlib/interrupt.h"
-#include "driverlib/sysctl.h"
 #include "driverlib/gpio.h"
-#include "driverlib/uart.h"
 #include "driverlib/pin_map.h"
-#include "driverlib/can.h"
-#include "utils/uartstdio.h"
 
-
-#include "inc/hw_i2c.h"
-#include "inc/hw_types.h"
-#include "inc/hw_gpio.h"
-#include "driverlib/i2c.h"
-#include "registerMap.h"
+#include "HAL/I2C_Tiva.h"
 
 // IMU sensor struct that is used for data
-struct IMUSensor
+struct IMU
 {
     float Ax;
     float Ay;
@@ -35,7 +20,7 @@ struct IMUSensor
     float Gy;
     float Gz;
 };
-typedef struct IMUSensor IMUSensor;
+typedef struct IMU IMU;
 
 enum Ascale
 {
@@ -67,24 +52,20 @@ enum M_MODE {
 void MPU_Config();
 void initMPU9250();
 void RawToRefine(float* Converted_Data, int16_t* Raw_Data, uint8_t TypeFlag, float* bias);
-uint8_t MPU_ReadBytes(uint8_t I2Caddress, uint8_t regAddress, uint16_t length, uint8_t* data);
 void readAccelData(int16_t* destination);
 void readGyroData(int16_t* destination);
-void HAL_MPU_WriteByte(uint8_t I2Caddress, uint8_t regAddress, uint8_t data);
-uint8_t HAL_MPU_ReadByte(uint8_t I2Caddress, uint8_t regAddress);
 void CalibrateMPU(float* Abias, float* Gbias);
 float int2Float(int integerValue);
 void MPU_START();
 void Read_IMU();
-IMUSensor IMU_Struct_Config(void);
-void SaveIMUData(IMUSensor* IMUsense);
+IMU IMU_Struct_Config(void);
+void SaveIMUData(IMU* IMUsense);
 void MPU_PowerSwitch(bool powerState);
 
 void IMU_GET();
 
-
 /**     MPU9250 - related macros        */
-#define MPU9250_I2C_BASE I2C1_BASE
+#define MPU9250_I2C_BASE I2C2_BASE
 
 /*      Device addresses        */
 #define AK8963_ADDRESS   (0x0C) // Magnetometer I2C address
@@ -112,16 +93,6 @@ void IMU_GET();
 #define SELF_TEST_X_GYRO 0x00
 #define SELF_TEST_Y_GYRO 0x01
 #define SELF_TEST_Z_GYRO 0x02
-
-/*#define X_FINE_GAIN      0x03 // [7:0] fine gain
-#define Y_FINE_GAIN      0x04
-#define Z_FINE_GAIN      0x05
-#define XA_OFFSET_H      0x06 // User-defined trim values for accelerometer
-#define XA_OFFSET_L_TC   0x07
-#define YA_OFFSET_H      0x08
-#define YA_OFFSET_L_TC   0x09
-#define ZA_OFFSET_H      0x0A
-#define ZA_OFFSET_L_TC   0x0B */
 
 #define SELF_TEST_X_ACCEL 0x0D
 #define SELF_TEST_Y_ACCEL 0x0E
