@@ -598,6 +598,24 @@ void loadDataForMaster(PandoraLowLevel* pandora)
 
         // Package encoder 1 radian value
         etherCATOutputFrames.controlSignalFrame.joint1angleRadians = pandora->joint1.angleRads;
+
+        // Package IMU Acceleration X
+        etherCATOutputFrames.controlSignalFrame.Ax = pandora->imu.Ax;
+
+        // Package IMU Acceleration Y
+        etherCATOutputFrames.controlSignalFrame.Ay = pandora->imu.Ay;
+
+        // Package IMU Acceleration Z
+        etherCATOutputFrames.controlSignalFrame.Az = pandora->imu.Az;
+
+        // Package IMU Gyro X
+        etherCATOutputFrames.controlSignalFrame.Gx = pandora->imu.Gx;
+
+        // Package IMU Gyro Y
+        etherCATOutputFrames.controlSignalFrame.Gy = pandora->imu.Gy;
+
+        // Package IMU Gyro Z
+        etherCATOutputFrames.controlSignalFrame.Gz = pandora->imu.Gz;
     }
     if(pandora->signalFromMaster == INITIALIZATION_SIGNAL)
     {
