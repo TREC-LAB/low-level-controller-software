@@ -399,7 +399,13 @@ struct __attribute__((__packed__)) ControlSignalEtherCATFrame_OUT
     float actuator1ForceInNewtons;
     float joint0angleRadians;
     float joint1angleRadians;
-    uint8_t remainingBytes[14];
+    float Ax;
+    float Ay;
+    float Az;
+    float Gx;
+    float Gy;
+    float Gz;
+    uint8_t remainingBytes[22];
 };
 typedef struct ControlSignalEtherCATFrame_OUT ControlSignalEtherCATFrame_OUT;
 
