@@ -17,6 +17,7 @@
 
 #include "Actuator.h"
 #include "Joint.h"
+#include "IMU.h"
 #define RED_LED GPIO_PIN_0
 #define BLUE_LED GPIO_PIN_1
 #define GREEN_LED GPIO_PIN_7
@@ -99,6 +100,8 @@ struct PandoraLowLevel
     uint8_t signalFromMaster;
     uint8_t prevSignalFromMaster;
 
+    IMU imu;
+
     // for synchronizing frames from the master and the Tiva
     uint8_t prevProcessIdFromMaster;
     uint8_t processIdFromMaster;
@@ -139,10 +142,10 @@ typedef union ByteData ByteData;
 PandoraLowLevel pandoraConstruct();
 
 // Configure the location pins
-void tivaLocationPinsConfig();
+//void tivaLocationPinsConfig();
 
 // Get the Tiva Location from the set of pins
-TivaLocations getLocationsFromPins(void);
+//TivaLocations getLocationsFromPins(void);
 
 // Only initializes the Tiva's ethercat capabilities
 // so it can read initialization data from the master.

@@ -20,9 +20,9 @@ PandoraLowLevel pandoraConstruct()
     PandoraLowLevel pandora;
 
     // Configure the Location pins
-    tivaLocationPinsConfig();
+//    tivaLocationPinsConfig();
     // Then read the location from them
-    pandora.location = getLocationsFromPins();
+ //   pandora.location = getLocationsFromPins();
 
     pandora.signalToMaster = 0;
     pandora.signalFromMaster = 0;
@@ -32,6 +32,8 @@ PandoraLowLevel pandoraConstruct()
 
     pandora.prevProcessIdFromMaster = 0;
     pandora.processIdFromMaster = 0;
+
+    pandora.imu = IMU_Struct_Config();
 
     pandora.initialized = false;
     // for the initialization DATA!! Allocate data on the heap to delete it later
@@ -46,6 +48,7 @@ PandoraLowLevel pandoraConstruct()
  * Tiva uses to determine which location
  * it is in.
  */
+/*
 void tivaLocationPinsConfig()
 {
     SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
@@ -57,7 +60,7 @@ void tivaLocationPinsConfig()
     GPIOPadConfigSet(GPIO_PORTA_BASE, GPIO_PIN_6,GPIO_STRENGTH_2MA,GPIO_PIN_TYPE_WAKE_LOW);
     GPIOPadConfigSet(GPIO_PORTA_BASE, GPIO_PIN_7,GPIO_STRENGTH_2MA,GPIO_PIN_TYPE_WAKE_LOW);
     GPIOPadConfigSet(GPIO_PORTE_BASE, GPIO_PIN_3,GPIO_STRENGTH_2MA,GPIO_PIN_TYPE_WAKE_LOW);
-}
+}*/
 
 /**
  * getLocationsFromPins
@@ -67,7 +70,7 @@ void tivaLocationPinsConfig()
  *
  * @return: the location the tiva is in
  */
-TivaLocations getLocationsFromPins()
+/*TivaLocations getLocationsFromPins()
 {
     TivaLocations tivaLocation;
     TivaLocationBitSet locationBitSet;
@@ -101,7 +104,7 @@ TivaLocations getLocationsFromPins()
         tivaLocation = notValidLocation;
 
     return tivaLocation;
-}
+}*/
 
 /**
  * tivaInitEtherCAT
@@ -113,7 +116,7 @@ TivaLocations getLocationsFromPins()
  */
 void tivaInitEtherCAT()
 {
-    tivaLocationPinsConfig();
+//    tivaLocationPinsConfig();
     SSI3_Config_SPI(); // Configure SSI3 for SPI for use with EtherCAT
     int ret = EtherCAT_Init();
    // printf("%d\n", ret);
@@ -259,6 +262,7 @@ void StoreCurrentInitFrame(PandoraLowLevel* pandora)
  */
 void tivaInit(PandoraLowLevel* pandora)
 {
+
     PWMConfig();
     enableForceSensor(&pandora->actuator0.forceSensor);
     enableForceSensor(&pandora->actuator1.forceSensor);
@@ -267,6 +271,7 @@ void tivaInit(PandoraLowLevel* pandora)
     enableQEIEncoder(&pandora->actuator0.motorEncoder);
     enableQEIEncoder(&pandora->actuator1.motorEncoder);
     enableDebugLEDS();
+    MPU_START();
     timer1A_Config();
     timer2A_Config();
     timer3A_Config();
@@ -593,6 +598,24 @@ void loadDataForMaster(PandoraLowLevel* pandora)
 
         // Package encoder 1 radian value
         etherCATOutputFrames.controlSignalFrame.joint1angleRadians = pandora->joint1.angleRads;
+
+        // Package IMU Acceleration X
+        etherCATOutputFrames.controlSignalFrame.Ax = pandora->imu.Ax;
+
+        // Package IMU Acceleration Y
+        etherCATOutputFrames.controlSignalFrame.Ay = pandora->imu.Ay;
+
+        // Package IMU Acceleration Z
+        etherCATOutputFrames.controlSignalFrame.Az = pandora->imu.Az;
+
+        // Package IMU Gyro X
+        etherCATOutputFrames.controlSignalFrame.Gx = pandora->imu.Gx;
+
+        // Package IMU Gyro Y
+        etherCATOutputFrames.controlSignalFrame.Gy = pandora->imu.Gy;
+
+        // Package IMU Gyro Z
+        etherCATOutputFrames.controlSignalFrame.Gz = pandora->imu.Gz;
     }
     if(pandora->signalFromMaster == INITIALIZATION_SIGNAL)
     {
