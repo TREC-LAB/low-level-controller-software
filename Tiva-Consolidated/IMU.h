@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
 #include "inc/hw_memmap.h"
 
 #include "driverlib/gpio.h"
@@ -54,8 +55,7 @@ void initMPU9250();
 void RawToRefine(float* Converted_Data, int16_t* Raw_Data, uint8_t TypeFlag, float* bias);
 void readAccelData(int16_t* destination);
 void readGyroData(int16_t* destination);
-void CalibrateMPU(float* Abias, float* Gbias);
-float int2Float(int integerValue);
+void CalibrateMPU();
 void MPU_START();
 void Read_IMU();
 IMU IMU_Struct_Config(void);
@@ -65,7 +65,7 @@ void MPU_PowerSwitch(bool powerState);
 void IMU_GET();
 
 /**     MPU9250 - related macros        */
-#define MPU9250_I2C_BASE I2C2_BASE
+#define MPU9250_I2C_BASE I2C1_BASE
 
 /*      Device addresses        */
 #define AK8963_ADDRESS   (0x0C) // Magnetometer I2C address

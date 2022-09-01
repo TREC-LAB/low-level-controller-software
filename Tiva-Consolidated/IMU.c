@@ -29,10 +29,10 @@ void MPU_START()
 
 
     //  Power cycle MPU chip before every SW initialization
-    MPU_PowerSwitch(false);
-    SysCtlDelay(20000);
-    MPU_PowerSwitch(true);
-    SysCtlDelay(30000);
+//    MPU_PowerSwitch(false);
+//    SysCtlDelay(20000);
+//    MPU_PowerSwitch(true);
+//    SysCtlDelay(30000);
 
 
     //Software Initialization
@@ -79,7 +79,7 @@ void IMU_GET(IMU* IMU)
 //void HAL_MPU_Init(void((*custHook)(void)))
 void MPU_Config()
 {
-    I2C2_Config();
+    I2C1_Config();
 }
 
 /**
@@ -227,6 +227,8 @@ void SaveIMUData(IMU* imu)
     imu->Gx = ConvGyro[0];
     imu->Gy = ConvGyro[1];
     imu->Gz = ConvGyro[2];
+
+//    printf("%f\n", ConvAccel[0]);
 }
 /**
  *
@@ -247,7 +249,9 @@ void RawToRefine(float * Converted_Data, int16_t * Raw_Data, uint8_t TypeFlag, f
     {
         for (i = 0; i < 3; i++)
         {                                                            // Converted Gyro data is degree/s
-            Converted_Data[i] = int2Float(Raw_Data[i])/GyroFactor;         // note 131 is LSB/(degrees/s)        // 250 is a dps setting
+
+            Converted_Data[i] = ((float)(Raw_Data[i]/GyroFactor)) + Gbias[i];         // note 131 is LSB/(degrees/s)        // 250 is a dps setting
+//            printf("Gyro[%d] = %f\n", i, Converted_Data[i]);
         }
 
     }
@@ -255,7 +259,7 @@ void RawToRefine(float * Converted_Data, int16_t * Raw_Data, uint8_t TypeFlag, f
     {
         for (i = 0; i < 3; i++)
         {                                                               // units are in g for gravity
-            Converted_Data[i] = int2Float(Raw_Data[i])/AccelFactor;         // Hardcode, but g = 9.81 m/s^2  16384 is taken fromo mpu 9250 datasheet and LSB Senstivity
+            Converted_Data[i] = ((float)(Raw_Data[i]/AccelFactor));         // Hardcode, but g = 9.81 m/s^2  16384 is taken fromo mpu 9250 datasheet and LSB Senstivity
         }
     }
 
@@ -291,6 +295,8 @@ void readGyroData(int16_t * destination)
   destination[0] = ((int16_t)rawData[0] << 8) | rawData[1] ;
   destination[1] = ((int16_t)rawData[2] << 8) | rawData[3] ;
   destination[2] = ((int16_t)rawData[4] << 8) | rawData[5] ;
+
+//  printf("Read Gyro Data: %f\n", (float)(destination[0]/131.0));
 }
 
 /**
@@ -299,15 +305,15 @@ void readGyroData(int16_t * destination)
 
      Currently only one iter will work, issue arise when iter>1,
  */
-void CalibrateMPU(float * Abias, float * Gbias)
+void CalibrateMPU()
 {
     uint16_t i;
     int16_t accelbias[3], gyrobias[3];
     float accelbiasX, accelbiasY, accelbiasZ, gyrobiasX, gyrobiasY, gyrobiasZ;
 
-    accelbiasX = 0.0, accelbiasY = 0.0, accelbiasZ = 0.0, gyrobiasX = 0.0, gyrobiasY = 0.0, gyrobiasZ = 0.0;
+//    accelbiasX = /*-0.012*/ 0.0, accelbiasY = 1.93, accelbiasZ = 0.85, gyrobiasX = 0.0, gyrobiasY = 5.0, gyrobiasZ = 7.0;
 
-    int iter = 1;
+    int iter = 100;
 
 
     for(i = 0; i < iter; i++) //obtain 20 iterations of data        NOTE for some reason taking average gives incorrect value, just use iter 1 for now
@@ -316,36 +322,34 @@ void CalibrateMPU(float * Abias, float * Gbias)
         readAccelData(accelbias);
         readGyroData(gyrobias);
 
-        accelbiasX = abs(int2Float(accelbias[0])/16384) + accelbiasX;       // Hardcode, but g = 9.81 m/s^2 and 16384 is just (2^16)/2,
-        accelbiasY = abs(int2Float(accelbias[1])/16384) + accelbiasY;       // Note the scaling factor I believe is set to 2g for the IMU
-        accelbiasZ = abs(int2Float(accelbias[2])/16384) + accelbiasZ;
+        accelbiasX += (float)(accelbias[0]/16384.0);       // Hardcode, but g = 9.81 m/s^2 and 16384 is just (2^16)/2,
+        accelbiasY += (float)(accelbias[1]/16384.0);       // Note the scaling factor I believe is set to 2g for the IMU
+        accelbiasZ += (float)(accelbias[2]/16384.0);
 
-        gyrobiasX = abs(int2Float(gyrobias[0])/131) + gyrobiasX;       // 250 is a dps setting
-        gyrobiasY = abs(int2Float(gyrobias[1])/131) + gyrobiasY;       //
-        gyrobiasZ = abs(int2Float(gyrobias[2])/131) + gyrobiasZ;
+        gyrobiasX += (float)(gyrobias[0]/131.0);       // 250 is a dps setting
+        gyrobiasY += (float)(gyrobias[1]/131.0);       //
+        gyrobiasZ += (float)(gyrobias[2]/131.0);
+//        printf("GX Bias: %f\n", gyrobiasX);
+
+//        printf("%f\n", int2Float(gyrobias[0]/131));
 
     }
 
     //formula for data calibrations, ((20iters data)/iterations) then use conversion formula respectively
     // Accleration XYZ bias
-    Abias[0] = (accelbiasX/iter);
-    Abias[1] = (accelbiasY/iter);
-    Abias[2] = (accelbiasZ/iter);
+    Abias[0] = (accelbiasX/(iter + 1));
+    Abias[1] = (accelbiasY/(iter + 1));
+    Abias[2] = (accelbiasZ/(iter + 1));
+    Gbias[0] = -1.0 * (gyrobiasX/(iter + 1));
+    Gbias[1] = -1.0 * (gyrobiasY/(iter + 1));
+    Gbias[2] = -1.0 * (gyrobiasZ/(iter + 1));
 
-    Gbias[0] = (gyrobiasX/iter);
-    Gbias[1] = (gyrobiasY/iter);
-    Gbias[2] = (gyrobiasZ/iter);
+    printf("%f\n", Gbias[0]);
 
-}
-
-/**
- *
-  Convert a integer datatype to a floating point data type
- *
- **/
-float int2Float(int integerValue)
-{
-    // In theory this should convert data type from a integer(16 bit) to float(32 bit)
-    float ConversionValue = integerValue;
-    return(ConversionValue);
+/*    Abias[0] = 0.4;
+    Abias[1] = 1.4;
+    Abias[2] = 1.19;
+    Gbias[0] = -20.0;
+    Gbias[1] = 5.0;
+    Gbias[2] = 7.0;*/
 }
