@@ -28,6 +28,7 @@
 
 
 void I2C2_Config();
+void I2C1_Config();
 void InitI2C0();
 
 void I2C_WriteByte(uint32_t IMUBase, uint8_t I2Caddress, uint8_t regAddress, uint8_t data);

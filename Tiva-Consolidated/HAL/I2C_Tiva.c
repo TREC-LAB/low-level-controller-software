@@ -30,6 +30,26 @@ void InitI2C0(void)
     HWREG(I2C0_BASE + I2C_O_FIFOCTL) = 80008000;
 }
 
+void I2C1_Config()
+{
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_I2C1);
+    SysCtlPeripheralReset(SYSCTL_PERIPH_I2C1);
+
+    // Enable I2C communication interface, SCL, SDA lines
+
+    GPIOPinConfigure(GPIO_PA7_I2C1SDA);
+    GPIOPinConfigure(GPIO_PA6_I2C1SCL);
+    GPIOPinTypeI2CSCL(GPIO_PORTA_BASE, GPIO_PIN_6);
+    GPIOPinTypeI2C(GPIO_PORTA_BASE, GPIO_PIN_7);
+
+    //  Enable I2C master interface
+    I2CMasterEnable(I2C1_BASE);
+
+    // Run I2C bus in high-speed mode, 400kHz speed (May not be at 400 kHz atm)
+    I2CMasterInitExpClk(I2C1_BASE, SysCtlClockGet(), true);
+}
+
 void I2C2_Config(void)
 {
     SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOE);
@@ -50,9 +70,9 @@ void I2C2_Config(void)
     I2CMasterInitExpClk(I2C2_BASE, SysCtlClockGet(), true);
 
     //  Configure power-switch pin
-    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB);
-    GPIOPinTypeGPIOOutput(GPIO_PORTB_BASE, GPIO_PIN_5);
-    GPIOPinWrite(GPIO_PORTB_BASE, GPIO_PIN_5, 0x00);
+//    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB);
+//    GPIOPinTypeGPIOOutput(GPIO_PORTB_BASE, GPIO_PIN_5);
+//    GPIOPinWrite(GPIO_PORTB_BASE, GPIO_PIN_5, 0x00);
 
     //enable I2C module 0
 /*    SysCtlPeripheralEnable(SYSCTL_PERIPH_I2C0);
@@ -98,14 +118,14 @@ void I2C_WriteByte(uint32_t IMUBase, uint8_t I2Caddress, uint8_t regAddress, uin
     I2CMasterControl(IMUBase, I2C_MASTER_CMD_BURST_SEND_START);
 //    HAL_DelayUS(4);
     SysCtlDelay(40);
-    while(I2CMasterBusy(IMUBase));
+//    while(I2CMasterBusy(IMUBase));
 
     //  Send register data to write and stop sequence
     I2CMasterDataPut(IMUBase, data);
     I2CMasterControl(IMUBase, I2C_MASTER_CMD_BURST_SEND_FINISH);
 //    HAL_DelayUS(4);
     SysCtlDelay(40);
-    while(I2CMasterBusy(IMUBase));
+//    while(I2CMasterBusy(IMUBase));
 
 }
 
@@ -122,13 +142,13 @@ uint8_t I2C_ReadByte(uint32_t IMUBase, uint8_t I2Caddress, uint8_t regAddress)
     //  Send start sequence and address, followed by register address
     I2CMasterControl(IMUBase, I2C_MASTER_CMD_BURST_SEND_START);
     //    HAL_DelayUS(4);
-    while(I2CMasterBusy(IMUBase));
+ //   while(I2CMasterBusy(IMUBase));
 
     //  Perform s single receive from I2C bus
     I2CMasterSlaveAddrSet(IMUBase, I2Caddress, true);
     I2CMasterControl(IMUBase, I2C_MASTER_CMD_SINGLE_RECEIVE);
     //    HAL_DelayUS(4);
-    while(I2CMasterBusy(IMUBase));
+//    while(I2CMasterBusy(IMUBase));
     //  Read a byte from receiving buffer
     data = I2CMasterDataGet(IMUBase);
 
@@ -161,7 +181,7 @@ uint8_t I2C_ReadBytes(uint32_t IMUBase, uint8_t I2Caddress, uint8_t regAddress, 
 //    SysCtlDelay(40);      // not sure if this delay was necessary
 
     // Wait for MCU to finish transaction
-    while(I2CMasterBusy(IMUBase));
+ //   while(I2CMasterBusy(IMUBase));
 
     //  Change address to reading mode
     I2CMasterSlaveAddrSet(IMUBase, I2Caddress, true);
@@ -174,7 +194,7 @@ uint8_t I2C_ReadBytes(uint32_t IMUBase, uint8_t I2Caddress, uint8_t regAddress, 
         I2CMasterControl(IMUBase, I2C_MASTER_CMD_BURST_RECEIVE_START);
 //        HAL_DelayUS(4);
 //        SysCtlDelay(10);
-        while(I2CMasterBusy(IMUBase));
+//        while(I2CMasterBusy(IMUBase));
         data[0] = (uint8_t)(I2CMasterDataGet(IMUBase) & 0xFF);
 
         for (i = 1; i < (length-1); i++)
@@ -182,7 +202,7 @@ uint8_t I2C_ReadBytes(uint32_t IMUBase, uint8_t I2Caddress, uint8_t regAddress, 
             I2CMasterControl(IMUBase, I2C_MASTER_CMD_BURST_RECEIVE_CONT);
 //            HAL_DelayUS(4);
 //            SysCtlDelay(10);
-            while(I2CMasterBusy(IMUBase));
+//            while(I2CMasterBusy(IMUBase));
             data[i] = (uint8_t)(I2CMasterDataGet(IMUBase) & 0xFF);
         }
         I2CMasterControl(IMUBase, I2C_MASTER_CMD_BURST_RECEIVE_FINISH);
@@ -190,7 +210,7 @@ uint8_t I2C_ReadBytes(uint32_t IMUBase, uint8_t I2Caddress, uint8_t regAddress, 
 
 //    HAL_DelayUS(4);
 //    SyswCtlDelay(10);
-    while(I2CMasterBusy(IMUBase));
+ //   while(I2CMasterBusy(IMUBase));
     data[length-1] = (uint8_t)(I2CMasterDataGet(IMUBase) & 0xFF);
 
     return 0;
