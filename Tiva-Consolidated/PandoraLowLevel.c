@@ -20,9 +20,9 @@ PandoraLowLevel pandoraConstruct()
     PandoraLowLevel pandora;
 
     // Configure the Location pins
-    tivaLocationPinsConfig();
+//    tivaLocationPinsConfig();
     // Then read the location from them
-    pandora.location = getLocationsFromPins();
+ //   pandora.location = getLocationsFromPins();
 
     pandora.signalToMaster = 0;
     pandora.signalFromMaster = 0;
@@ -48,6 +48,7 @@ PandoraLowLevel pandoraConstruct()
  * Tiva uses to determine which location
  * it is in.
  */
+/*
 void tivaLocationPinsConfig()
 {
     SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
@@ -59,7 +60,7 @@ void tivaLocationPinsConfig()
     GPIOPadConfigSet(GPIO_PORTA_BASE, GPIO_PIN_6,GPIO_STRENGTH_2MA,GPIO_PIN_TYPE_WAKE_LOW);
     GPIOPadConfigSet(GPIO_PORTA_BASE, GPIO_PIN_7,GPIO_STRENGTH_2MA,GPIO_PIN_TYPE_WAKE_LOW);
     GPIOPadConfigSet(GPIO_PORTE_BASE, GPIO_PIN_3,GPIO_STRENGTH_2MA,GPIO_PIN_TYPE_WAKE_LOW);
-}
+}*/
 
 /**
  * getLocationsFromPins
@@ -69,7 +70,7 @@ void tivaLocationPinsConfig()
  *
  * @return: the location the tiva is in
  */
-TivaLocations getLocationsFromPins()
+/*TivaLocations getLocationsFromPins()
 {
     TivaLocations tivaLocation;
     TivaLocationBitSet locationBitSet;
@@ -103,7 +104,7 @@ TivaLocations getLocationsFromPins()
         tivaLocation = notValidLocation;
 
     return tivaLocation;
-}
+}*/
 
 /**
  * tivaInitEtherCAT
@@ -115,7 +116,7 @@ TivaLocations getLocationsFromPins()
  */
 void tivaInitEtherCAT()
 {
-    tivaLocationPinsConfig();
+//    tivaLocationPinsConfig();
     SSI3_Config_SPI(); // Configure SSI3 for SPI for use with EtherCAT
     int ret = EtherCAT_Init();
    // printf("%d\n", ret);

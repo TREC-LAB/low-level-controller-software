@@ -142,10 +142,10 @@ typedef union ByteData ByteData;
 PandoraLowLevel pandoraConstruct();
 
 // Configure the location pins
-void tivaLocationPinsConfig();
+//void tivaLocationPinsConfig();
 
 // Get the Tiva Location from the set of pins
-TivaLocations getLocationsFromPins(void);
+//TivaLocations getLocationsFromPins(void);
 
 // Only initializes the Tiva's ethercat capabilities
 // so it can read initialization data from the master.
