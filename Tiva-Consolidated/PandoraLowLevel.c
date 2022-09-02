@@ -245,7 +245,12 @@ void StoreCurrentInitFrame(PandoraLowLevel* pandora)
     }
     else if(currentInitFrame == 4)
     {
-        uint8_t softwareEStopEnable = etherCATInputFrames.initSignal4Frame.softwareEStopEnable;
+        uint8_t imuEnable = etherCATInputFrames.initSignal4Frame.imuEnable;
+        pandora->imu.enabled = imuEnable;
+    }
+    else if(currentInitFrame == 5)
+    {
+        uint8_t softwareEStopEnable = etherCATInputFrames.initSignal5Frame.softwareEStopEnable;
         PandoraLowLevelSettings settings;
         settings.softwareEStopEnable = softwareEStopEnable;
         pandora->settings = settings;
