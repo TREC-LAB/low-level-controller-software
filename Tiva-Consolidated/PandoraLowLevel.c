@@ -276,7 +276,8 @@ void tivaInit(PandoraLowLevel* pandora)
     enableQEIEncoder(&pandora->actuator0.motorEncoder);
     enableQEIEncoder(&pandora->actuator1.motorEncoder);
     enableDebugLEDS();
-    MPU_START();
+    if(pandora->imu.enabled)
+        MPU_START();
     timer1A_Config();
     timer2A_Config();
     timer3A_Config();
