@@ -10,6 +10,15 @@ Low-level code which allows for the controlling of pandora
 ---
 
 <!-- Vertsions of code -->
+### *v2.2.0*:
+* Added basic support for the IMU
+* Basic I2C HAL support added
+* Expanded the EtherCAT frame to 64 bytes input and 64 bytes output
+* Calibrated IMU readings
+#### *issues*:
+* An IMU must be connected or else the Tiva loops forever
+
+
 ### *v2.1:*
 * Added software E-stop reset
 * Re-initialization
