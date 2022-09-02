@@ -14,6 +14,7 @@
 // IMU sensor struct that is used for data
 struct IMU
 {
+    bool enabled;
     float Ax;
     float Ay;
     float Az;
