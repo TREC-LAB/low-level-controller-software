@@ -333,7 +333,8 @@ void Timer3AIntHandler(void)
         readQEIEncoderPosition(&pandora.actuator1.motorEncoder);
         readQEIEncoderVelocity(&pandora.actuator0.motorEncoder);
         readQEIEncoderVelocity(&pandora.actuator1.motorEncoder);
-        IMU_GET(&pandora.imu);
+        if(pandora.imu.enabled)
+            IMU_GET(&pandora.imu);
 //        printf("%f\n", pandora.imu.Ax);
     }
 
