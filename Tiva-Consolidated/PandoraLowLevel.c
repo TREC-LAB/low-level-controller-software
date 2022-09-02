@@ -245,7 +245,12 @@ void StoreCurrentInitFrame(PandoraLowLevel* pandora)
     }
     else if(currentInitFrame == 4)
     {
-        uint8_t softwareEStopEnable = etherCATInputFrames.initSignal4Frame.softwareEStopEnable;
+        uint8_t imuEnable = etherCATInputFrames.initSignal4Frame.imuEnable;
+        pandora->imu.enabled = imuEnable;
+    }
+    else if(currentInitFrame == 5)
+    {
+        uint8_t softwareEStopEnable = etherCATInputFrames.initSignal5Frame.softwareEStopEnable;
         PandoraLowLevelSettings settings;
         settings.softwareEStopEnable = softwareEStopEnable;
         pandora->settings = settings;
@@ -271,7 +276,8 @@ void tivaInit(PandoraLowLevel* pandora)
     enableQEIEncoder(&pandora->actuator0.motorEncoder);
     enableQEIEncoder(&pandora->actuator1.motorEncoder);
     enableDebugLEDS();
-    MPU_START();
+    if(pandora->imu.enabled)
+        MPU_START();
     timer1A_Config();
     timer2A_Config();
     timer3A_Config();

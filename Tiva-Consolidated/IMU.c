@@ -202,6 +202,7 @@ void MPU_PowerSwitch(bool powerState)
 IMU IMU_Struct_Config(void)
 {
     IMU IMUsense;
+    IMUsense.enabled = false;
     IMUsense.Ax = 0.0;
     IMUsense.Ay = 0.0;
     IMUsense.Az = 0.0;
