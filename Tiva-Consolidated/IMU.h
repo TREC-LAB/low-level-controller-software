@@ -11,20 +11,68 @@
 
 #include "HAL/I2C_Tiva.h"
 
-// IMU sensor struct that is used for data
-struct IMU
+#define GYROFACTOR                  131.0
+#define ACCELEROMETERFACTOR         16384.0
+
+
+/**
+ * AccelerationData
+ * Holds the x,y,z accelerationData of the IMU
+ */
+struct AccelerationData
 {
-    bool enabled;
     float Ax;
     float Ay;
     float Az;
+};
+typedef struct AccelerationData AccelerationData;
+
+/**
+ * GyroData
+ * Holds the x,y,z gyro data of the IMU
+ */
+struct GyroData
+{
     float Gx;
     float Gy;
     float Gz;
 };
+typedef struct GyroData GyroData;
+
+/**
+ * IMUBias
+ * Contains all of the bias values for the x,y,z directions of the
+ * accelerometer and the gyroscope
+ */
+struct IMUBias
+{
+    float AxBias;
+    float AyBias;
+    float AzBias;
+    float GxBias;
+    float GyBias;
+    float GzBias;
+};
+typedef struct IMUBias IMUBias;
+/**
+ * IMU
+ * Contains all of the data needed by an IMU on the Tiva
+ */
+struct IMU
+{
+    bool enabled;
+    AccelerationData accelerationData;
+    GyroData gyroData;
+
+    IMUBias imuBias;
+};
 typedef struct IMU IMU;
 
-enum Ascale
+/**
+ * AccelerationScale
+ * The scale settings regarding acceleration for the IMU
+ */
+enum AccelerationScale
 {
   AFS_2G = 0,
   AFS_4G,
@@ -32,38 +80,35 @@ enum Ascale
   AFS_16G
 };
 
-enum Gscale {
+/**
+ * GyroScale
+ * The scale settings regarding gyroscope readings for the IMU
+ */
+enum GyroScale
+{
   GFS_250DPS = 0,
   GFS_500DPS,
   GFS_1000DPS,
   GFS_2000DPS
 };
 
-enum Mscale {
-  MFS_14BITS = 0, // 0.6 mG per LSB
-  MFS_16BITS      // 0.15 mG per LSB
-};
-
-enum M_MODE {
-  M_8HZ = 0x02,  // 8 Hz update
-  M_100HZ = 0x06 // 100 Hz continuous magnetometer
-};
-
-
-// Functions header
-void MPU_Config();
+// initialization related functions
+IMU imuConstruct(void);
+void imuEnable(IMU* imu);
 void initMPU9250();
-void RawToRefine(float* Converted_Data, int16_t* Raw_Data, uint8_t TypeFlag, float* bias);
-void readAccelData(int16_t* destination);
-void readGyroData(int16_t* destination);
-void CalibrateMPU();
-void MPU_START();
-void Read_IMU();
-IMU IMU_Struct_Config(void);
-void SaveIMUData(IMU* IMUsense);
-void MPU_PowerSwitch(bool powerState);
+void imuCalibrate(IMU* imu);
 
-void IMU_GET();
+// functions related to reading
+void readAccelerationData(IMU* imu);
+void readGyroData(IMU* imu);
+void ReadIMUData(IMU* imu);
+
+
+
+
+
+
+
 
 /**     MPU9250 - related macros        */
 #define MPU9250_I2C_BASE I2C1_BASE
