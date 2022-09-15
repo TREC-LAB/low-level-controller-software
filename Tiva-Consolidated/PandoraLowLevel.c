@@ -119,7 +119,7 @@ void tivaInitEtherCAT()
 //    tivaLocationPinsConfig();
     SSI3_Config_SPI(); // Configure SSI3 for SPI for use with EtherCAT
     int ret = EtherCAT_Init();
-   // printf("%d\n", ret);
+    printf("%d\n", ret);
 }
 
 /**
@@ -281,8 +281,6 @@ void tivaInit(PandoraLowLevel* pandora)
     timer1A_Config();
     timer2A_Config();
     timer3A_Config();
-
-//    printf("ret: %d\n", ret);
 }
 
 /**

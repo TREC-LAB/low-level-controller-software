@@ -46,9 +46,6 @@ typedef struct GyroData GyroData;
  */
 struct IMUBias
 {
-    float AxBias;
-    float AyBias;
-    float AzBias;
     float GxBias;
     float GyBias;
     float GzBias;
@@ -104,13 +101,10 @@ void readGyroData(IMU* imu);
 void ReadIMUData(IMU* imu);
 
 
-
-
-
-
-
-
 /**     MPU9250 - related macros        */
+
+
+
 #define MPU9250_I2C_BASE I2C1_BASE
 
 /*      Device addresses        */

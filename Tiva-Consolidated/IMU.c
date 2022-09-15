@@ -91,9 +91,6 @@ IMU imuConstruct(void)
     imu.gyroData.Gy = 0.0;
     imu.gyroData.Gz = 0.0;
 
-    imu.imuBias.AxBias = 0.0;
-    imu.imuBias.AyBias = 0.0;
-    imu.imuBias.AzBias = 0.0;
     imu.imuBias.GxBias = 0.0;
     imu.imuBias.GyBias = 0.0;
     imu.imuBias.GzBias = 0.0;
@@ -120,9 +117,9 @@ void readAccelerationData(IMU* imu)
     rawAccelerationY = ((int16_t)rawByteData[2] << 8) | rawByteData[3];
     rawAccelerationZ = ((int16_t)rawByteData[4] << 8) | rawByteData[5];
 
-    imu->accelerationData.Ax = (float)(rawAccelerationX / ACCELEROMETERFACTOR) + imu->imuBias.AxBias;
-    imu->accelerationData.Ay = (float)(rawAccelerationY / ACCELEROMETERFACTOR) + imu->imuBias.AyBias;
-    imu->accelerationData.Az = (float)(rawAccelerationZ / ACCELEROMETERFACTOR) + imu->imuBias.AzBias;
+    imu->accelerationData.Ax = (float)(rawAccelerationX / ACCELEROMETERFACTOR);
+    imu->accelerationData.Ay = (float)(rawAccelerationY / ACCELEROMETERFACTOR);
+    imu->accelerationData.Az = (float)(rawAccelerationZ / ACCELEROMETERFACTOR);
 }
 
 /**
@@ -180,9 +177,6 @@ void imuCalibrate(IMU* imu)
         gyrobiasZ += imu->gyroData.Gz;
     }
 
-    imu->imuBias.AxBias = (accelbiasX/(iter));
-    imu->imuBias.AyBias = (accelbiasY/(iter));
-    imu->imuBias.AxBias = (accelbiasZ/(iter));
     imu->imuBias.GxBias = -1.0 * (gyrobiasX/(iter));
     imu->imuBias.GyBias = -1.0 * (gyrobiasY/(iter));
     imu->imuBias.GzBias = -1.0 * (gyrobiasZ/(iter));

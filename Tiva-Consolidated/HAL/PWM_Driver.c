@@ -35,7 +35,7 @@ volatile float dq1_des = 0;
 volatile float tau_des;
 //volatile float des_force;
 
-void PWMConfig(){
+/*void PWMConfig(){
     //Configure Pin for PWM
         SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOE); //actuator 1
         SysCtlPeripheralEnable(SYSCTL_PERIPH_PWM0);
@@ -52,18 +52,52 @@ void PWMConfig(){
         HWREG(GPIO_PORTB_BASE + GPIO_O_LOCK) = GPIO_LOCK_KEY; //Use Hardware Reg to unlock and change function of GPIO pin, then lock them again
         HWREG(GPIO_PORTB_BASE + GPIO_O_CR) |= 0x01;
         HWREG(GPIO_PORTB_BASE + GPIO_O_LOCK) = 0;
-        GPIOPinConfigure(GPIO_PB4_M0PWM2);
-        GPIOPinTypePWM(GPIO_PORTB_BASE, GPIO_PIN_4);
-        PWMDeadBandDisable(PWM0_BASE, PWM_GEN_1); //Deadband set to disable delay
+        GPIOPinConfigure(GPIO_PB6_M0PWM0);
+        GPIOPinTypePWM(GPIO_PORTB_BASE, GPIO_PIN_6);
+        PWMDeadBandDisable(PWM0_BASE, PWM_GEN_0); //Deadband set to disable delay
 
 //        //Configure Pin for Direction, uses same peripheral Letter as PWM
-        SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOD);
+  //      SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB);
 //        HWREG(GPIO_PORTD_BASE + GPIO_O_LOCK) = GPIO_LOCK_KEY; //Use Hardware Reg to unlock and change function of GPIO pin, then lock them again
 //        HWREG(GPIO_PORTD_BASE + GPIO_O_CR) &= ~0x11;
 //        HWREG(GPIO_PORTD_BASE + GPIO_O_LOCK) = 0;
-        GPIOPinTypeGPIOOutput(GPIO_PORTD_BASE, GPIO_PIN_1); //actuator 1
+        GPIOPinTypeGPIOOutput(GPIO_PORTB_BASE, GPIO_PIN_2); //actuator 1
 ////        GPIOPinTypeGPIOOutput(GPIO_PORTD_BASE, GPIO_PIN_3); //actuator 2
-        SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOE);
+//        SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOE);
+        GPIOPinTypeGPIOOutput(GPIO_PORTE_BASE, GPIO_PIN_1); //actuator 2
+}*/
+
+void PWMConfig()
+{
+    //Configure Pin for PWM
+        SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOE); //actuator 1
+        SysCtlPeripheralEnable(SYSCTL_PERIPH_PWM0);
+        GPIOPinConfigure(GPIO_PE4_M0PWM4);
+        GPIOPinTypePWM(GPIO_PORTE_BASE, GPIO_PIN_4);
+//
+////        SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOE); //actuator 2
+////        SysCtlPeripheralEnable(SYSCTL_PERIPH_PWM0);
+////        GPIOPinConfigure(GPIO_PE5_M0PWM5);
+////        GPIOPinTypePWM(GPIO_PORTE_BASE, GPIO_PIN_5);
+////        PWMDeadBandDisable(PWM0_BASE, PWM_GEN_2); //Deadband set to disable delay between PE4 and PE5 because they are on the same generator
+//
+
+        SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB);//ankle left
+        HWREG(GPIO_PORTB_BASE + GPIO_O_LOCK) = GPIO_LOCK_KEY; //Use Hardware Reg to unlock and change function of GPIO pin, then lock them again
+        HWREG(GPIO_PORTB_BASE + GPIO_O_CR) |= 0x01;
+        HWREG(GPIO_PORTB_BASE + GPIO_O_LOCK) = 0;
+        GPIOPinConfigure(GPIO_PB6_M0PWM0);
+        GPIOPinTypePWM(GPIO_PORTB_BASE, GPIO_PIN_6);
+        PWMDeadBandDisable(PWM0_BASE, PWM_GEN_0); //Deadband set to disable delay
+
+//        //Configure Pin for Direction, uses same peripheral Letter as PWM
+  //      SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB);
+//        HWREG(GPIO_PORTD_BASE + GPIO_O_LOCK) = GPIO_LOCK_KEY; //Use Hardware Reg to unlock and change function of GPIO pin, then lock them again
+//        HWREG(GPIO_PORTD_BASE + GPIO_O_CR) &= ~0x11;
+//        HWREG(GPIO_PORTD_BASE + GPIO_O_LOCK) = 0;
+        GPIOPinTypeGPIOOutput(GPIO_PORTB_BASE, GPIO_PIN_2); //actuator 1
+////        GPIOPinTypeGPIOOutput(GPIO_PORTD_BASE, GPIO_PIN_3); //actuator 2
+//        SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOE);
         GPIOPinTypeGPIOOutput(GPIO_PORTE_BASE, GPIO_PIN_1); //actuator 2
 }
 
