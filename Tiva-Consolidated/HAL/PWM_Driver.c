@@ -99,6 +99,7 @@ void PWMConfig()
 ////        GPIOPinTypeGPIOOutput(GPIO_PORTD_BASE, GPIO_PIN_3); //actuator 2
 //        SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOE);
         GPIOPinTypeGPIOOutput(GPIO_PORTE_BASE, GPIO_PIN_1); //actuator 2
+
 }
 
 void setPulseWidth(uint8_t actuator,uint16_t pwmFrequency, float dc, uint32_t SysClock, uint8_t dir)
@@ -148,18 +149,18 @@ void setPulseWidth(uint8_t actuator,uint16_t pwmFrequency, float dc, uint32_t Sy
     case 1: //Actuator 1
         //set pwm clock to 20MHz, a quarter of system clock. This should give the resolution needed to set duty cycle in increments of 0.1%
         //PB4
-        PWMGenConfigure(PWM0_BASE, PWM_GEN_1, PWM_GEN_MODE_DOWN | PWM_GEN_MODE_NO_SYNC);                                    //Configure the PWM generator for count down mode with immediate updates to the parameters.
-        PWMGenPeriodSet(PWM0_BASE, PWM_GEN_1, (int)((float)pwmClockSpeed/(float)pwmFrequency));                             //Set the period of the pwm signal using the pwm clock frequency and the desired signal frequency
-        PWMPulseWidthSet(PWM0_BASE, PWM_OUT_2, (int)(((float)pwmClockSpeed/(float)pwmFrequency)*((float)dc/100)));  //Set the pulse width of PWM2 with duty cycle. PWM_OUT_2 refers to the second PWM2.
-        PWMGenEnable(PWM0_BASE, PWM_GEN_1);
+        PWMGenConfigure(PWM0_BASE, PWM_GEN_0, PWM_GEN_MODE_DOWN | PWM_GEN_MODE_NO_SYNC);                                    //Configure the PWM generator for count down mode with immediate updates to the parameters.
+        PWMGenPeriodSet(PWM0_BASE, PWM_GEN_0, (int)((float)pwmClockSpeed/(float)pwmFrequency));                             //Set the period of the pwm signal using the pwm clock frequency and the desired signal frequency
+        PWMPulseWidthSet(PWM0_BASE, PWM_OUT_0, (int)(((float)pwmClockSpeed/(float)pwmFrequency)*((float)dc/100)));  //Set the pulse width of PWM2 with duty cycle. PWM_OUT_2 refers to the second PWM2.
+        PWMGenEnable(PWM0_BASE, PWM_GEN_0);
         //output duty cycle and direction pin
         if (dc == 0)
         {
-            PWMOutputState(PWM0_BASE, (PWM_OUT_2_BIT), false);
+            PWMOutputState(PWM0_BASE, (PWM_OUT_0_BIT), false);
         }
         else
         {
-            PWMOutputState(PWM0_BASE, (PWM_OUT_2_BIT), true);
+            PWMOutputState(PWM0_BASE, (PWM_OUT_0_BIT), true);
         }
         if (dir == 0) // Direction is Clockwise
         {
