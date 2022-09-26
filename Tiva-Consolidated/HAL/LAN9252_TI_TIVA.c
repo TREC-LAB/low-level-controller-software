@@ -323,7 +323,7 @@ void SPIReadProcRamFifo(void)
     }                                                           //
     while ((TempLong.Word[0]>>8) != SEC_BYTE_NUM_ROUND_OUT/4);       // *CCC*
 
-    GPIO_writePin(ETHERCAT_SELECT, 0);                                              // enable SPI chip select
+    GPIOPinWrite(GPIO_PORTB_BASE, GPIO_PIN_3, 0);
 
     SPI_Transfer(COMM_SPI_READ);                              // SPI read command
     SPI_Transfer(0x00);                                       // address of the read
@@ -331,10 +331,10 @@ void SPIReadProcRamFifo(void)
 
     for (i=0; i< (SEC_BYTE_NUM_ROUND_OUT); i++)                 // transfer loop for the remaining
     {                                                           // bytes
-      MasterToTiva.Byte[i+64] = SPI_Transfer(DUMMY_BYTE);        // we transfer the second part of
+      etherCATInputFrames.rawBytes[i+64] = SPI_Transfer(DUMMY_BYTE);        // we transfer the second part of
     }                                                           // the buffer, so offset by 64
 
-    GPIO_writePin(ETHERCAT_SELECT, 1);                                            // SPI chip select disable
+    GPIOPinWrite(GPIO_PORTB_BASE, GPIO_PIN_3, GPIO_PIN_3);
   #endif
 }
 
@@ -403,7 +403,7 @@ void SPIWriteProcRamFifo()
     }                                                           //
     while ((TempLong.Word[0]>>8) < (SEC_BYTE_NUM_ROUND_IN/4));       //   *CCC*
 
-    GPIO_writePin(ETHERCAT_SELECT, 0);                                               // enable SPI chip select
+    GPIOPinWrite(GPIO_PORTB_BASE, GPIO_PIN_3, 0);
 
     SPI_Transfer(COMM_SPI_WRITE);                             // SPI write command
     SPI_Transfer(0x00);                                       // address of the write fifo
@@ -411,12 +411,12 @@ void SPIWriteProcRamFifo()
 
     for (i=0; i< (SEC_BYTE_NUM_ROUND_IN - 1); i++)              // transfer loop for the remaining
     {                                                           // bytes
-      SPI_Transfer (TivaToMaster.Byte[i+64]);                     // we transfer the second part of
+      SPI_Transfer (etherCATOutputFrames.rawBytes[i+64]);                     // we transfer the second part of
     }                                                           // the buffer, so offset by 64
                                                                 //
-    SPI_Transfer (TivaToMaster.Byte[i+64]);                   // one last byte
+    SPI_Transfer (etherCATOutputFrames.rawBytes[i+64]);                   // one last byte
 
-    GPIO_writePin(ETHERCAT_SELECT, 1);                                              // disable SPI chip select
+    GPIOPinWrite(GPIO_PORTB_BASE, GPIO_PIN_3, GPIO_PIN_3);
   #endif
 }
 
