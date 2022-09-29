@@ -45,6 +45,8 @@ struct FTSensor
 
     CANBUSRx RxData0;
     CANBUSRx RxData1;
+
+    CANBUSTx TxData0;
 };
 typedef struct FTSensor FTSensor;
 

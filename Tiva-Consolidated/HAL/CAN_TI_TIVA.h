@@ -48,7 +48,7 @@ extern void CANRx0Initial(CANBUSRx* msgRx0, uint16_t canID, uint16_t canObj); //
 extern void CANRx1Initial(CANBUSRx* msgRx1, uint16_t canID, uint16_t canObj); // this set your Tiva to Receive, specify ID and Object number
 extern void CANTxInitial(CANBUSTx* msgTx0, uint16_t canID, uint16_t canObj);
 extern unsigned char * myCANRx(uint16_t canObj);
-extern void CANSend(uint16_t canID, uint16_t canObj);
+extern void CANSend(CANBUSTx* msgTx0, uint16_t canID, uint16_t canObj);
 extern void tare(void);
 //extern void readFTSensor(FTSensor* ftSensor);
 void storeForce(void);

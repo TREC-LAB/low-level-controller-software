@@ -119,7 +119,7 @@ FTSensor FTSensorConfig(void){
     return ftSensor;
 }
 */
-
+/*
 void tare()
 {
     tarefx = -1.0 * fx;
@@ -130,7 +130,7 @@ void tare()
     taretz = -1.0 * tz;
     TareFlag = 1;
 }
-
+*/
 float binTwoCToDec(unsigned char com0, unsigned char com1)
 {
     //this is the real money
@@ -256,7 +256,7 @@ void CANTxInitial(CANBUSTx* msgTx0, uint16_t canID, uint16_t canObj){
     msgTx0->msgTxDataPtr[3] = 0x00;
 }
 
-void CANSend(uint16_t canID, uint16_t canObj)
+void CANSend(CANBUSTx* msgTx0, uint16_t canID, uint16_t canObj)
 {
-    CANMessageSet(CAN0_BASE, canObj, &msgTx, MSG_OBJ_TYPE_TX);
+    CANMessageSet(CAN0_BASE, canObj, &msgTx0->msgTx, MSG_OBJ_TYPE_TX);
 }
