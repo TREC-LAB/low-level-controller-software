@@ -109,9 +109,9 @@ IMU imuConstruct(void)
 void readAccelerationData(IMU* imu)
 {
     uint8_t rawByteData[6];  // x/y/z accel register data stored here
-    uint16_t rawAccelerationX;
-    uint16_t rawAccelerationY;
-    uint16_t rawAccelerationZ;
+    int16_t rawAccelerationX;
+    int16_t rawAccelerationY;
+    int16_t rawAccelerationZ;
     // Read the six raw data registers into data array        // Note 0x68 is the IMU slave address
     I2C_ReadBytes(MPU9250_I2C_BASE, 0x68, ACCEL_XOUT_H, 6, &rawByteData[0]);        //#define ACCEL_XOUT_H       0x3B
 
@@ -133,9 +133,9 @@ void readAccelerationData(IMU* imu)
 void readGyroData(IMU* imu)
 {
     uint8_t rawByteData[6];
-    uint16_t rawGyroX;
-    uint16_t rawGyroY;
-    uint16_t rawGyroZ;
+    int16_t rawGyroX;
+    int16_t rawGyroY;
+    int16_t rawGyroZ;
     // Read the six raw data registers sequentially into data array
     I2C_ReadBytes(MPU9250_I2C_BASE, 0x68, GYRO_XOUT_H, 6, &rawByteData[0]);
 
