@@ -120,9 +120,9 @@ void readAccelerationData(IMU* imu)
     rawAccelerationY = ((int16_t)rawByteData[2] << 8) | rawByteData[3];
     rawAccelerationZ = ((int16_t)rawByteData[4] << 8) | rawByteData[5];
 
-    imu->accelerationData.Ax = (float)(rawAccelerationX / ACCELEROMETERFACTOR) + imu->imuBias.AxBias;
-    imu->accelerationData.Ay = (float)(rawAccelerationY / ACCELEROMETERFACTOR) + imu->imuBias.AyBias;
-    imu->accelerationData.Az = (float)(rawAccelerationZ / ACCELEROMETERFACTOR) + imu->imuBias.AzBias;
+    imu->accelerationData.Ax = (float)(rawAccelerationX / ACCELEROMETERFACTOR); // + imu->imuBias.AxBias;
+    imu->accelerationData.Ay = (float)(rawAccelerationY / ACCELEROMETERFACTOR); //+ imu->imuBias.AyBias;
+    imu->accelerationData.Az = (float)(rawAccelerationZ / ACCELEROMETERFACTOR); //+ imu->imuBias.AzBias;
 }
 
 /**
