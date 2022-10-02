@@ -4,7 +4,7 @@
  * Contains the layout and functions regarding an FT Sensor
  */
 
-#ifndef FTSENOR_H
+#ifndef FTSENSOR_H
 #define FTSENSOR_H
 
 #include "HAL/CAN_TI_TIVA.h"
@@ -51,6 +51,9 @@ struct FTSensor
 typedef struct FTSensor FTSensor;
 
 FTSensor ftSensorConstruct(void);
+
+void ftSensorEnable(FTSensor* ftSensor);
+void SendFTSensorData(FTSensor* ftSensor);
 
 void ftSensorCalibrate(FTSensor* ftSensor);
 void readForceTorqueData(FTSensor* ftSensor);

@@ -317,9 +317,10 @@ void SPIReadProcRamFifo(void)
                                               //-- to transfer the remainig bytes -------------
 
 
+    GPIOPinWrite(GPIO_PORTB_BASE, GPIO_PIN_3, 0);
     do                                                          // wait for the data to be
     {                                                           // transferred from the output
-      TempLong.Long = SPIReadRegisterDirect(ECAT_PRAM_RD_CMD,1);// process ram to the read fifo
+      TempLong.Long = SPIReadRegisterDirect(ECAT_PRAM_RD_CMD,4);// process ram to the read fifo
     }                                                           //
     while ((TempLong.Word[0]>>8) != SEC_BYTE_NUM_ROUND_OUT/4);       // *CCC*
 
@@ -397,6 +398,7 @@ void SPIWriteProcRamFifo()
                                               //-- we must do another round -------------------
                                               //-- to transfer the remainig bytes -------------
 
+    GPIOPinWrite(GPIO_PORTB_BASE, GPIO_PIN_3, 0);
     do                                                          // check that the fifo has
     {                                                           // enough free space
       TempLong.Long = SPIReadRegisterDirect(ECAT_PRAM_WR_CMD,4);//

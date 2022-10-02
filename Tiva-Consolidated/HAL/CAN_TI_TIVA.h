@@ -10,6 +10,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <math.h>
 #include <string.h>
 #include "inc/hw_memmap.h"

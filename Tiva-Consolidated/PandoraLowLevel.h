@@ -18,6 +18,7 @@
 #include "Actuator.h"
 #include "Joint.h"
 #include "IMU.h"
+#include "FTSensor.h"
 #define RED_LED GPIO_PIN_0
 #define BLUE_LED GPIO_PIN_1
 #define GREEN_LED GPIO_PIN_7
@@ -101,6 +102,7 @@ struct PandoraLowLevel
     uint8_t prevSignalFromMaster;
 
     IMU imu;
+    FTSensor ftSensor;
 
     // for synchronizing frames from the master and the Tiva
     uint8_t prevProcessIdFromMaster;

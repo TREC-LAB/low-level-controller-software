@@ -48,6 +48,7 @@
 #include "HAL/LAN9252_TI_TIVA.h"
 #include "HAL/Timer_TIVA.h"
 #include "HAL/UART_TIVA.h"
+#include "HAL/CAN_TI_TIVA.h"
 
 // Implementation
 #include "EtherCAT_FrameData.h"

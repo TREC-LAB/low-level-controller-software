@@ -80,16 +80,23 @@ void CANIntHandler(void)
 void ReadCAN(CANBUSRx* msgRx0, CANBUSRx* msgRx1)
 {
     uint32_t status = CANStatusGet(CAN0_BASE, CAN_STS_CONTROL);
+//    CANMessageClear(CAN0_BASE, 2);
+//    CANMessageClear(CAN0_BASE, 3);
+    CANMessageGet(CAN0_BASE, 2, &msgRx0->msgRx, 1);
+    CANMessageGet(CAN0_BASE, 3, &msgRx1->msgRx, 1);
+    return;
     if((status & CAN_STATUS_RXOK) == CAN_STATUS_RXOK)
     {
         CANMessageGet(CAN0_BASE, 2, &msgRx0->msgRx, 1);
         CANMessageGet(CAN0_BASE, 3, &msgRx1->msgRx, 1);
         if((msgRx0->msgRx.ui32Flags & MSG_OBJ_DATA_LOST)==MSG_OBJ_DATA_LOST)
         {
+            printf("Clearing message\n");
             CANMessageClear(CAN0_BASE, 2);
         }
         else if((msgRx1->msgRx.ui32Flags & MSG_OBJ_DATA_LOST)==MSG_OBJ_DATA_LOST)
         {
+            printf("clearing message 3\n");
             CANMessageClear(CAN0_BASE, 3);
         }
     }
@@ -160,12 +167,15 @@ void storeForce(void)
     fz = binTwoCToDec(msgRx1Data[0], msgRx1Data[1])/forceFactor;
     tz = binTwoCToDec(msgRx1Data[2], msgRx1Data[3])/torqueFactor;
 
+    printf("0: %d\n", msgRxData[0]);
+    printf("1: %d\n", msgRxData[1]);
+
     if((fz != 0) && (TareFlag != 1))
     {
         tare();
     }
-}*/
-
+}
+*/
 /*void readFTSensor(FTSensor* ftSensor)
 {
     ftSensor->forceX = fx + tarefx;
