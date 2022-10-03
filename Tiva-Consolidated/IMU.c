@@ -183,7 +183,7 @@ void imuCalibrate(IMU* imu)
     imu->imuBias.AxBias = (accelbiasX/(iter));
     imu->imuBias.AyBias = (accelbiasY/(iter));
     imu->imuBias.AxBias = (accelbiasZ/(iter));
-    imu->imuBias.GxBias = -1.0 * (gyrobiasX/(iter));
-    imu->imuBias.GyBias = -1.0 * (gyrobiasY/(iter));
-    imu->imuBias.GzBias = -1.0 * (gyrobiasZ/(iter));
+    imu->imuBias.GxBias = -1.0 * (gyrobiasX/(iter + 1));
+    imu->imuBias.GyBias = -1.0 * (gyrobiasY/(iter + 1));
+    imu->imuBias.GzBias = -1.0 * (gyrobiasZ/(iter + 1));
 }
