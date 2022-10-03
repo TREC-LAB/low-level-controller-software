@@ -33,7 +33,7 @@ PandoraLowLevel pandoraConstruct()
     pandora.prevProcessIdFromMaster = 0;
     pandora.processIdFromMaster = 0;
 
-    pandora.imu = IMU_Struct_Config();
+    pandora.imu = imuConstruct();
 
     pandora.initialized = false;
     // for the initialization DATA!! Allocate data on the heap to delete it later
@@ -277,7 +277,7 @@ void tivaInit(PandoraLowLevel* pandora)
     enableQEIEncoder(&pandora->actuator1.motorEncoder);
     enableDebugLEDS();
     if(pandora->imu.enabled)
-        MPU_START();
+        imuEnable(&pandora->imu);
     timer1A_Config();
     timer2A_Config();
     timer3A_Config();
@@ -606,22 +606,22 @@ void loadDataForMaster(PandoraLowLevel* pandora)
         etherCATOutputFrames.controlSignalFrame.joint1angleRadians = pandora->joint1.angleRads;
 
         // Package IMU Acceleration X
-        etherCATOutputFrames.controlSignalFrame.Ax = pandora->imu.Ax;
+        etherCATOutputFrames.controlSignalFrame.Ax = pandora->imu.accelerationData.Ax;
 
         // Package IMU Acceleration Y
-        etherCATOutputFrames.controlSignalFrame.Ay = pandora->imu.Ay;
+        etherCATOutputFrames.controlSignalFrame.Ay = pandora->imu.accelerationData.Ay;
 
         // Package IMU Acceleration Z
-        etherCATOutputFrames.controlSignalFrame.Az = pandora->imu.Az;
+        etherCATOutputFrames.controlSignalFrame.Az = pandora->imu.accelerationData.Az;
 
         // Package IMU Gyro X
-        etherCATOutputFrames.controlSignalFrame.Gx = pandora->imu.Gx;
+        etherCATOutputFrames.controlSignalFrame.Gx = pandora->imu.gyroData.Gx;
 
         // Package IMU Gyro Y
-        etherCATOutputFrames.controlSignalFrame.Gy = pandora->imu.Gy;
+        etherCATOutputFrames.controlSignalFrame.Gy = pandora->imu.gyroData.Gy;
 
         // Package IMU Gyro Z
-        etherCATOutputFrames.controlSignalFrame.Gz = pandora->imu.Gz;
+        etherCATOutputFrames.controlSignalFrame.Gz = pandora->imu.gyroData.Gz;
     }
     if(pandora->signalFromMaster == INITIALIZATION_SIGNAL)
     {
