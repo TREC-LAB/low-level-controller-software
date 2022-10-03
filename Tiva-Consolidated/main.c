@@ -334,8 +334,7 @@ void Timer3AIntHandler(void)
         readQEIEncoderVelocity(&pandora.actuator0.motorEncoder);
         readQEIEncoderVelocity(&pandora.actuator1.motorEncoder);
         if(pandora.imu.enabled)
-            IMU_GET(&pandora.imu);
-//        printf("%f\n", pandora.imu.Ax);
+            ReadIMUData(&pandora.imu);
     }
 
     // Send TivaToMaster and receive MasterToTiva
