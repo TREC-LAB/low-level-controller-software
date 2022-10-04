@@ -364,3 +364,4 @@ void Timer3AIntHandler(void)
     TimerIntClear(TIMER3_BASE, TIMER_TIMA_TIMEOUT);
 }
 
+// Trivial edit
