@@ -13,6 +13,8 @@ void imuEnable(IMU* imu)
     //Software Initialization
     initMPU9250();
 
+    initAndCalibrateAK8963(imu);
+
     // sets the biases
     imuCalibrate(imu);
 }
@@ -78,6 +80,36 @@ void initMPU9250()
 
 }
 
+void initAndCalibrateAK8963(IMU* imu)
+{
+    uint8_t magnetometerOutputBitSetting = sixteenBits;
+    uint8_t rawByteData[3];
+    I2C_WriteByte(MPU9250_I2C_BASE, AK8963_ADDRESS, AK8963_CNTL, 0x00);     // Power down magnetometer
+    SysCtlDelay(100000);
+    I2C_WriteByte(MPU9250_I2C_BASE, AK8963_ADDRESS, AK8963_CNTL, 0x0F);     // Enter Fuse ROM Mode
+    SysCtlDelay(100000);
+    I2C_ReadBytes(MPU9250_I2C_BASE, AK8963_ADDRESS, AK8963_ASAX, 3, rawByteData);
+
+    imu->magnetometerData.MxFactoryBias = (float)(rawByteData[0] - 128) / 256.0 + 1.0;
+    imu->magnetometerData.MyFactoryBias = (float)(rawByteData[1] - 128) / 256.0 + 1.0;
+    imu->magnetometerData.MzFactoryBias = (float)(rawByteData[2] - 128) / 256.0 + 1.0;
+
+    I2C_WriteByte(MPU9250_I2C_BASE, AK8963_ADDRESS, AK8963_CNTL, 0x00);     // Power down magnetometer
+
+    SysCtlDelay(100000);
+
+    uint8_t byteConfig = (uint8_t) magnetometerOutputBitSetting << 4 | 0x06;
+
+    I2C_WriteByte(MPU9250_I2C_BASE, AK8963_ADDRESS, AK8963_CNTL, byteConfig);
+
+    SysCtlDelay(100000);
+
+//    printf("MxBias: %f, %d\n", imu->imuBias.MxBias, rawByteData[0]);
+//    printf("MyBias: %f\n", imu->imuBias.MyBias);
+//    printf("MzBias: %f\n", imu->imuBias.MzBias);
+
+}
+
 /**
  * imuConstruct
  * constructs an imu
@@ -93,9 +125,17 @@ IMU imuConstruct(void)
     imu.gyroData.Gy = 0.0;
     imu.gyroData.Gz = 0.0;
 
-    imu.imuBias.GxBias = 0.0;
-    imu.imuBias.GyBias = 0.0;
-    imu.imuBias.GzBias = 0.0;
+    imu.gyroData.GxBias = 0.0;
+    imu.gyroData.GyBias = 0.0;
+    imu.gyroData.GzBias = 0.0;
+
+    imu.magnetometerData.MxFactoryBias = 0.0;
+    imu.magnetometerData.MyFactoryBias = 0.0;
+    imu.magnetometerData.MzFactoryBias = 0.0;
+
+    imu.magnetometerData.Mx = 0.0;
+    imu.magnetometerData.My = 0.0;
+    imu.magnetometerData.Mz = 0.0;
 
     return imu;
 }
@@ -142,9 +182,36 @@ void readGyroData(IMU* imu)
     rawGyroY = ((int16_t)rawByteData[2] << 8) | rawByteData[3];
     rawGyroZ = ((int16_t)rawByteData[4] << 8) | rawByteData[5];
 
-    imu->gyroData.Gx = (float)(rawGyroX / GYROFACTOR) + imu->imuBias.GxBias;
-    imu->gyroData.Gy = (float)(rawGyroY / GYROFACTOR) + imu->imuBias.GyBias;
-    imu->gyroData.Gz = (float)(rawGyroZ / GYROFACTOR) + imu->imuBias.GzBias;
+    imu->gyroData.Gx = (float)(rawGyroX / GYROFACTOR) + imu->gyroData.GxBias;
+    imu->gyroData.Gy = (float)(rawGyroY / GYROFACTOR) + imu->gyroData.GyBias;
+    imu->gyroData.Gz = (float)(rawGyroZ / GYROFACTOR) + imu->gyroData.GzBias;
+}
+
+/**
+ * readMagnetometerData
+ * Reads magnetometer data from the imu
+ * @param imu: a pointer to the IMU to read magnetometer data from
+ */
+void readMagnetometerData(IMU* imu)
+{
+    uint8_t magnetometerStatus = I2C_ReadByte(MPU9250_I2C_BASE, AK8963_ADDRESS, AK8963_ST1);
+    uint8_t rawBytes[7];
+    if(magnetometerStatus & 0x01)   // if the ready status bit is set
+    {
+        I2C_ReadBytes(MPU9250_I2C_BASE, AK8963_ADDRESS, AK8963_XOUT_L, 7, &rawBytes[0]);
+        // if(status & 0x02) != 0)
+        //    return;
+    }
+    uint8_t dataStatus = rawBytes[6];
+    int16_t rawMagnetometerX;
+    int16_t rawMagnetometerY;
+    int16_t rawMagnetometerZ;
+    if(!(dataStatus & 0x08))
+    {
+        rawMagnetometerX = ((int16_t)rawBytes[1] << 8) | rawBytes[0];
+        rawMagnetometerY = ((int16_t)rawBytes[3] << 8) | rawBytes[2];
+        rawMagnetometerZ = ((int16_t)rawBytes[5] << 8) | rawBytes[4];
+    }
 }
 
 /**
@@ -179,7 +246,7 @@ void imuCalibrate(IMU* imu)
         gyrobiasZ += imu->gyroData.Gz;
     }
 
-    imu->imuBias.GxBias = -1.0 * (gyrobiasX/(iter + 1));
-    imu->imuBias.GyBias = -1.0 * (gyrobiasY/(iter + 1));
-    imu->imuBias.GzBias = -1.0 * (gyrobiasZ/(iter + 1));
+    imu->gyroData.GxBias = -1.0 * (gyrobiasX/(iter + 1));
+    imu->gyroData.GyBias = -1.0 * (gyrobiasY/(iter + 1));
+    imu->gyroData.GzBias = -1.0 * (gyrobiasZ/(iter + 1));
 }

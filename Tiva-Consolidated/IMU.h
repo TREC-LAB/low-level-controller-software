@@ -36,21 +36,25 @@ struct GyroData
     float Gx;
     float Gy;
     float Gz;
-};
-typedef struct GyroData GyroData;
 
-/**
- * IMUBias
- * Contains all of the bias values for the x,y,z directions of the
- * accelerometer and the gyroscope
- */
-struct IMUBias
-{
     float GxBias;
     float GyBias;
     float GzBias;
 };
-typedef struct IMUBias IMUBias;
+typedef struct GyroData GyroData;
+
+struct MagnetometerData
+{
+    float Mx;
+    float My;
+    float Mz;
+
+    float MxFactoryBias;
+    float MyFactoryBias;
+    float MzFactoryBias;
+};
+typedef struct MagnetometerData MagnetometerData;
+
 /**
  * IMU
  * Contains all of the data needed by an IMU on the Tiva
@@ -60,8 +64,8 @@ struct IMU
     bool enabled;
     AccelerationData accelerationData;
     GyroData gyroData;
+    MagnetometerData magnetometerData;
 
-    IMUBias imuBias;
 };
 typedef struct IMU IMU;
 
@@ -89,15 +93,23 @@ enum GyroScale
   GFS_2000DPS
 };
 
+enum MagnetometerOutputBits
+{
+    fourteenBits,
+    sixteenBits
+};
+
 // initialization related functions
 IMU imuConstruct(void);
 void imuEnable(IMU* imu);
 void initMPU9250();
+void initAndCalibrateAK8963(IMU* imu);
 void imuCalibrate(IMU* imu);
 
 // functions related to reading
 void readAccelerationData(IMU* imu);
 void readGyroData(IMU* imu);
+void readMagnetometerData(IMU* imu);
 void ReadIMUData(IMU* imu);
 
 
