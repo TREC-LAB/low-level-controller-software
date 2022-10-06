@@ -139,11 +139,11 @@ void setPulseWidth(uint8_t actuator,uint16_t pwmFrequency, float dc, uint32_t Sy
         }
         if (dir == 0) // Direction is Clockwise
         {
-            GPIOPinWrite(GPIO_PORTD_BASE, GPIO_PIN_1, 0);
+            GPIOPinWrite(GPIO_PORTB_BASE, GPIO_PIN_2, 0);
         }
         else // Direction is Counter-Clockwise
         {
-            GPIOPinWrite(GPIO_PORTD_BASE, GPIO_PIN_1, 0xff);
+            GPIOPinWrite(GPIO_PORTB_BASE, GPIO_PIN_2, 0xff);
         break;
 
     case 1: //Actuator 1
