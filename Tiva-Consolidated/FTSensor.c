@@ -53,7 +53,6 @@ void ftSensorCalibrate(FTSensor* ftSensor)
     ftSensor->bias.torqueYBias = -1.0 * ftSensor->torqueY;
     ftSensor->bias.torqueZBias = -1.0 * ftSensor->torqueZ;
 
-    printf("%f\n", ftSensor->bias.forceXBias);
 /*    printf("Force X bias: %f\n", ftSensor->bias.forceXBias);
     printf("Force Y bias: %f\n", ftSensor->bias.forceYBias);
     printf("Force Z bias: %f\n", ftSensor->bias.forceZBias); */
@@ -81,6 +80,6 @@ void readForceTorqueData(FTSensor* ftSensor)
 
 //    printf("0: %d\n", ftSensor->RxData0.msgRxData[0]);
 //    printf("1: %d\n", ftSensor->RxData0.msgRxData[1]);
-    printf("actual: %f\n", (binTwoCToDec(ftSensor->RxData0.msgRxData[0], ftSensor->RxData0.msgRxData[1])/forceFactor));
+  //  printf("actual: %f\n", (binTwoCToDec(ftSensor->RxData0.msgRxData[0], ftSensor->RxData0.msgRxData[1])/forceFactor));
 }
 
