@@ -8,6 +8,11 @@ Designed for the [Virginia Tech TREC Lab](https://trecvt.org) by [Nick Tremaroli
 Low-level code which allows for the controlling of pandora
 
 ---
+### *v2.4*:
+* Added magnetometer data from the IMU to the etherCAT frame
+* Fixed issues noticed from the new sensor board
+* Fixed memory pointer issue with CAN Tx
+
 ### *v2.3*:
 * Improved IMU implementation
 * Upgraded PWM pinout to new sensor board

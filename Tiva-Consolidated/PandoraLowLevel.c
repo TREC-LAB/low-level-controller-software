@@ -34,6 +34,7 @@ PandoraLowLevel pandoraConstruct()
     pandora.processIdFromMaster = 0;
 
     pandora.imu = imuConstruct();
+    pandora.ftSensor = ftSensorConstruct();
 
     pandora.initialized = false;
     // for the initialization DATA!! Allocate data on the heap to delete it later
@@ -119,7 +120,7 @@ void tivaInitEtherCAT()
 //    tivaLocationPinsConfig();
     SSI3_Config_SPI(); // Configure SSI3 for SPI for use with EtherCAT
     int ret = EtherCAT_Init();
-   // printf("%d\n", ret);
+//    printf("%d\n", ret);
 }
 
 /**
@@ -278,11 +279,10 @@ void tivaInit(PandoraLowLevel* pandora)
     enableDebugLEDS();
     if(pandora->imu.enabled)
         imuEnable(&pandora->imu);
+    ftSensorEnable(&pandora->ftSensor);
     timer1A_Config();
     timer2A_Config();
     timer3A_Config();
-
-//    printf("ret: %d\n", ret);
 }
 
 /**
@@ -622,6 +622,33 @@ void loadDataForMaster(PandoraLowLevel* pandora)
 
         // Package IMU Gyro Z
         etherCATOutputFrames.controlSignalFrame.Gz = pandora->imu.gyroData.Gz;
+
+        // Package IMU Magnetometer X
+        etherCATOutputFrames.controlSignalFrame.Mx = pandora->imu.magnetometerData.Mx;
+
+        // Package IMU Magnetometer Y
+        etherCATOutputFrames.controlSignalFrame.My = pandora->imu.magnetometerData.My;
+
+        // Package IMU Magnetometer Z
+        etherCATOutputFrames.controlSignalFrame.Mz = pandora->imu.magnetometerData.Mz;
+
+        // Package FT Sensor Force X
+        etherCATOutputFrames.controlSignalFrame.ftForceX = pandora->ftSensor.forceX;
+
+        // Package FT Sensor Force Y
+        etherCATOutputFrames.controlSignalFrame.ftForceY = pandora->ftSensor.forceY;
+
+        // Package FT Sensor Force Z
+        etherCATOutputFrames.controlSignalFrame.ftForceZ = pandora->ftSensor.forceZ;
+
+        // Package FT Sensor Torque X
+        etherCATOutputFrames.controlSignalFrame.ftTorqueX = pandora->ftSensor.torqueX;
+
+        // Package FT Sensor Torque Y
+        etherCATOutputFrames.controlSignalFrame.ftTorqueY = pandora->ftSensor.torqueY;
+
+        // Package FT Sensor Torque Z
+        etherCATOutputFrames.controlSignalFrame.ftTorqueZ = pandora->ftSensor.torqueZ;
     }
     if(pandora->signalFromMaster == INITIALIZATION_SIGNAL)
     {

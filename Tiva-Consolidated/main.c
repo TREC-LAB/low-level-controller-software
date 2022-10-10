@@ -325,6 +325,7 @@ void Timer3AIntHandler(void)
     pandora.signalFromMaster = etherCATInputFrames.rawBytes[SIGNAL_INDEX];
     if (pandora.signalFromMaster == CONTROL_SIGNAL && pandora.initialized)
     {
+        SendFTSensorData(&pandora.ftSensor);
         updateForces(&pandora.actuator0.forceSensor);
         updateForces(&pandora.actuator1.forceSensor);
         updateJointAngles(&pandora.joint0);
@@ -333,8 +334,11 @@ void Timer3AIntHandler(void)
         readQEIEncoderPosition(&pandora.actuator1.motorEncoder);
         readQEIEncoderVelocity(&pandora.actuator0.motorEncoder);
         readQEIEncoderVelocity(&pandora.actuator1.motorEncoder);
+
         if(pandora.imu.enabled)
-            ReadIMUData(&pandora.imu);
+            readSensorData(&pandora.imu);
+
+        readForceTorqueData(&pandora.ftSensor);
     }
 
     // Send TivaToMaster and receive MasterToTiva
