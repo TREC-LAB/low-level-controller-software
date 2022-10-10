@@ -25,7 +25,7 @@ uint16_t SPI_Transfer(uint16_t Value);
 
 
 #if (!defined BYTE_NUM && !defined CUSTOM)			// if BYTE_NUM is not declared
-  #define BYTE_NUM 64
+  #define BYTE_NUM 128
 #endif                                    			//
 
 
@@ -292,7 +292,7 @@ struct __attribute__((__packed__)) ControlSignalEtherCATFrame_IN
     float actuator0DutyCycle;
     uint8_t actuator1Direction;
     float actuator1DutyCycle;
-    uint8_t reaminingBytes[52];
+    uint8_t reaminingBytes[116];
 };
 typedef struct ControlSignalEtherCATFrame_IN ControlSignalEtherCATFrame_IN;
 
@@ -302,7 +302,7 @@ struct __attribute__((__packed__)) LocationDebugSignalEtherCATFrame_IN
     uint8_t signalFromMaster;
     uint8_t masterProcessID;
     uint8_t masterLocationGuess;
-    uint8_t remainingBytes[61];
+    uint8_t remainingBytes[125];
 };
 typedef struct LocationDebugSignalEtherCATFrame_IN LocationDebugSignalEtherCATFrame_IN;
 
@@ -318,7 +318,7 @@ struct __attribute__((__packed__)) InitSignal0EtherCATFrame_IN
     uint8_t actuator0_ForceSensorADCBaseNumber;
     float actuator0_ForceSensorSlope;
     float actuator0_ForceSensorOffset;
-    uint8_t remainingBytes[45];
+    uint8_t remainingBytes[109];
 };
 typedef struct InitSignal0EtherCATFrame_IN InitSignal0EtherCATFrame_IN;
 
@@ -333,7 +333,7 @@ struct __attribute__((__packed__)) InitSignal1EtherCATFrame_IN
     uint8_t actuator1_ForceSensorADCBaseNumber;
     float actuator1_ForceSensorSlope;
     float actuator1_ForceSensorOffset;
-    uint8_t remainingBytes[45];
+    uint8_t remainingBytes[109];
 };
 typedef struct InitSignal1EtherCATFrame_IN InitSignal1EtherCATFrame_IN;
 
@@ -349,7 +349,7 @@ struct __attribute__((__packed__)) InitSignal2EtherCATFrame_IN
     float joint0_RawZeroPosition;
     float joint0_RawForwardRangeOfMotion;
     float joint0_RawBackwardRangeOfMotion;
-    uint8_t remainingBytes[44];
+    uint8_t remainingBytes[108];
 };
 typedef struct InitSignal2EtherCATFrame_IN InitSignal2EtherCATFrame_IN;
 
@@ -365,7 +365,7 @@ struct __attribute__((__packed__)) InitSignal3EtherCATFrame_IN
     float joint1_RawZeroPosition;
     float joint1_RawForwardRangeOfMotion;
     float joint1_RamBackwardRangeOfMotion;
-    uint8_t remainingBytes[44];
+    uint8_t remainingBytes[108];
 };
 typedef struct InitSignal3EtherCATFrame_IN InitSignal3EtherCATFrame_IN;
 
@@ -375,7 +375,7 @@ struct __attribute__((__packed__)) InitSignal4EtherCATFrame_IN
     uint8_t masterProcessID;
     uint8_t currentInitFrame;
     uint8_t imuEnable;
-    uint8_t remainingBytes[60];
+    uint8_t remainingBytes[124];
 };
 typedef struct InitSignal4EtherCATFrame_IN InitSignal4EtherCATFrame_IN;
 
@@ -385,7 +385,7 @@ struct __attribute__((__packed__)) InitSignal5EtherCATFrame_IN
     uint8_t masterProcessID;
     uint8_t currentInitFrame;
     uint8_t softwareEStopEnable;
-    uint8_t remainingBytes[60];
+    uint8_t remainingBytes[124];
 };
 typedef struct InitSignal5EtherCATFrame_IN InitSignal5EtherCATFrame_IN;
 
@@ -394,7 +394,7 @@ struct __attribute__((__packed__)) InitSignalHeaderEtherCATFrame_IN
     uint8_t signalFromMaster;
     uint8_t masterProcessID;
     uint8_t currentInitFrame;
-    uint8_t remainingBytes[61];
+    uint8_t remainingBytes[125];
 };
 typedef struct InitSignalHeaderEtherCATFrame_IN InitSignalHeaderEtherCATFrame_IN;
 
@@ -415,7 +415,17 @@ struct __attribute__((__packed__)) ControlSignalEtherCATFrame_OUT
     float Gx;
     float Gy;
     float Gz;
-    uint8_t remainingBytes[22];
+    float Mx;
+    float My;
+    float Mz;
+
+    float ftForceX;
+    float ftForceY;
+    float ftForceZ;
+    float ftTorqueX;
+    float ftTorqueY;
+    float ftTorqueZ;
+    uint8_t remainingBytes[50];
 };
 typedef struct ControlSignalEtherCATFrame_OUT ControlSignalEtherCATFrame_OUT;
 
@@ -425,7 +435,7 @@ struct __attribute__((__packed__)) LocationDebugSignalEtherCATFrame_OUT
     uint8_t signalFromMaster;
     uint8_t masterProcessId;
     uint8_t masterLocationGuess;
-    uint8_t remainingBytes[61];
+    uint8_t remainingBytes[125];
 };
 typedef struct LocationDebugSignalEtherCATFrame_OUT LocationDebugSignalEtherCATFrame_OUT;
 
@@ -436,7 +446,7 @@ struct __attribute__((__packed__)) InitSignalEtherCATFrame_OUT
     uint8_t masterProcessId;
     uint8_t numInitializationFramesReceived;
     uint8_t totalNumberOfInitializationFrames;
-    uint8_t remainingBytes[60];
+    uint8_t remainingBytes[124];
 };
 typedef struct InitSignalEtherCATFrame_OUT InitSignalEtherCATFrame_OUT;
 

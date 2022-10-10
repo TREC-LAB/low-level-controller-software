@@ -125,7 +125,8 @@ void SSI1_Disable()
 //    HWREG(GPIO_PORTF_BASE+GPIO_O_LOCK) = 0;             // Relock
 }
 
-void SSI2_Config(){
+void SSI2_Config()
+{
 //    //--------------------------------------------------------------
 //    //SSI pin configuration
 //    //      PB7 - SSI2Tx
