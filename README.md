@@ -8,6 +8,10 @@ Designed for the [Virginia Tech TREC Lab](https://trecvt.org) by [Nick Tremaroli
 Low-level code which allows for the controlling of pandora
 
 ---
+### *v2.3*:
+* Improved IMU implementation
+* Upgraded PWM pinout to new sensor board
+
 ### *v2.2.1*:
 * Fixed issue regarding IMU being connected
 	* Now there is a master enable imu feature
