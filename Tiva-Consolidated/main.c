@@ -336,7 +336,7 @@ void Timer3AIntHandler(void)
         readQEIEncoderVelocity(&pandora.actuator1.motorEncoder);
 
         if(pandora.imu.enabled)
-            ReadIMUData(&pandora.imu);
+            readSensorData(&pandora.imu);
 
         readForceTorqueData(&pandora.ftSensor);
     }

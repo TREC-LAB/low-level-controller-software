@@ -14,6 +14,8 @@
 #define GYROFACTOR                  131.0
 #define ACCELEROMETERFACTOR         16384.0
 
+#define GYROFACTOR_2000DPS      ((2000.0 / 32767.5))
+#define ACCELEROMETERFACTOR_16G  (9.81 * (16.0/32767.5))
 
 /**
  * AccelerationData
@@ -21,6 +23,10 @@
  */
 struct AccelerationData
 {
+    int16_t AxRaw;
+    int16_t AyRaw;
+    int16_t AzRaw;
+
     float Ax;
     float Ay;
     float Az;
@@ -33,6 +39,10 @@ typedef struct AccelerationData AccelerationData;
  */
 struct GyroData
 {
+    int16_t GxRaw;
+    int16_t GyRaw;
+    int16_t GzRaw;
+
     float Gx;
     float Gy;
     float Gz;
@@ -45,6 +55,10 @@ typedef struct GyroData GyroData;
 
 struct MagnetometerData
 {
+    int16_t MxRaw;
+    int16_t MyRaw;
+    int16_t MzRaw;
+
     float Mx;
     float My;
     float Mz;
@@ -52,6 +66,14 @@ struct MagnetometerData
     float MxFactoryBias;
     float MyFactoryBias;
     float MzFactoryBias;
+
+    float MxBias;
+    float MyBias;
+    float MzBias;
+
+    float MxScale;
+    float MyScale;
+    float MzScale;
 };
 typedef struct MagnetometerData MagnetometerData;
 
@@ -101,20 +123,30 @@ enum MagnetometerOutputBits
 
 // initialization related functions
 IMU imuConstruct(void);
+void imuInitialize(IMU* imu);
 void imuEnable(IMU* imu);
 void initMPU9250();
 void initAndCalibrateAK8963(IMU* imu);
 void imuCalibrate(IMU* imu);
+void readSensorData(IMU* imu);
+
+void readAK8963Registers(uint8_t subAddress, uint8_t count, uint8_t* dest);
+void writeAK8963Register(uint8_t subAddress, uint8_t data);
 
 // functions related to reading
 void readAccelerationData(IMU* imu);
 void readGyroData(IMU* imu);
+void readRawMagnetometerData(IMU* imu);
+void getMagnetometerDataFromRaw(IMU* imu);
 void readMagnetometerData(IMU* imu);
 void ReadIMUData(IMU* imu);
 
 
 /**     MPU9250 - related macros        */
 
+#define MAG_MODE 0x06
+#define M16BIT_MAG_RESOLUTION   (10. * 4912. / 32760.0)
+#define M14BIT_MAG_RESOLUTION   (10. * 4912. / 8190.0)
 
 
 #define MPU9250_I2C_BASE I2C1_BASE
@@ -263,5 +295,28 @@ void ReadIMUData(IMU* imu);
 #define YA_OFFSET_L        0x7B
 #define ZA_OFFSET_H        0x7D
 #define ZA_OFFSET_L        0x7E
+
+#define PWR_MGMNT_1 0x6B
+#define CLOCK_SEL_PLL  0x01
+#define I2C_MST_EN   0x20
+#define I2C_MST_CLK  0x0D
+#define AK8963_PWR_DOWN  0x00
+#define AK8963_CNTL1     0x0A
+#define PWR_RESET        0x80
+#define AK8963_RESET     0x01
+#define PWR_MGMNT_2      0x6C
+#define SEN_ENABLE       0x00
+#define ACCEL_FS_SEL_16G 0x18
+#define GYRO_FS_SEL_2000DPS 0x18
+#define GYRO_DLPF_184    0x01
+#define CONFIG           0x1A
+#define ACCEL_DLPF_184   0x01
+#define SMPDIV           0x19
+#define I2C_READ_FLAG    0x80
+#define I2C_SLV0_EN      0x80
+#define AK8963_FUSE_ROM  0x0F
+#define AK8963_ASA       0x10
+#define AK8963_CNT_MEAS2 0x16
+#define ACCEL_OUT        0x3B
 
 #endif /* IMU_IMU_TIVA_H_ */
