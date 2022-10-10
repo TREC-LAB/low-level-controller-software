@@ -415,6 +415,9 @@ struct __attribute__((__packed__)) ControlSignalEtherCATFrame_OUT
     float Gx;
     float Gy;
     float Gz;
+    float Mx;
+    float My;
+    float Mz;
 
     float ftForceX;
     float ftForceY;
@@ -422,7 +425,7 @@ struct __attribute__((__packed__)) ControlSignalEtherCATFrame_OUT
     float ftTorqueX;
     float ftTorqueY;
     float ftTorqueZ;
-    uint8_t remainingBytes[62];
+    uint8_t remainingBytes[50];
 };
 typedef struct ControlSignalEtherCATFrame_OUT ControlSignalEtherCATFrame_OUT;
 

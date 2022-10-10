@@ -120,7 +120,7 @@ void tivaInitEtherCAT()
 //    tivaLocationPinsConfig();
     SSI3_Config_SPI(); // Configure SSI3 for SPI for use with EtherCAT
     int ret = EtherCAT_Init();
-    printf("%d\n", ret);
+//    printf("%d\n", ret);
 }
 
 /**
@@ -622,6 +622,15 @@ void loadDataForMaster(PandoraLowLevel* pandora)
 
         // Package IMU Gyro Z
         etherCATOutputFrames.controlSignalFrame.Gz = pandora->imu.gyroData.Gz;
+
+        // Package IMU Magnetometer X
+        etherCATOutputFrames.controlSignalFrame.Mx = pandora->imu.magnetometerData.Mx;
+
+        // Package IMU Magnetometer Y
+        etherCATOutputFrames.controlSignalFrame.My = pandora->imu.magnetometerData.My;
+
+        // Package IMU Magnetometer Z
+        etherCATOutputFrames.controlSignalFrame.Mz = pandora->imu.magnetometerData.Mz;
 
         // Package FT Sensor Force X
         etherCATOutputFrames.controlSignalFrame.ftForceX = pandora->ftSensor.forceX;
