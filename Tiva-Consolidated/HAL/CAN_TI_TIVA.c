@@ -255,6 +255,7 @@ void CANRxInitial(uint32_t msgId, uint32_t msgIdMas)
 void CANTxInitial(CANBUSTx* msgTx0, uint16_t canID, uint16_t canObj){
     // Set up msg object
 //    msgTxData = 0;
+    msgTx0->msgTxDataPtr = (unsigned char *)msgTx0->msgTxData;
     msgTx0->msgTx.ui32MsgID = canID;
     msgTx0->msgTx.ui32MsgIDMask = canObj;
     msgTx0->msgTx.ui32Flags = MSG_OBJ_TX_INT_ENABLE;
