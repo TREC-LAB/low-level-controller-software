@@ -8,7 +8,7 @@
 #ifndef UART_TIVA_H_
 #define UART_TIVA_H_
 
-#include "../main.h"
+//#include "../main.h"
 
 extern uint32_t readdata;
 extern void UART0Config(void);
