@@ -13,12 +13,13 @@
 #ifndef LAN9252_TI
 #define LAN9252_TI
 
-//#include "device.h"
-#include "../main.h"
-//Global Functiokns
-uint16_t EtherCAT_Init(void);
-uint16_t EtherCAT_MainTask(void);
-uint16_t SPI_Transfer(uint16_t Value);
+
+#include <stdint.h>
+#include "inc/hw_memmap.h"
+#include "driverlib/gpio.h"
+#include "driverlib/ssi.h"
+
+
 
 //-----------------------------------------------------------------------------------------------
 
