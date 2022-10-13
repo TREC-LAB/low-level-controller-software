@@ -33,7 +33,7 @@ uint16_t SPI_Transfer(uint16_t Value);
 //Errors are 2,3,4
 //pass is 1
 
-uint16_t EtherCAT_MainTask(void)
+uint16_t EtherCAT_MainTask(EtherCATFrames_OUT* etherCATOutputFrames, EtherCATFrames_IN* etherCATInputFrames)
 {
   uint16_t WatchDog = 0;
   unsigned Operational = 0;
@@ -65,7 +65,7 @@ uint16_t EtherCAT_MainTask(void)
   {
     for (i=0; i < TOT_BYTE_NUM_OUT ; i++)
     {
-      etherCATInputFrames.rawBytes[i] = 0;
+      etherCATInputFrames->rawBytes[i] = 0;
     }
   }
   else
@@ -86,12 +86,10 @@ uint16_t EtherCAT_MainTask(void)
   return Status;
 }
 
-uint16_t EtherCAT_Init(void)
+uint16_t EtherCAT_Init(EtherCATFrames_OUT* etherCATOutputFrames)
 {
   ULONG TempLong;
   uint16_t i;
-
-  SysCtlDelay(2000);
 
   // LAN9252 reset
   SPIWriteRegisterDirect (RESET_CTL, DIGITAL_RST);
@@ -147,7 +145,7 @@ uint16_t EtherCAT_Init(void)
   // Clear the input buffer
   for (i=0; i < TOT_BYTE_NUM_IN ; i++)
   {
-    etherCATOutputFrames.rawBytes[i] = 0;
+    etherCATOutputFrames->rawBytes[i] = 0;
   }
 
   // Initalization completed

@@ -476,8 +476,9 @@ union EtherCATFrames_OUT
 };
 typedef union EtherCATFrames_Out EtherCATFrames_OUT;
 
-//EtherCATFrames_IN etherCATInputFrames;
-//EtherCATFrames_OUT etherCATOutputFrames;
+uint16_t EtherCAT_Init(EtherCATFrames_OUT* etherCATOutputFrames);
+uint16_t EtherCAT_MainTask(EtherCATFrames_OUT* etherCATOutputFrames, EtherCATFrames_IN* etherCATInputFrames);
+uint16_t SPI_Transfer(uint16_t Value);
 
 #endif
 
