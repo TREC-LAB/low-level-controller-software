@@ -83,19 +83,19 @@ void UARTSendString(uint8_t uartMod, char pui8Buffer[])
 
 void checkKeyboard()
 {
-    // Read the next character from the UART and write it back to the UART.
-    readdata = UARTCharGetNonBlocking(UART0_BASE);
-    // op_state = testing; //reinitialize op_state
-
-    //change joint limit
-    if (readdata == 'j')
-    {
-        //reset lower and upper limit
-        memset(lower_joint_limit_str, 0, 15);
-        memset(upper_joint_limit_str, 0, 15);
-        op_state = changing_lower_joint_limit;
-        UARTSendString(0, "lo_jt_limit= ");
-    }
+//    // Read the next character from the UART and write it back to the UART.
+//    readdata = UARTCharGetNonBlocking(UART0_BASE);
+//    // op_state = testing; //reinitialize op_state
+//
+//    //change joint limit
+//    if (readdata == 'j')
+//    {
+//        //reset lower and upper limit
+//        memset(lower_joint_limit_str, 0, 15);
+//        memset(upper_joint_limit_str, 0, 15);
+//        op_state = changing_lower_joint_limit;
+//        UARTSendString(0, "lo_jt_limit= ");
+//    }
     //start motor
 //    else if (readdata == 'z')
 //    {
