@@ -1,4 +1,47 @@
-#include "main.h"
+//#include "main.h"
+
+#include <stdint.h>
+#include <stdio.h>
+#include <stdbool.h>
+#include <math.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+// TivaWare
+#include "inc/hw_ints.h"
+#include "inc/hw_ssi.h"
+#include "inc/hw_types.h"
+#include "inc/hw_memmap.h"
+#include "inc/hw_gpio.h"
+#include "inc/hw_types.h"
+#include "driverlib/debug.h"
+#include "driverlib/fpu.h"
+#include "driverlib/gpio.h"
+#include "driverlib/interrupt.h"
+#include "driverlib/pin_map.h"
+#include "driverlib/rom.h"
+#include "driverlib/rom_map.h"
+#include "driverlib/sysctl.h"
+#include "driverlib/uart.h"
+#include "driverlib/timer.h"
+#include "driverlib/qei.h"
+#include "driverlib/ssi.h"
+#include "driverlib/adc.h"
+#include "driverlib/pwm.h"
+#include "utils/uartstdio.h"
+
+// HAL
+#include "HAL/LAN9252_TI_TIVA.h"
+#include "HAL/Timer_TIVA.h"
+#include "HAL/UART_TIVA.h"
+#include "HAL/CAN_TI_TIVA.h"
+
+// Implementation
+#include "EtherCAT_FrameData.h"
+#include "PandoraLowLevel.h"
+
+
 
 // EtherCAT buffer
 extern PROCBUFFER_OUT MasterToTiva;
@@ -10,174 +53,9 @@ volatile bool runTimer1 = true;
 volatile bool runTimer3 = true;
 
 uint16_t sample_rate = 1000; // Hz
-uint16_t logging_rate = 200; // Hz
 uint16_t estop_rate = 1000;  // Hz
 
 
-//*****************************************************************************
-//
-// define variables
-//
-
-volatile uint8_t uart;
-volatile uint16_t duty_cycle = 0;
-volatile uint8_t direction = 0;
-volatile float last_dc = 0;
-
-// Amplitudes for OL step inputs
-volatile float s1 = 4;
-volatile float s2 = 8;
-volatile float s3 = 12;
-
-volatile float OL_amplitude = 5;
-volatile float OL_freq = 1;
-
-//Actuator References used
-const uint8_t actuator_0 = 0;
-volatile float duty_cycle_0 = 0;
-//DUTY_CYCLE duty_cycle0;
-volatile uint8_t direction_0 = 0;
-
-const uint8_t actuator_1 = 1;
-volatile float duty_cycle_1 = 0;
-//DUTY_CYCLE duty_cycle0;
-volatile uint8_t direction_1 = 0;
-
-volatile uint32_t lower_joint_limit_0 = 7000;
-volatile uint32_t upper_joint_limit_0 = 30000;
-volatile uint32_t lower_joint_limit_1 = 15000;
-volatile uint32_t upper_joint_limit_1 = 34000;
-
-bool UARTPutNonBlockingFlag = true;
-bool log_data = false;
-bool motor_state = false;
-
-volatile float y_offset;
-volatile uint32_t time_count; //in millisecond
-volatile uint32_t time_prev;
-uint32_t force_0; //Thigh & Ankle 0 actuator
-uint32_t force_1; //Ankle 1 actuator
-uint32_t adc_val0;
-uint32_t adc_val1;
-uint32_t adc_init;
-volatile uint32_t adc_val4_filtered;
-
-//data that the user typed down through the console
-uint32_t readdata;
-uint32_t motor_ctl_feedback;
-
-volatile int32_t output;
-//volatile int32_t qeiPosition_0;
-//volatile uint32_t qeiVelocity_0;
-//volatile int32_t qeiDirection_0;
-
-//volatile int32_t qeiPosition_1;
-//volatile uint32_t qeiVelocity_1;
-//volatile int32_t qeiDirection_1;
-
-//uint32_t abs_angle_0;
-//uint32_t abs_angle_1;
-
-volatile float u_sat = 25; //Input Saturation
-volatile uint32_t des_force = 2200; //Desired Force for Closed-Loop control
-
-volatile float error = 0;
-volatile float error_total = 0;
-
-//Reference model
-
-float ap = 10;
-float bp = 10;
-
-float ar = 2;
-float br = 2;
-
-volatile float pitch_r;
-volatile float dpitch_r = 0;
-
-volatile float roll_r;
-volatile float droll_r = 0;
-
-//Duty Cycle Variable for Printing
-volatile uint32_t duty_cycle_p = 0;
-volatile uint32_t duty_cycle_p_1 = 0;
-
-// UART Variables
-
-char direction_str[10];//store user's input sin freq, later will be convert to float.
-uint8_t direction_str_counter;//counter for storing user input into omega_str
-
-char duty_cycle_str[5];//store user's input duty cycle, later will be convert to int.
-uint8_t duty_cycle_str_counter;//counter for storing user input into duty_cycle_str
-
-char sample_rate_str[5];//store user's input sample rate, later will be convert to int.
-uint8_t sample_rate_str_counter;//counter for storing user input into sample_rate_freq_str
-
-char lower_joint_limit_str[15];//store user's input lower joint limit, later will be convert to int.
-char upper_joint_limit_str[15];//store user's input upper joint limit, later will be convert to int.
-uint8_t joint_limit_str_counter;//counter for storing user input into lower/upper joint limit.
-
-char logging_rate_str[5];//store user's input logging rate, later will be convert to int.
-uint8_t logging_rate_str_counter;//counter for storing user input into logging rate.
-
-char receivedStr[16];//char is a temporary, to be converted to int
-uint8_t receivedStrCounter;
-volatile float kneePitch;
-
-volatile enum state_t op_state = testing; // all of UART was set to transition back to testing state rather than normal
-volatile enum dof dof_state = none;
-
-// Variables for converting integer encoder reading to joint angle
-
-uint32_t enc0_offset = 34476; //Ankle Pitch
-uint32_t enc1_offset = 27680; //Ankle Roll
-
-volatile float q_0 = 0; //Ankle Pitch
-volatile float q_1 = 0; //Ankle Roll
-
-volatile float dq_0 = 0; //Ankle Pitch Angular Velocity
-volatile float dq_1 = 0; //Ankle Roll Angular Velocity
-
-volatile float pitch_des = 0;
-volatile float roll_des = 0;
-
-volatile float error_p;
-volatile float error_r;
-
-volatile float error_p_tot;
-volatile float error_r_tot;
-
-volatile float tau_p_in;
-volatile float tau_r_in;
-
-volatile float ctrl0_in = 0;
-volatile float ctrl1_in = 0;
-
-//Ankle pitch gains
-float kp = 11; //9.5;
-float ki = 2.5; //2;
-float kd = 1;
-
-//Ankle roll gains
-float kp_r = 4;//2;
-float ki_r = 2;//1;
-float kd_r = 1;//0.5;//.75;
-
-bool shut_down_signal = false;
-uint32_t encVel = 0;
-int32_t encDir = 0;
-
-//*****************************************************************************
-
-// The error routine that is called if the driver library encounters an error.
-#ifdef DEBUG
-void
-__error__(char *pcFilename, uint32_t ui32Line)
-{
-}
-#endif
-
-void logData(void);
 bool EngageVirtualEStop(PandoraLowLevel* pandora);
 
 /*
@@ -185,26 +63,16 @@ bool EngageVirtualEStop(PandoraLowLevel* pandora);
  */
 int main(void)
 {
-
     //Set the system clock to 80Mhz
     SysCtlClockSet(SYSCTL_SYSDIV_2_5|SYSCTL_USE_PLL|SYSCTL_OSC_MAIN|SYSCTL_XTAL_16MHZ);
-
-//    SysCtlPeripheralEnable(LED_PERIPH);
-//    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB);
-    SysCtlDelay(30);
-
-    //Set the pin of your choice to output
-//    GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED);
-
-    SysCtlDelay(2000);
 
     // Populate pandora object
     pandora = pandoraConstruct();
 
-    // Initialize tiva
-
+    // Initialize EtherCAT on the Tiva so the Tiva can start receiving data from the master
     tivaInitEtherCAT();
 
+    // stores the master's initialization data
     while(!pandora.initialized)
     {
         EtherCAT_MainTask();
@@ -219,6 +87,7 @@ int main(void)
         }
     }
 
+    // initialize pandora
     tivaInit(&pandora);
 
     // Enable processor interrupts
@@ -227,9 +96,8 @@ int main(void)
     startTimer1(estop_rate); // Start vstop timer
     startTimer3(sample_rate); // Start motor timer
 
-    while(1)
-    {
-    }
+    // loop forever, let the interrupts handle the tasks
+    while(1);
 }
 
 
