@@ -6,9 +6,6 @@ extern PROCBUFFER_IN TivaToMaster;
 
 PandoraLowLevel pandora;
 
-volatile bool runTimer1 = true;
-volatile bool runTimer3 = true;
-
 uint16_t sample_rate = 1000; // Hz
 uint16_t logging_rate = 200; // Hz
 uint16_t estop_rate = 1000;  // Hz
@@ -178,7 +175,6 @@ __error__(char *pcFilename, uint32_t ui32Line)
 #endif
 
 void logData(void);
-bool EngageVirtualEStop(PandoraLowLevel* pandora);
 
 /*
  * main() is to initialize PWM, QEI, ADC, SSI, Timers, and UARTs modules.
@@ -198,31 +194,7 @@ int main(void)
 
     SysCtlDelay(2000);
 
-    // Populate pandora object
-    pandora = pandoraConstruct();
-
-    // Initialize tiva
-
-    tivaInitEtherCAT();
-
-    while(!pandora.initialized)
-    {
-        EtherCAT_MainTask();
-        pandora.prevProcessIdFromMaster = pandora.processIdFromMaster;
-        pandora.processIdFromMaster = etherCATInputFrames.rawBytes[PROCESS_ID_INDEX];
-
-        if(pandora.processIdFromMaster != pandora.prevProcessIdFromMaster)
-        {
-            storeDataFromMaster(&pandora);
-            processDataFromMaster(&pandora);
-            loadDataForMaster(&pandora);
-        }
-    }
-
-    tivaInit(&pandora);
-
-    // Enable processor interrupts
-    IntMasterEnable();
+    lowLevelStartup();
 
     startTimer1(estop_rate); // Start vstop timer
     startTimer3(sample_rate); // Start motor timer
@@ -250,62 +222,8 @@ void UART1IntHandler(void) {}
  */
 void Timer1AIntHandler(void)
 {
-    if (runTimer1)
-    {
-        if (EngageVirtualEStop(&pandora))
-        {
-            // Stop timer1
-            runTimer3 = false;
-            pandora.signalToMaster = HALT_SIGNAL_TM;
-
-            // Stop motor
-            pandora.actuator0.dutyCycle = 0;
-            pandora.actuator1.dutyCycle = 0;
-            SendPWMSignal(&pandora.actuator0);
-            SendPWMSignal(&pandora.actuator1);
-
-            // Send shutdown signal to master
-            haltLEDS();
-            EtherCAT_MainTask();
-        }
-        else
-        {
-            runTimer3 = true;
-            pandora.signalToMaster = NORMAL_OPERATION;
-        }
-    }
-    else
-    {
-        // Stop motors if not running estop interrupt
-        pandora.actuator0.dutyCycle = 0;
-        pandora.actuator1.dutyCycle = 0;
-        SendPWMSignal(&pandora.actuator0);
-        SendPWMSignal(&pandora.actuator1);
-    }
+    checkEstop();
     TimerIntClear(TIMER1_BASE, TIMER_TIMA_TIMEOUT);
-}
-
-
-/*
- * EngageVirtualEStop
- * Checks conditions to decide whether to engage Virtual EStop
- * based on Force, Abs Encoder Angle Ranges.
- *
- * @param pandora: a pointer to the pandora struct which contains all of the
- * values to check
- * @return: if the virtual estop should be triggered
- */
-bool EngageVirtualEStop(PandoraLowLevel* pandora)
-{
-   return (((pandora->joint0.actualRaw < -1 * pandora->joint0.rawBackwardRangeOfMotion ||
-        pandora->joint0.actualRaw > pandora->joint0.rawForwardRangeOfMotion)) ||
-            (pandora->joint1.actualRaw < -1 * pandora->joint1.rawBackwardRangeOfMotion ||
-        pandora->joint1.actualRaw > pandora->joint1.rawForwardRangeOfMotion) ||
-        pandora->actuator0.forceSensor.newtons > pandora->actuator0.forceSensor.upperLimitNewtons ||
-        pandora->actuator0.forceSensor.newtons < pandora->actuator0.forceSensor.lowerLimitNewtons ||
-        pandora->actuator1.forceSensor.newtons > pandora->actuator1.forceSensor.upperLimitNewtons ||
-        pandora->actuator1.forceSensor.newtons < pandora->actuator1.forceSensor.lowerLimitNewtons) &&
-        pandora->signalFromMaster == CONTROL_SIGNAL && pandora->settings.softwareEStopEnable;
 }
 
 /*
@@ -321,47 +239,6 @@ void Timer2AIntHandler(void) {}
  */
 void Timer3AIntHandler(void)
 {
-    EtherCAT_MainTask();
-    pandora.signalFromMaster = etherCATInputFrames.rawBytes[SIGNAL_INDEX];
-    if (pandora.signalFromMaster == CONTROL_SIGNAL && pandora.initialized)
-    {
-        updateForces(&pandora.actuator0.forceSensor);
-        updateForces(&pandora.actuator1.forceSensor);
-        updateJointAngles(&pandora.joint0);
-        updateJointAngles(&pandora.joint1);
-        readQEIEncoderPosition(&pandora.actuator0.motorEncoder);
-        readQEIEncoderPosition(&pandora.actuator1.motorEncoder);
-        readQEIEncoderVelocity(&pandora.actuator0.motorEncoder);
-        readQEIEncoderVelocity(&pandora.actuator1.motorEncoder);
-        if(pandora.imu.enabled)
-            ReadIMUData(&pandora.imu);
-    }
-
-    // Send TivaToMaster and receive MasterToTiva
-    if (runTimer3 || pandora.signalFromMaster != CONTROL_SIGNAL)
-    {
-
-        pandora.prevProcessIdFromMaster = pandora.processIdFromMaster;
-        pandora.processIdFromMaster = etherCATInputFrames.rawBytes[PROCESS_ID_INDEX];
-
-        if(pandora.processIdFromMaster != pandora.prevProcessIdFromMaster)
-        {
-            // Read desired Tiva status, duty cycles, and directions from MasterToTiva
-            storeDataFromMaster(&pandora);
-
-            // Act according Tiva status
-            // Turns off estop timer if necessary
-            runTimer1 = processDataFromMaster(&pandora);
-             // Populate TivaToMaster data frame
-            loadDataForMaster(&pandora);
-        }
-        else
-        {
-            runTimer1 = processDataFromMaster(&pandora);
-            loadDataForMaster(&pandora);
-        }
-    }
+    readSensors();
     TimerIntClear(TIMER3_BASE, TIMER_TIMA_TIMEOUT);
 }
-
-// Trivial edit
