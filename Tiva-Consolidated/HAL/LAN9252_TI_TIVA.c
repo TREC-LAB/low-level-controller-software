@@ -15,15 +15,15 @@
 
 
 // Local Functions prototyping
-void SPIWriteRegisterDirect(uint16_t Address, uint32_t DataOut);
-uint32_t SPIReadRegisterDirect(uint16_t Address, uint16_t Len);
+void LAN9252WriteRegisterDirect(uint16_t Address, uint32_t DataOut);
+uint32_t LAN9252ReadRegisterDirect(uint16_t Address, uint16_t Len);
 
-void SPIWriteRegisterIndirect(uint32_t  DataOut, uint16_t Address, uint16_t Len);
-uint32_t SPIReadRegisterIndirect(uint16_t Address, uint16_t Len);
-uint32_t SPIReadRegisterIndirectOneByte(uint16_t Address);
+void LAN9252WriteRegisterIndirect(uint32_t  DataOut, uint16_t Address, uint16_t Len);
+uint32_t LAN9252ReadRegisterIndirect(uint16_t Address, uint16_t Len);
+uint32_t LAN9252ReadRegisterIndirectOneByte(uint16_t Address);
 
-void SPIReadProcRamFifo(void);
-void SPIWriteProcRamFifo(void);
+void LAN9252ReadProcRamFifo(void);
+void LAN9252WriteProcRamFifo(void);
 
 uint16_t SPI_Transfer(uint16_t Value);
 
