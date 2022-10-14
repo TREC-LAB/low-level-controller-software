@@ -15,6 +15,7 @@
 
 
 #include <stdint.h>
+#include <stdbool.h>
 #include "inc/hw_memmap.h"
 #include "driverlib/gpio.h"
 #include "driverlib/ssi.h"
@@ -259,32 +260,10 @@ typedef union
 //-------------------------------------------  Input/Output buffers for Standard Mode -----------
 #ifdef BYTE_NUM
 
-//  typedef struct						      //-- output buffer -----------------
-//  {		 									  //
-//    uint16_t  Word [BYTE_NUM];                 //
-//  } PROCBUFFER_OUT;							  //
-//
-//  typedef struct                              //-- input buffer ------------------
-//  {											  //
-//    uint16_t  Word [BYTE_NUM];                 //
-//  } PROCBUFFER_IN;                            //
 
-struct PROCBUFFER_OUT                             //-- output buffer -----------------
-{                                           //
-    uint8_t  Byte [BYTE_NUM];                 //
-};
-typedef struct PROCBUFFER_OUT PROCBUFFER_OUT;
+/**********InputFrames**********/
 
-struct PROCBUFFER_IN                             //-- input buffer ------------------
-{                                           //
-    uint8_t  Byte [BYTE_NUM];                 //
-};
-typedef struct PROCBUFFER_IN PROCBUFFER_IN;
-
-//PROCBUFFER_OUT MasterToTiva;
-//PROCBUFFER_IN TivaToMaster;
-
-// InputFrames
+// used to avoid padding
 struct __attribute__((__packed__)) ControlSignalEtherCATFrame_IN
 {
     uint8_t signalFromMaster;
@@ -298,6 +277,7 @@ struct __attribute__((__packed__)) ControlSignalEtherCATFrame_IN
 typedef struct ControlSignalEtherCATFrame_IN ControlSignalEtherCATFrame_IN;
 
 
+// used to avoid padding
 struct __attribute__((__packed__)) LocationDebugSignalEtherCATFrame_IN
 {
     uint8_t signalFromMaster;
@@ -308,6 +288,7 @@ struct __attribute__((__packed__)) LocationDebugSignalEtherCATFrame_IN
 typedef struct LocationDebugSignalEtherCATFrame_IN LocationDebugSignalEtherCATFrame_IN;
 
 
+// used to avoid padding
 struct __attribute__((__packed__)) InitSignal0EtherCATFrame_IN
 {
     uint8_t signalFromMaster;
@@ -323,6 +304,7 @@ struct __attribute__((__packed__)) InitSignal0EtherCATFrame_IN
 };
 typedef struct InitSignal0EtherCATFrame_IN InitSignal0EtherCATFrame_IN;
 
+// used to avoid padding
 struct __attribute__((__packed__)) InitSignal1EtherCATFrame_IN
 {
     uint8_t signalFromMaster;
@@ -338,6 +320,7 @@ struct __attribute__((__packed__)) InitSignal1EtherCATFrame_IN
 };
 typedef struct InitSignal1EtherCATFrame_IN InitSignal1EtherCATFrame_IN;
 
+// used to avoid padding
 struct __attribute__((__packed__)) InitSignal2EtherCATFrame_IN
 {
     uint8_t signalFromMaster;
@@ -354,6 +337,7 @@ struct __attribute__((__packed__)) InitSignal2EtherCATFrame_IN
 };
 typedef struct InitSignal2EtherCATFrame_IN InitSignal2EtherCATFrame_IN;
 
+// used to avoid padding
 struct __attribute__((__packed__)) InitSignal3EtherCATFrame_IN
 {
     uint8_t signalFromMaster;
@@ -370,6 +354,7 @@ struct __attribute__((__packed__)) InitSignal3EtherCATFrame_IN
 };
 typedef struct InitSignal3EtherCATFrame_IN InitSignal3EtherCATFrame_IN;
 
+// used to avoid padding
 struct __attribute__((__packed__)) InitSignal4EtherCATFrame_IN
 {
     uint8_t signalFromMaster;
@@ -380,6 +365,7 @@ struct __attribute__((__packed__)) InitSignal4EtherCATFrame_IN
 };
 typedef struct InitSignal4EtherCATFrame_IN InitSignal4EtherCATFrame_IN;
 
+// used to avoid padding
 struct __attribute__((__packed__)) InitSignal5EtherCATFrame_IN
 {
     uint8_t signalFromMaster;
@@ -390,6 +376,7 @@ struct __attribute__((__packed__)) InitSignal5EtherCATFrame_IN
 };
 typedef struct InitSignal5EtherCATFrame_IN InitSignal5EtherCATFrame_IN;
 
+// used to avoid padding
 struct __attribute__((__packed__)) InitSignalHeaderEtherCATFrame_IN
 {
     uint8_t signalFromMaster;
@@ -399,9 +386,9 @@ struct __attribute__((__packed__)) InitSignalHeaderEtherCATFrame_IN
 };
 typedef struct InitSignalHeaderEtherCATFrame_IN InitSignalHeaderEtherCATFrame_IN;
 
-// OutputFrames
+/**********OutputFrames**********/
 
-//#pragma pack(1)     // used to avoid padding
+// used to avoid padding
 struct __attribute__((__packed__)) ControlSignalEtherCATFrame_OUT
 {
     uint8_t signalToMaster;
@@ -430,7 +417,7 @@ struct __attribute__((__packed__)) ControlSignalEtherCATFrame_OUT
 };
 typedef struct ControlSignalEtherCATFrame_OUT ControlSignalEtherCATFrame_OUT;
 
-//#pragma pack(1)     // used to avoid padding
+// used to avoid padding
 struct __attribute__((__packed__)) LocationDebugSignalEtherCATFrame_OUT
 {
     uint8_t signalFromMaster;
@@ -440,7 +427,7 @@ struct __attribute__((__packed__)) LocationDebugSignalEtherCATFrame_OUT
 };
 typedef struct LocationDebugSignalEtherCATFrame_OUT LocationDebugSignalEtherCATFrame_OUT;
 
-//#pragma pack(1)     // used to avoid padding
+// used to avoid padding
 struct __attribute__((__packed__)) InitSignalEtherCATFrame_OUT
 {
     uint8_t signalFromMaster;
@@ -467,7 +454,7 @@ union EtherCATFrames_IN
 };
 typedef union EtherCATFrames_IN EtherCATFrames_IN;
 
-//#pragma pack(1)
+// the output frames which are sent to the master
 union EtherCATFrames_OUT
 {
     ControlSignalEtherCATFrame_OUT controlSignalFrame;
@@ -475,11 +462,21 @@ union EtherCATFrames_OUT
     InitSignalEtherCATFrame_OUT initSignalFrame;
     uint8_t rawBytes[BYTE_NUM];
 };
-typedef union EtherCATFrames_Out EtherCATFrames_OUT;
+typedef union EtherCATFrames_OUT EtherCATFrames_OUT;
 
 uint16_t EtherCAT_Init(EtherCATFrames_OUT* etherCATOutputFrames);
 uint16_t EtherCAT_MainTask(EtherCATFrames_OUT* etherCATOutputFrames, EtherCATFrames_IN* etherCATInputFrames);
 uint16_t SPI_Transfer(uint16_t Value);
+
+void LAN9252WriteRegisterDirect(uint16_t Address, uint32_t DataOut);
+uint32_t LAN9252ReadRegisterDirect(uint16_t Address, uint16_t Len);
+
+void LAN9252WriteRegisterIndirect(uint32_t  DataOut, uint16_t Address, uint16_t Len);
+uint32_t LAN9252ReadRegisterIndirect(uint16_t Address, uint16_t Len);
+uint32_t LAN9252ReadRegisterIndirectOneByte(uint16_t Address);
+
+void LAN9252ReadProcRamFifo(EtherCATFrames_IN* etherCATInputFrames);
+void LAN9252WriteProcRamFifo(EtherCATFrames_OUT* etherCATOutputFrames);
 
 #endif
 

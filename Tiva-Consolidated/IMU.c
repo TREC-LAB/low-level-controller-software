@@ -56,15 +56,6 @@ void writeAK8963Register(uint8_t subAddress, uint8_t data)
         uint8_t result;
         readAK8963Registers(subAddress, 1, &result);
         successful = result == data || data == AK8963_RESET;
-//        if(!successful)
-//            printf("Write failed\n");
-        /*if(result == data || data == AK8963_RESET)
-            printf("Write successful!\n");
-        else
-        {
-            printf("Write Failed\n");
-            goto START;
-        }*/
     }
 }
 

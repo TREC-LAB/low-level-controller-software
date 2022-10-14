@@ -13,22 +13,6 @@
 
 #include "LAN9252_TI_TIVA.h"
 
-
-// Local Functions prototyping
-void LAN9252WriteRegisterDirect(uint16_t Address, uint32_t DataOut);
-uint32_t LAN9252ReadRegisterDirect(uint16_t Address, uint16_t Len);
-
-void LAN9252WriteRegisterIndirect(uint32_t  DataOut, uint16_t Address, uint16_t Len);
-uint32_t LAN9252ReadRegisterIndirect(uint16_t Address, uint16_t Len);
-uint32_t LAN9252ReadRegisterIndirectOneByte(uint16_t Address);
-
-void LAN9252ReadProcRamFifo(void);
-void LAN9252WriteProcRamFifo(void);
-
-uint16_t SPI_Transfer(uint16_t Value);
-
-
-
 //initalize EtherCAT
 //Errors are 2,3,4
 //pass is 1
@@ -42,7 +26,7 @@ uint16_t EtherCAT_MainTask(EtherCATFrames_OUT* etherCATOutputFrames, EtherCATFra
   uint16_t Status;
 
   // Read the watchdog status
-  TempLong.Long = SPIReadRegisterIndirectOneByte (WDOG_STATUS);
+  TempLong.Long = LAN9252ReadRegisterIndirectOneByte (WDOG_STATUS);
 
   // set/reset the corrisponding flag
   if ((TempLong.Word[0] & 0x01) == 0x01)
@@ -51,7 +35,7 @@ uint16_t EtherCAT_MainTask(EtherCATFrames_OUT* etherCATOutputFrames, EtherCATFra
     WatchDog = 1;
 
   // Read the EtherCAT State Machine status to see if we are in operational state
-  TempLong.Long = SPIReadRegisterIndirectOneByte (AL_STATUS);
+  TempLong.Long = LAN9252ReadRegisterIndirectOneByte (AL_STATUS);
   Status = TempLong.Word[0] & 0x0F;
 
   // set/reset the corresponding flag
@@ -71,11 +55,11 @@ uint16_t EtherCAT_MainTask(EtherCATFrames_OUT* etherCATOutputFrames, EtherCATFra
   else
   {
     // Otherwise transfer process data from the EtherCAT core to the output buffer
-    SPIReadProcRamFifo();
+    LAN9252ReadProcRamFifo(etherCATInputFrames);
   }
 
   // We always transfer process data from the input buffer to the EtherCAT core
-  SPIWriteProcRamFifo();
+  LAN9252WriteProcRamFifo(etherCATOutputFrames);
 
   // Return the status of the State Machine and of the watchdog
   if (WatchDog)
@@ -92,7 +76,7 @@ uint16_t EtherCAT_Init(EtherCATFrames_OUT* etherCATOutputFrames)
   uint16_t i;
 
   // LAN9252 reset
-  SPIWriteRegisterDirect (RESET_CTL, DIGITAL_RST);
+  LAN9252WriteRegisterDirect (RESET_CTL, DIGITAL_RST);
 
   // Reset timeout
   // Wait for reset to complete
@@ -100,7 +84,7 @@ uint16_t EtherCAT_Init(EtherCATFrames_OUT* etherCATOutputFrames)
   do
   {
     i++;
-    TempLong.Long = SPIReadRegisterDirect (RESET_CTL, 4);
+    TempLong.Long = LAN9252ReadRegisterDirect (RESET_CTL, 4);
   } while (((TempLong.Word[0] & 0x01) != 0x00) && (i != ETHERCAT_INIT_TIMEOUT));
 
   // Time out expired
@@ -116,7 +100,7 @@ uint16_t EtherCAT_Init(EtherCATFrames_OUT* etherCATOutputFrames)
   do
   {
     i++;
-    TempLong.Long = SPIReadRegisterDirect (BYTE_TEST, 4);
+    TempLong.Long = LAN9252ReadRegisterDirect (BYTE_TEST, 4);
   } while ((TempLong.Long != 0x87654321) && (i != ETHERCAT_INIT_TIMEOUT));
 
   // Time out expired
@@ -132,7 +116,7 @@ uint16_t EtherCAT_Init(EtherCATFrames_OUT* etherCATOutputFrames)
   do
   {
     i++;
-    TempLong.Long = SPIReadRegisterDirect (HW_CFG, 4);
+    TempLong.Long = LAN9252ReadRegisterDirect (HW_CFG, 4);
   } while (((TempLong.Word[1] & READY) == 0) && (i != ETHERCAT_INIT_TIMEOUT));
 
   // Time out expired
@@ -156,7 +140,7 @@ uint16_t EtherCAT_Init(EtherCATFrames_OUT* etherCATOutputFrames)
 // Len = number of bytes to read (1,2,3,4)
 //
 // A long is returned but only the requested bytes are meaningful, starting from LsByte.
-uint32_t SPIReadRegisterDirect (uint16_t Address, uint16_t Len)
+uint32_t LAN9252ReadRegisterDirect (uint16_t Address, uint16_t Len)
 {
   ULONG Result;
   uint16_t i;
@@ -186,7 +170,7 @@ uint32_t SPIReadRegisterDirect (uint16_t Address, uint16_t Len)
 
 // Address = register to write
 // DataOut = data to write
-void SPIWriteRegisterDirect (uint16_t Address, uint32_t DataOut)
+void LAN9252WriteRegisterDirect (uint16_t Address, uint32_t DataOut)
 {
   ULONG Data;
   Data.Long = DataOut;
@@ -212,7 +196,7 @@ void SPIWriteRegisterDirect (uint16_t Address, uint32_t DataOut)
 // Len = number of bytes to read (1,2,3,4)
 //
 // A long is returned but only the requested bytes are meaningful, starting from LsByte.
-uint32_t SPIReadRegisterIndirect (uint16_t Address, uint16_t Len)
+uint32_t LAN9252ReadRegisterIndirect (uint16_t Address, uint16_t Len)
 {
   ULONG TempLong;
 
@@ -221,41 +205,41 @@ uint32_t SPIReadRegisterIndirect (uint16_t Address, uint16_t Len)
   TempLong.Word[1] = (Len | (ESC_READ << 8));
 
   // Write the command
-  SPIWriteRegisterDirect (ECAT_CSR_CMD, TempLong.Long);
+  LAN9252WriteRegisterDirect (ECAT_CSR_CMD, TempLong.Long);
 
   // Wait for command execution
   do
   {
-    TempLong.Long = SPIReadRegisterDirect(ECAT_CSR_CMD,4);
+    TempLong.Long = LAN9252ReadRegisterDirect(ECAT_CSR_CMD,4);
   }
   while(TempLong.Word[1] & ECAT_CSR_BUSY);
 
 
   // read the requested register
-  TempLong.Long = SPIReadRegisterDirect(ECAT_CSR_DATA,(Len/2));
+  TempLong.Long = LAN9252ReadRegisterDirect(ECAT_CSR_DATA,(Len/2));
   return TempLong.Long;
 }
 
 // Address = register to write
 // DataOut = data to write
-void SPIWriteRegisterIndirect (uint32_t DataOut, uint16_t Address, uint16_t Len)
+void LAN9252WriteRegisterIndirect (uint32_t DataOut, uint16_t Address, uint16_t Len)
 {
   ULONG TempLong;
 
   // Write the data
-  SPIWriteRegisterDirect (ECAT_CSR_DATA, DataOut);
+  LAN9252WriteRegisterDirect (ECAT_CSR_DATA, DataOut);
 
   // Compose the command
   TempLong.Word[0] = Address;
   TempLong.Word[1] = (Len | (ESC_WRITE << 8));
 
   // Write the command
-  SPIWriteRegisterDirect (ECAT_CSR_CMD, TempLong.Long);
+  LAN9252WriteRegisterDirect (ECAT_CSR_CMD, TempLong.Long);
 
   // Wait for command execution
   do
   {
-    TempLong.Long = SPIReadRegisterDirect (ECAT_CSR_CMD, 2);
+    TempLong.Long = LAN9252ReadRegisterDirect (ECAT_CSR_CMD, 2);
   }
   while (TempLong.Word[1] & ECAT_CSR_BUSY);
 }
@@ -264,7 +248,7 @@ void SPIWriteRegisterIndirect (uint32_t DataOut, uint16_t Address, uint16_t Len)
 // Read data from the output process ram, through the FIFO.
 // These are the bytes received from the EtherCAT master and
 // that will be use by our application to write the outputs.
-void SPIReadProcRamFifo(void)
+void LAN9252ReadProcRamFifo(EtherCATFrames_IN* etherCATInputFrames)
 {
   ULONG TempLong;
   unsigned char i;
@@ -272,14 +256,14 @@ void SPIReadProcRamFifo(void)
 
   #if TOT_BYTE_NUM_OUT > 0
 
-    SPIWriteRegisterDirect (ECAT_PRAM_RD_CMD, PRAM_ABORT);        // abort any possible pending transfer
+    LAN9252WriteRegisterDirect (ECAT_PRAM_RD_CMD, PRAM_ABORT);        // abort any possible pending transfer
 
-    SPIWriteRegisterDirect (ECAT_PRAM_RD_ADDR_LEN, (0x00001000 | (((uint32_t)TOT_BYTE_NUM_OUT) << 16)));
+    LAN9252WriteRegisterDirect (ECAT_PRAM_RD_ADDR_LEN, (0x00001000 | (((uint32_t)TOT_BYTE_NUM_OUT) << 16)));
                                                                   // the high word is the num of bytes
                                                                   // to read 0xTOT_BYTE_NUM_OUT----
                                                                   // the low word is the output process
                                                                   // ram offset 0x----1000
-    SPIWriteRegisterDirect (ECAT_PRAM_RD_CMD, 0x80000000);        // start command
+    LAN9252WriteRegisterDirect (ECAT_PRAM_RD_CMD, 0x80000000);        // start command
 
                                                 //------- one round is enough if we have ----
                                                 //------- to transfer up to 64 bytes --------
@@ -287,7 +271,7 @@ void SPIReadProcRamFifo(void)
     // Wait for the data to be transferred from the output process ram to the read FIFO.
     do
     {
-      TempLong.Long = SPIReadRegisterDirect (ECAT_PRAM_RD_CMD,4);
+      TempLong.Long = LAN9252ReadRegisterDirect (ECAT_PRAM_RD_CMD,4);
     }
     while ((TempLong.Word[0]>>8) != FST_BYTE_NUM_ROUND_OUT/4);
 
@@ -302,7 +286,7 @@ void SPIReadProcRamFifo(void)
     // Receive data from EasyCat
     for (i=0; i< FST_BYTE_NUM_ROUND_OUT; i++)
     {
-      etherCATInputFrames.rawBytes[i] = SPI_Transfer(DUMMY_BYTE);
+      etherCATInputFrames->rawBytes[i] = SPI_Transfer(DUMMY_BYTE);
     }
 
     // SPI chip select disable
@@ -318,7 +302,7 @@ void SPIReadProcRamFifo(void)
     GPIOPinWrite(GPIO_PORTB_BASE, GPIO_PIN_3, 0);
     do                                                          // wait for the data to be
     {                                                           // transferred from the output
-      TempLong.Long = SPIReadRegisterDirect(ECAT_PRAM_RD_CMD,4);// process ram to the read fifo
+      TempLong.Long = LAN9252ReadRegisterDirect(ECAT_PRAM_RD_CMD,4);// process ram to the read fifo
     }                                                           //
     while ((TempLong.Word[0]>>8) != SEC_BYTE_NUM_ROUND_OUT/4);       // *CCC*
 
@@ -330,7 +314,7 @@ void SPIReadProcRamFifo(void)
 
     for (i=0; i< (SEC_BYTE_NUM_ROUND_OUT); i++)                 // transfer loop for the remaining
     {                                                           // bytes
-      etherCATInputFrames.rawBytes[i+64] = SPI_Transfer(DUMMY_BYTE);        // we transfer the second part of
+      etherCATInputFrames->rawBytes[i+64] = SPI_Transfer(DUMMY_BYTE);        // we transfer the second part of
     }                                                           // the buffer, so offset by 64
 
     GPIOPinWrite(GPIO_PORTB_BASE, GPIO_PIN_3, GPIO_PIN_3);
@@ -342,7 +326,7 @@ void SPIReadProcRamFifo(void)
 // Write data to the input process ram through the fifo.
 // These are the bytes that we have read from the inputs of our
 // application and that will be sent to the EtherCAT master.
-void SPIWriteProcRamFifo()
+void LAN9252WriteProcRamFifo(EtherCATFrames_OUT* etherCATOutputFrames)
 {
   ULONG TempLong;
   unsigned char i;
@@ -350,15 +334,15 @@ void SPIWriteProcRamFifo()
   #if TOT_BYTE_NUM_IN > 0
 
     // abort any possible pending transfer
-    SPIWriteRegisterDirect (ECAT_PRAM_WR_CMD, PRAM_ABORT);
+    LAN9252WriteRegisterDirect (ECAT_PRAM_WR_CMD, PRAM_ABORT);
 
-    SPIWriteRegisterDirect (ECAT_PRAM_WR_ADDR_LEN, (0x00001200 | (((uint32_t)TOT_BYTE_NUM_IN) << 16)));
+    LAN9252WriteRegisterDirect (ECAT_PRAM_WR_ADDR_LEN, (0x00001200 | (((uint32_t)TOT_BYTE_NUM_IN) << 16)));
                                                                   // the high word is the num of bytes
                                                                   // to write 0xTOT_BYTE_NUM_IN----
                                                                   // the low word is the input process
                                                                   // ram offset  0x----1200
 
-    SPIWriteRegisterDirect (ECAT_PRAM_WR_CMD, 0x80000000);        // start command
+    LAN9252WriteRegisterDirect (ECAT_PRAM_WR_CMD, 0x80000000);        // start command
 
                                                 //------- one round is enough if we have ----
                                                 //------- to transfer up to 64 bytes --------
@@ -366,7 +350,7 @@ void SPIWriteProcRamFifo()
     // Check that the fifo has enough free space
     do
     {
-      TempLong.Long = SPIReadRegisterDirect (ECAT_PRAM_WR_CMD,4);
+      TempLong.Long = LAN9252ReadRegisterDirect (ECAT_PRAM_WR_CMD,4);
     }
     while ((TempLong.Word[0]>>8) <   (FST_BYTE_NUM_ROUND_IN/4));
 
@@ -381,11 +365,11 @@ void SPIWriteProcRamFifo()
     // Transfer data to EasyCat
     for (i=0; i< (FST_BYTE_NUM_ROUND_IN - 1 ); i++)
     {
-        SPI_Transfer (etherCATOutputFrames.rawBytes[i]);
+        SPI_Transfer (etherCATOutputFrames->rawBytes[i]);
     }
 
     // Transfer last byte
-    SPI_Transfer (etherCATOutputFrames.rawBytes[i]);
+    SPI_Transfer (etherCATOutputFrames->rawBytes[i]);
 
     // Disable SPI chip select
     GPIOPinWrite(GPIO_PORTB_BASE, GPIO_PIN_3, GPIO_PIN_3);
@@ -399,7 +383,7 @@ void SPIWriteProcRamFifo()
     GPIOPinWrite(GPIO_PORTB_BASE, GPIO_PIN_3, 0);
     do                                                          // check that the fifo has
     {                                                           // enough free space
-      TempLong.Long = SPIReadRegisterDirect(ECAT_PRAM_WR_CMD,4);//
+      TempLong.Long = LAN9252ReadRegisterDirect(ECAT_PRAM_WR_CMD,4);//
     }                                                           //
     while ((TempLong.Word[0]>>8) < (SEC_BYTE_NUM_ROUND_IN/4));       //   *CCC*
 
@@ -411,10 +395,10 @@ void SPIWriteProcRamFifo()
 
     for (i=0; i< (SEC_BYTE_NUM_ROUND_IN - 1); i++)              // transfer loop for the remaining
     {                                                           // bytes
-      SPI_Transfer (etherCATOutputFrames.rawBytes[i+64]);                     // we transfer the second part of
+      SPI_Transfer (etherCATOutputFrames->rawBytes[i+64]);                     // we transfer the second part of
     }                                                           // the buffer, so offset by 64
                                                                 //
-    SPI_Transfer (etherCATOutputFrames.rawBytes[i+64]);                   // one last byte
+    SPI_Transfer (etherCATOutputFrames->rawBytes[i+64]);                   // one last byte
 
     GPIOPinWrite(GPIO_PORTB_BASE, GPIO_PIN_3, GPIO_PIN_3);
   #endif
@@ -424,7 +408,7 @@ void SPIWriteProcRamFifo()
 // Len = number of bytes to read (1,2,3,4)
 //
 // A long is returned but only the requested bytes are meaningful, starting from LsByte
-uint32_t SPIReadRegisterIndirectOneByte (uint16_t Address)
+uint32_t LAN9252ReadRegisterIndirectOneByte (uint16_t Address)
 {
   ULONG TempLong;
   ULONG Result;
@@ -434,12 +418,12 @@ uint32_t SPIReadRegisterIndirectOneByte (uint16_t Address)
   TempLong.Word[1] = (1 | (ESC_READ << 8));
 
   // Write the command
-  SPIWriteRegisterDirect (ECAT_CSR_CMD, TempLong.Long);
+  LAN9252WriteRegisterDirect (ECAT_CSR_CMD, TempLong.Long);
 
   // Wait for command execution
   do
   {
-    TempLong.Long = SPIReadRegisterDirect(ECAT_CSR_CMD,4);
+    TempLong.Long = LAN9252ReadRegisterDirect(ECAT_CSR_CMD,4);
   }
   while(TempLong.Word[1] & ECAT_CSR_BUSY);
 

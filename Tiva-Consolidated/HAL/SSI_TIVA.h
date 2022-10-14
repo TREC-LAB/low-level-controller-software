@@ -20,19 +20,6 @@
 #include "driverlib/sysctl.h"
 #include "driverlib/ssi.h"
 
-uint32_t abs_angle_0_prev;
-uint32_t abs_angle_1_prev;
-
-//Variables for velocity filtering
-int32_t abs_angle_0_vel_f;
-int32_t abs_angle_1_vel_f;
-
-int32_t abs_angle_0_vel_prev;
-int32_t abs_angle_1_vel_prev;
-
-int32_t abs_angle_0_vel;
-int32_t abs_angle_1_vel;
-
 void SSI0_Gurley_Config(void);
 void SSI0_Orbis_Config(void);
 void SSI0_Disable(void);    // Not Tested!!

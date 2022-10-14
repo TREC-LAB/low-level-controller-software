@@ -3,6 +3,7 @@
 /**
  * Initializes UART0 for communicating between Tiva and Master
  */
+/*
 void UART0Config()
 {
     SysCtlPeripheralEnable(SYSCTL_PERIPH_UART0);
@@ -19,7 +20,7 @@ void UART0Config()
     IntEnable(INT_UART0);
     UARTIntEnable(UART0_BASE, UART_INT_RX | UART_INT_RT);
 }
-
+*/
 /**
  * Initializes UART0 for communicating between Tiva and motor controller
  */
@@ -44,17 +45,19 @@ void UART1Config()
 /**
  * Sends instruction to users to the console
  */
+/*
 void sendInstruction()
 {
     UARTSendString(0, "TIVA initialized, begin logging: \r\n");
 }
-
+*/
 /*
  * Send a string to the UART.
  * uartMod is used to indicate which UART module you want to use
  * UART0 is used between MCU and the Computer console
  * UART1 is used between MCU and the motor controller
  */
+/*
 void UARTSendString(uint8_t uartMod, char pui8Buffer[])
 {
     //
@@ -80,7 +83,8 @@ void UARTSendString(uint8_t uartMod, char pui8Buffer[])
         }
     }
 }
-
+*/
+/*
 void checkKeyboard()
 {
 //    // Read the next character from the UART and write it back to the UART.
@@ -364,4 +368,4 @@ void checkKeyboard()
 //        UARTCharPutNonBlocking(UART0_BASE,readdata);
 //    }
 }
-
+*/

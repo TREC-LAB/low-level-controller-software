@@ -1,5 +1,3 @@
-//#include "main.h"
-
 #include <stdint.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -41,12 +39,6 @@
 #include "EtherCAT_FrameData.h"
 #include "PandoraLowLevel.h"
 
-
-
-// EtherCAT buffer
-extern PROCBUFFER_OUT MasterToTiva;
-extern PROCBUFFER_IN TivaToMaster;
-
 PandoraLowLevel pandora;
 
 volatile bool runTimer1 = true;
@@ -58,9 +50,7 @@ uint16_t estop_rate = 1000;  // Hz
 
 bool EngageVirtualEStop(PandoraLowLevel* pandora);
 
-/*
- * main() is to initialize PWM, QEI, ADC, SSI, Timers, and UARTs modules.
- */
+
 int main(void)
 {
     //Set the system clock to 80Mhz
@@ -70,14 +60,14 @@ int main(void)
     pandora = pandoraConstruct();
 
     // Initialize EtherCAT on the Tiva so the Tiva can start receiving data from the master
-    tivaInitEtherCAT();
+    tivaInitEtherCAT(&pandora);
 
     // stores the master's initialization data
     while(!pandora.initialized)
     {
-        EtherCAT_MainTask();
+        GetAndSendDataToMaster(&pandora);
         pandora.prevProcessIdFromMaster = pandora.processIdFromMaster;
-        pandora.processIdFromMaster = etherCATInputFrames.rawBytes[PROCESS_ID_INDEX];
+        pandora.processIdFromMaster = pandora.etherCATInputFrames.rawBytes[PROCESS_ID_INDEX];
 
         if(pandora.processIdFromMaster != pandora.prevProcessIdFromMaster)
         {
@@ -134,7 +124,7 @@ void Timer1AIntHandler(void)
 
             // Send shutdown signal to master
             haltLEDS();
-            EtherCAT_MainTask();
+            GetAndSendDataToMaster(&pandora);
         }
         else
         {
@@ -189,8 +179,8 @@ void Timer2AIntHandler(void) {}
  */
 void Timer3AIntHandler(void)
 {
-    EtherCAT_MainTask();
-    pandora.signalFromMaster = etherCATInputFrames.rawBytes[SIGNAL_INDEX];
+    GetAndSendDataToMaster(&pandora);
+    pandora.signalFromMaster = pandora.etherCATInputFrames.rawBytes[SIGNAL_INDEX];
     if (pandora.signalFromMaster == CONTROL_SIGNAL && pandora.initialized)
     {
         SendFTSensorData(&pandora.ftSensor);
@@ -214,7 +204,7 @@ void Timer3AIntHandler(void)
     {
 
         pandora.prevProcessIdFromMaster = pandora.processIdFromMaster;
-        pandora.processIdFromMaster = etherCATInputFrames.rawBytes[PROCESS_ID_INDEX];
+        pandora.processIdFromMaster = pandora.etherCATInputFrames.rawBytes[PROCESS_ID_INDEX];
 
         if(pandora.processIdFromMaster != pandora.prevProcessIdFromMaster)
         {

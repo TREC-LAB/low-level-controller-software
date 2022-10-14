@@ -43,71 +43,6 @@ PandoraLowLevel pandoraConstruct()
 }
 
 /**
- * tivaLocationPinsConfig
- *
- * Configures the location pins which the
- * Tiva uses to determine which location
- * it is in.
- */
-/*
-void tivaLocationPinsConfig()
-{
-    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
-    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOE);
-    // Configure input pin
-    GPIOPinTypeGPIOInput(GPIO_PORTA_BASE, GPIO_PIN_6 | GPIO_PIN_7);
-    GPIOPinTypeGPIOInput(GPIO_PORTE_BASE, GPIO_PIN_3);
-
-    GPIOPadConfigSet(GPIO_PORTA_BASE, GPIO_PIN_6,GPIO_STRENGTH_2MA,GPIO_PIN_TYPE_WAKE_LOW);
-    GPIOPadConfigSet(GPIO_PORTA_BASE, GPIO_PIN_7,GPIO_STRENGTH_2MA,GPIO_PIN_TYPE_WAKE_LOW);
-    GPIOPadConfigSet(GPIO_PORTE_BASE, GPIO_PIN_3,GPIO_STRENGTH_2MA,GPIO_PIN_TYPE_WAKE_LOW);
-}*/
-
-/**
- * getLocationsFromPins
- *
- * Gets the Tiva location from the pin
- * configuration at startup.
- *
- * @return: the location the tiva is in
- */
-/*TivaLocations getLocationsFromPins()
-{
-    TivaLocations tivaLocation;
-    TivaLocationBitSet locationBitSet;
-
-    // read from the pins
-    uint32_t readValue = GPIOPinRead(GPIO_PORTA_BASE, GPIO_PIN_6);
-    locationBitSet.Bit0 = ((readValue & GPIO_PIN_6) == GPIO_PIN_6);
-    readValue = GPIOPinRead(GPIO_PORTA_BASE, GPIO_PIN_7);
-    locationBitSet.Bit1 = ((readValue & GPIO_PIN_7) == GPIO_PIN_7);
-
-    readValue = GPIOPinRead(GPIO_PORTE_BASE, GPIO_PIN_3);
-    locationBitSet.Bit2 = ((readValue & GPIO_PIN_3) == GPIO_PIN_3);
-
-    // get the location from the pin set
-    // The bit is True if there is a connection to it
-    if(locationBitSet.Bit0 && !locationBitSet.Bit1 && !locationBitSet.Bit2)
-        tivaLocation = hipL;
-    else if(!locationBitSet.Bit0 && locationBitSet.Bit1 && !locationBitSet.Bit2)
-        tivaLocation = hipR;
-    else if(locationBitSet.Bit0 && locationBitSet.Bit1 && !locationBitSet.Bit2)
-        tivaLocation = thighL;
-    else if(!locationBitSet.Bit0 && !locationBitSet.Bit1 && locationBitSet.Bit2)
-        tivaLocation = thighR;
-    else if(locationBitSet.Bit0 && !locationBitSet.Bit1 && locationBitSet.Bit2)
-        tivaLocation = ankleL;
-    else if(!locationBitSet.Bit0 && locationBitSet.Bit1 && locationBitSet.Bit2)
-        tivaLocation = ankleR;
-    else if(locationBitSet.Bit0 && locationBitSet.Bit1 && locationBitSet.Bit2)
-        tivaLocation = DEBUG;
-    else
-        tivaLocation = notValidLocation;
-
-    return tivaLocation;
-}*/
-
-/**
  * tivaInitEtherCAT
  *
  * Initializes the ethercat board on the Tiva. Note that this function
@@ -115,11 +50,11 @@ void tivaLocationPinsConfig()
  * This is because the Tiva must read the initialization input data
  * from the master first to know how to configure the rest of its peripherals
  */
-void tivaInitEtherCAT()
+void tivaInitEtherCAT(PandoraLowLevel* pandora)
 {
 //    tivaLocationPinsConfig();
     SSI3_Config_SPI(); // Configure SSI3 for SPI for use with EtherCAT
-    int ret = EtherCAT_Init();
+    int ret = EtherCAT_Init(&pandora->etherCATOutputFrames);
 //    printf("%d\n", ret);
 }
 
@@ -132,22 +67,22 @@ void tivaInitEtherCAT()
 void StoreCurrentInitFrame(PandoraLowLevel* pandora)
 {
     // actuator0 is the first initialization frame received
-    uint8_t currentInitFrame = etherCATInputFrames.initSignalHeader.currentInitFrame;
+    uint8_t currentInitFrame = pandora->etherCATInputFrames.initSignalHeader.currentInitFrame;
     if(currentInitFrame == 0)
     {
         uint8_t actuatorNumber = 0;
 
-        uint8_t rawQEIBase = etherCATInputFrames.initSignal0Frame.actuator0_QEIBaseNumber;
+        uint8_t rawQEIBase = pandora->etherCATInputFrames.initSignal0Frame.actuator0_QEIBaseNumber;
         uint32_t actuator0_QEIBase = QEI0_BASE + ((1 << 12) * rawQEIBase);
 
-        uint16_t actuator0_QEISampleRate = etherCATInputFrames.initSignal0Frame.actuator0_QEISampleRate;
-        uint32_t actuator0_QEICountsPerRotation = etherCATInputFrames.initSignal0Frame.actuator0_QEICountsPerRotation;
+        uint16_t actuator0_QEISampleRate = pandora->etherCATInputFrames.initSignal0Frame.actuator0_QEISampleRate;
+        uint32_t actuator0_QEICountsPerRotation = pandora->etherCATInputFrames.initSignal0Frame.actuator0_QEICountsPerRotation;
 
-        uint8_t rawADCBase = etherCATInputFrames.initSignal0Frame.actuator0_ForceSensorADCBaseNumber;
+        uint8_t rawADCBase = pandora->etherCATInputFrames.initSignal0Frame.actuator0_ForceSensorADCBaseNumber;
         uint32_t actuator0_ADCBase = ADC0_BASE + ((1 << 12) * rawADCBase);
 
-        float actuator0_ForceSensorSlope = etherCATInputFrames.initSignal0Frame.actuator0_ForceSensorSlope;
-        float actuator0_ForceSensorOffset = etherCATInputFrames.initSignal0Frame.actuator0_ForceSensorOffset;
+        float actuator0_ForceSensorSlope = pandora->etherCATInputFrames.initSignal0Frame.actuator0_ForceSensorSlope;
+        float actuator0_ForceSensorOffset = pandora->etherCATInputFrames.initSignal0Frame.actuator0_ForceSensorOffset;
 
         Actuator actuator0 = actuatorConstruct(actuatorNumber, actuator0_QEIBase,
                                                 actuator0_QEISampleRate, actuator0_QEICountsPerRotation,
@@ -160,18 +95,18 @@ void StoreCurrentInitFrame(PandoraLowLevel* pandora)
     {
         uint8_t actuatorNumber = 1;
 
-        uint8_t rawQEIBase = etherCATInputFrames.initSignal1Frame.actuator1_QEIBaseNumber;
+        uint8_t rawQEIBase = pandora->etherCATInputFrames.initSignal1Frame.actuator1_QEIBaseNumber;
         uint32_t actuator1_QEIBase = QEI0_BASE + ((1 << 12) * rawQEIBase);
 
-        uint16_t actuator1_QEISampleRate = etherCATInputFrames.initSignal1Frame.actuator1_QEISampleRate;
-        uint32_t actuator1_QEICountsPerRotation = etherCATInputFrames.initSignal1Frame.actuator1_QEICountsPerRotation;
+        uint16_t actuator1_QEISampleRate = pandora->etherCATInputFrames.initSignal1Frame.actuator1_QEISampleRate;
+        uint32_t actuator1_QEICountsPerRotation = pandora->etherCATInputFrames.initSignal1Frame.actuator1_QEICountsPerRotation;
 
-        uint8_t rawADCBase = etherCATInputFrames.initSignal1Frame.actuator1_ForceSensorADCBaseNumber;
+        uint8_t rawADCBase = pandora->etherCATInputFrames.initSignal1Frame.actuator1_ForceSensorADCBaseNumber;
         uint32_t actuator1_ADCBase = ADC0_BASE + ((1 << 12) * rawADCBase);
 
 
-        float actuator1_ForceSensorSlope = etherCATInputFrames.initSignal1Frame.actuator1_ForceSensorSlope;
-        float actuator1_ForceSensorOffset = etherCATInputFrames.initSignal1Frame.actuator1_ForceSensorOffset;
+        float actuator1_ForceSensorSlope = pandora->etherCATInputFrames.initSignal1Frame.actuator1_ForceSensorSlope;
+        float actuator1_ForceSensorOffset = pandora->etherCATInputFrames.initSignal1Frame.actuator1_ForceSensorOffset;
 
         Actuator actuator1 = actuatorConstruct(actuatorNumber, actuator1_QEIBase,
                                                 actuator1_QEISampleRate, actuator1_QEICountsPerRotation,
@@ -181,18 +116,18 @@ void StoreCurrentInitFrame(PandoraLowLevel* pandora)
     }
     else if(currentInitFrame == 2)
     {
-        uint8_t rawSSIBaseNumber = etherCATInputFrames.initSignal2Frame.joint0_SSIBaseNumber;
+        uint8_t rawSSIBaseNumber = pandora->etherCATInputFrames.initSignal2Frame.joint0_SSIBaseNumber;
         uint32_t joint0_SSIBaseNumber = SSI0_BASE + ((1 << 12) * rawSSIBaseNumber);
 
-        uint8_t ssiEncoderBrandRaw = etherCATInputFrames.initSignal2Frame.joint0_SSIEncoderBrandRaw;
+        uint8_t ssiEncoderBrandRaw = pandora->etherCATInputFrames.initSignal2Frame.joint0_SSIEncoderBrandRaw;
         SSIEncoderBrand joint0_SSIEncoderBrand = (SSIEncoderBrand)ssiEncoderBrandRaw;
 
-        uint16_t joint0_SSIEncoderSampleRate = etherCATInputFrames.initSignal2Frame.joint0_SSISampleRate;
-        int8_t joint0_jointReverseFactor = etherCATInputFrames.initSignal2Frame.joint0_ReverseFactor;
+        uint16_t joint0_SSIEncoderSampleRate = pandora->etherCATInputFrames.initSignal2Frame.joint0_SSISampleRate;
+        int8_t joint0_jointReverseFactor = pandora->etherCATInputFrames.initSignal2Frame.joint0_ReverseFactor;
 
-        float rawZero = etherCATInputFrames.initSignal2Frame.joint0_RawZeroPosition;
-        float rawForwardRangeOfMotion = etherCATInputFrames.initSignal2Frame.joint0_RawForwardRangeOfMotion;
-        float rawBackwardRangeOfMotion = etherCATInputFrames.initSignal2Frame.joint0_RawBackwardRangeOfMotion;
+        float rawZero = pandora->etherCATInputFrames.initSignal2Frame.joint0_RawZeroPosition;
+        float rawForwardRangeOfMotion = pandora->etherCATInputFrames.initSignal2Frame.joint0_RawForwardRangeOfMotion;
+        float rawBackwardRangeOfMotion = pandora->etherCATInputFrames.initSignal2Frame.joint0_RawBackwardRangeOfMotion;
         uint16_t joint0_rawZero, joint0_rawForwardRangeOfMotion, joint0_rawBackwardRangeOfMotion;
         if(joint0_SSIEncoderBrand == Gurley_Encoder)
         {
@@ -214,18 +149,18 @@ void StoreCurrentInitFrame(PandoraLowLevel* pandora)
     }
     else if(currentInitFrame == 3)
     {
-        uint8_t rawSSIBaseNumber = etherCATInputFrames.initSignal3Frame.joint1_SSIBaseNumber;
+        uint8_t rawSSIBaseNumber = pandora->etherCATInputFrames.initSignal3Frame.joint1_SSIBaseNumber;
         uint32_t joint1_SSIBaseNumber = SSI0_BASE + ((1 << 12) * rawSSIBaseNumber);
 
-        uint8_t ssiEncoderBrandRaw = etherCATInputFrames.initSignal3Frame.joint1_SSIEncoderBrandRaw;
+        uint8_t ssiEncoderBrandRaw = pandora->etherCATInputFrames.initSignal3Frame.joint1_SSIEncoderBrandRaw;
         SSIEncoderBrand joint1_SSIEncoderBrand = (SSIEncoderBrand)ssiEncoderBrandRaw;
 
-        uint16_t joint1_SSIEncoderSampleRate = etherCATInputFrames.initSignal3Frame.joint1_SSISampleRate;
-        int8_t joint1_jointReverseFactor = etherCATInputFrames.initSignal3Frame.joint1_ReverseFactor;
+        uint16_t joint1_SSIEncoderSampleRate = pandora->etherCATInputFrames.initSignal3Frame.joint1_SSISampleRate;
+        int8_t joint1_jointReverseFactor = pandora->etherCATInputFrames.initSignal3Frame.joint1_ReverseFactor;
 
-        float rawZero = etherCATInputFrames.initSignal3Frame.joint1_RawZeroPosition;
-        float rawForwardRangeOfMotion = etherCATInputFrames.initSignal3Frame.joint1_RawForwardRangeOfMotion;
-        float rawBackwardRangeOfMotion = etherCATInputFrames.initSignal3Frame.joint1_RamBackwardRangeOfMotion;
+        float rawZero = pandora->etherCATInputFrames.initSignal3Frame.joint1_RawZeroPosition;
+        float rawForwardRangeOfMotion = pandora->etherCATInputFrames.initSignal3Frame.joint1_RawForwardRangeOfMotion;
+        float rawBackwardRangeOfMotion = pandora->etherCATInputFrames.initSignal3Frame.joint1_RamBackwardRangeOfMotion;
         uint16_t joint1_rawZero, joint1_rawForwardRangeOfMotion, joint1_rawBackwardRangeOfMotion;
         if(joint1_SSIEncoderBrand == Gurley_Encoder)
         {
@@ -246,12 +181,12 @@ void StoreCurrentInitFrame(PandoraLowLevel* pandora)
     }
     else if(currentInitFrame == 4)
     {
-        uint8_t imuEnable = etherCATInputFrames.initSignal4Frame.imuEnable;
+        uint8_t imuEnable = pandora->etherCATInputFrames.initSignal4Frame.imuEnable;
         pandora->imu.enabled = imuEnable;
     }
     else if(currentInitFrame == 5)
     {
-        uint8_t softwareEStopEnable = etherCATInputFrames.initSignal5Frame.softwareEStopEnable;
+        uint8_t softwareEStopEnable = pandora->etherCATInputFrames.initSignal5Frame.softwareEStopEnable;
         PandoraLowLevelSettings settings;
         settings.softwareEStopEnable = softwareEStopEnable;
         pandora->settings = settings;
@@ -283,6 +218,11 @@ void tivaInit(PandoraLowLevel* pandora)
     timer1A_Config();
     timer2A_Config();
     timer3A_Config();
+}
+
+void GetAndSendDataToMaster(PandoraLowLevel* pandora)
+{
+    EtherCAT_MainTask(&pandora->etherCATOutputFrames, &pandora->etherCATInputFrames);
 }
 
 /**
@@ -465,30 +405,30 @@ void checkActuatorDisable(PandoraLowLevel* pandora)
  */
 void storeDataFromMaster(PandoraLowLevel* pandora)
 {
-    pandora->signalFromMaster = etherCATInputFrames.rawBytes[SIGNAL_INDEX];
+    pandora->signalFromMaster = pandora->etherCATInputFrames.rawBytes[SIGNAL_INDEX];
     // notice how the different control signals effect
     // how the data gets stored
     if (pandora->signalFromMaster == CONTROL_SIGNAL)
     {
         // Set joint 0 direction
-        pandora->actuator0.direction = etherCATInputFrames.controlSignalFrame.actuator0Direction;
+        pandora->actuator0.direction = pandora->etherCATInputFrames.controlSignalFrame.actuator0Direction;
 
         // Set joint 0 duty cycle
-        pandora->actuator0.dutyCycle = etherCATInputFrames.controlSignalFrame.actuator0DutyCycle;
+        pandora->actuator0.dutyCycle = pandora->etherCATInputFrames.controlSignalFrame.actuator0DutyCycle;
 
         // Set joint 1 direction
-        pandora->actuator1.direction = etherCATInputFrames.controlSignalFrame.actuator1Direction;
+        pandora->actuator1.direction = pandora->etherCATInputFrames.controlSignalFrame.actuator1Direction;
 
         // Set joint 1 duty cycle
-        pandora->actuator1.dutyCycle = etherCATInputFrames.controlSignalFrame.actuator1DutyCycle;
+        pandora->actuator1.dutyCycle = pandora->etherCATInputFrames.controlSignalFrame.actuator1DutyCycle;
     }
     else if (pandora->signalFromMaster == LOCATION_DEBUG_SIGNAL)
     {
-        pandora->masterLocationGuess = (TivaLocations)etherCATInputFrames.locationDebugSignalFrame.masterLocationGuess;
+        pandora->masterLocationGuess = (TivaLocations)pandora->etherCATInputFrames.locationDebugSignalFrame.masterLocationGuess;
     }
     else if (pandora->signalFromMaster == INITIALIZATION_SIGNAL)
     {
-        pandora->numberOfInitFramesReceived = etherCATInputFrames.initSignalHeader.currentInitFrame + 1;
+        pandora->numberOfInitFramesReceived = pandora->etherCATInputFrames.initSignalHeader.currentInitFrame + 1;
     }
 }
 
@@ -585,75 +525,75 @@ bool processDataFromMaster(PandoraLowLevel* pandora)
 void loadDataForMaster(PandoraLowLevel* pandora)
 {
     pandora->signalToMaster = pandora->signalFromMaster;
-    etherCATOutputFrames.rawBytes[SIGNAL_INDEX] = (uint8_t)pandora->signalToMaster;
-    etherCATOutputFrames.rawBytes[PROCESS_ID_INDEX] = pandora->processIdFromMaster;
+    pandora->etherCATOutputFrames.rawBytes[SIGNAL_INDEX] = (uint8_t)pandora->signalToMaster;
+    pandora->etherCATOutputFrames.rawBytes[PROCESS_ID_INDEX] = pandora->processIdFromMaster;
 
     // Notice how the signals determine how the data gets serialized
     if(pandora->signalFromMaster == LOCATION_DEBUG_SIGNAL && pandora->location == pandora->masterLocationGuess)
-        etherCATOutputFrames.locationDebugSignalFrame.masterLocationGuess = (uint8_t)(pandora->location);
+        pandora->etherCATOutputFrames.locationDebugSignalFrame.masterLocationGuess = (uint8_t)(pandora->location);
     if(pandora->signalFromMaster == CONTROL_SIGNAL)
     {
         // Package force sensor 0 Newton value
-        etherCATOutputFrames.controlSignalFrame.actuator0ForceInNewtons = pandora->actuator0.forceSensor.newtons;
+        pandora->etherCATOutputFrames.controlSignalFrame.actuator0ForceInNewtons = pandora->actuator0.forceSensor.newtons;
 
         // Package force sensor 1 Newton value
-        etherCATOutputFrames.controlSignalFrame.actuator1ForceInNewtons = pandora->actuator1.forceSensor.newtons;
+        pandora->etherCATOutputFrames.controlSignalFrame.actuator1ForceInNewtons = pandora->actuator1.forceSensor.newtons;
 
         // Package encoder 0 radian value
-        etherCATOutputFrames.controlSignalFrame.joint0angleRadians = pandora->joint0.angleRads;
+        pandora->etherCATOutputFrames.controlSignalFrame.joint0angleRadians = pandora->joint0.angleRads;
 
         // Package encoder 1 radian value
-        etherCATOutputFrames.controlSignalFrame.joint1angleRadians = pandora->joint1.angleRads;
+        pandora->etherCATOutputFrames.controlSignalFrame.joint1angleRadians = pandora->joint1.angleRads;
 
         // Package IMU Acceleration X
-        etherCATOutputFrames.controlSignalFrame.Ax = pandora->imu.accelerationData.Ax;
+        pandora->etherCATOutputFrames.controlSignalFrame.Ax = pandora->imu.accelerationData.Ax;
 
         // Package IMU Acceleration Y
-        etherCATOutputFrames.controlSignalFrame.Ay = pandora->imu.accelerationData.Ay;
+        pandora->etherCATOutputFrames.controlSignalFrame.Ay = pandora->imu.accelerationData.Ay;
 
         // Package IMU Acceleration Z
-        etherCATOutputFrames.controlSignalFrame.Az = pandora->imu.accelerationData.Az;
+        pandora->etherCATOutputFrames.controlSignalFrame.Az = pandora->imu.accelerationData.Az;
 
         // Package IMU Gyro X
-        etherCATOutputFrames.controlSignalFrame.Gx = pandora->imu.gyroData.Gx;
+        pandora->etherCATOutputFrames.controlSignalFrame.Gx = pandora->imu.gyroData.Gx;
 
         // Package IMU Gyro Y
-        etherCATOutputFrames.controlSignalFrame.Gy = pandora->imu.gyroData.Gy;
+        pandora->etherCATOutputFrames.controlSignalFrame.Gy = pandora->imu.gyroData.Gy;
 
         // Package IMU Gyro Z
-        etherCATOutputFrames.controlSignalFrame.Gz = pandora->imu.gyroData.Gz;
+        pandora->etherCATOutputFrames.controlSignalFrame.Gz = pandora->imu.gyroData.Gz;
 
         // Package IMU Magnetometer X
-        etherCATOutputFrames.controlSignalFrame.Mx = pandora->imu.magnetometerData.Mx;
+        pandora->etherCATOutputFrames.controlSignalFrame.Mx = pandora->imu.magnetometerData.Mx;
 
         // Package IMU Magnetometer Y
-        etherCATOutputFrames.controlSignalFrame.My = pandora->imu.magnetometerData.My;
+        pandora->etherCATOutputFrames.controlSignalFrame.My = pandora->imu.magnetometerData.My;
 
         // Package IMU Magnetometer Z
-        etherCATOutputFrames.controlSignalFrame.Mz = pandora->imu.magnetometerData.Mz;
+        pandora->etherCATOutputFrames.controlSignalFrame.Mz = pandora->imu.magnetometerData.Mz;
 
         // Package FT Sensor Force X
-        etherCATOutputFrames.controlSignalFrame.ftForceX = pandora->ftSensor.forceX;
+        pandora->etherCATOutputFrames.controlSignalFrame.ftForceX = pandora->ftSensor.forceX;
 
         // Package FT Sensor Force Y
-        etherCATOutputFrames.controlSignalFrame.ftForceY = pandora->ftSensor.forceY;
+        pandora->etherCATOutputFrames.controlSignalFrame.ftForceY = pandora->ftSensor.forceY;
 
         // Package FT Sensor Force Z
-        etherCATOutputFrames.controlSignalFrame.ftForceZ = pandora->ftSensor.forceZ;
+        pandora->etherCATOutputFrames.controlSignalFrame.ftForceZ = pandora->ftSensor.forceZ;
 
         // Package FT Sensor Torque X
-        etherCATOutputFrames.controlSignalFrame.ftTorqueX = pandora->ftSensor.torqueX;
+        pandora->etherCATOutputFrames.controlSignalFrame.ftTorqueX = pandora->ftSensor.torqueX;
 
         // Package FT Sensor Torque Y
-        etherCATOutputFrames.controlSignalFrame.ftTorqueY = pandora->ftSensor.torqueY;
+        pandora->etherCATOutputFrames.controlSignalFrame.ftTorqueY = pandora->ftSensor.torqueY;
 
         // Package FT Sensor Torque Z
-        etherCATOutputFrames.controlSignalFrame.ftTorqueZ = pandora->ftSensor.torqueZ;
+        pandora->etherCATOutputFrames.controlSignalFrame.ftTorqueZ = pandora->ftSensor.torqueZ;
     }
     if(pandora->signalFromMaster == INITIALIZATION_SIGNAL)
     {
-        etherCATOutputFrames.initSignalFrame.numInitializationFramesReceived = pandora->numberOfInitFramesReceived;
-        etherCATOutputFrames.initSignalFrame.totalNumberOfInitializationFrames = NUMBER_OF_INITIALIZATION_FRAMES;
+        pandora->etherCATOutputFrames.initSignalFrame.numInitializationFramesReceived = pandora->numberOfInitFramesReceived;
+        pandora->etherCATOutputFrames.initSignalFrame.totalNumberOfInitializationFrames = NUMBER_OF_INITIALIZATION_FRAMES;
     }
 }
 

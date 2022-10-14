@@ -14,6 +14,8 @@
 
 #include "HAL/LAN9252_TI_TIVA.h"
 #include "HAL/PWM_Driver.h"
+#include "HAL/Timer_TIVA.h"
+#include "EtherCAT_FrameData.h"
 
 #include "Actuator.h"
 #include "Joint.h"
@@ -33,8 +35,6 @@
 // For ethercat communication
 //struct PROCBUFFER_OUT MasterToTiva;
 //struct PROCBUFFER_IN TivaToMaster;
-union EtherCATFrames_IN etherCATInputFrames;
-union EtherCATFrames_OUT etherCATOutputFrames;
 
 
 /**
@@ -104,6 +104,10 @@ struct PandoraLowLevel
     IMU imu;
     FTSensor ftSensor;
 
+    // for communication with the master computer
+    EtherCATFrames_IN etherCATInputFrames;
+    EtherCATFrames_OUT etherCATOutputFrames;
+
     // for synchronizing frames from the master and the Tiva
     uint8_t prevProcessIdFromMaster;
     uint8_t processIdFromMaster;
@@ -143,16 +147,10 @@ typedef union ByteData ByteData;
 // Construct and init the PandoraLowLevel object
 PandoraLowLevel pandoraConstruct();
 
-// Configure the location pins
-//void tivaLocationPinsConfig();
-
-// Get the Tiva Location from the set of pins
-//TivaLocations getLocationsFromPins(void);
-
 // Only initializes the Tiva's ethercat capabilities
 // so it can read initialization data from the master.
 // This function is meant to be called before tivaInit
-void tivaInitEtherCAT();
+void tivaInitEtherCAT(PandoraLowLevel* pandora);
 
 // store the current initialization frame
 void StoreCurrentInitFrame(PandoraLowLevel* pandora);
@@ -160,6 +158,9 @@ void StoreCurrentInitFrame(PandoraLowLevel* pandora);
 // initialize all of the tiva's peripherals needed
 // after the initialization frame has been parsed
 void tivaInit(PandoraLowLevel* pandora);
+
+/*----------------------Communication with Master functions----------------------*/
+void GetAndSendDataToMaster(PandoraLowLevel* pandora);
 
 /*----------------------LED functions----------------------*/
 
