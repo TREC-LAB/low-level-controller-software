@@ -10,6 +10,7 @@
 #define PWM_DRIVER_H
 
 #include <stdint.h>
+#include <stdio.h>
 #include <stdbool.h>
 
 #include "inc/hw_types.h"

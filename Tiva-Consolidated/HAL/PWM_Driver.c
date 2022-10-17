@@ -18,7 +18,7 @@ volatile float f_m_inv;
 volatile float tau_des;
 float K1 = 2; //Desired Stiffness (Nm / rad)
 float K2 = 10; //Desired Damping (Nm*s / rad)
-float dc_max = 35;
+float dc_max = 100.0;
 
 float Fg = 105.6047; //Knee Link Weight (N, from CAD)
 
@@ -114,6 +114,7 @@ void setPulseWidth(uint8_t actuator,uint16_t pwmFrequency, float dc, uint32_t Sy
     {
         dc = dc_max;
     }
+//    printf("Actuator: %d, DC: %f\n", actuator, dc);
 
     //Added SysCtlPeripheralEnable for GPIO and PWM, Modified the PWM generator in the Configure and PeriodSet to generator 0
     SysCtlPWMClockSet(SYSCTL_PWMDIV_2);

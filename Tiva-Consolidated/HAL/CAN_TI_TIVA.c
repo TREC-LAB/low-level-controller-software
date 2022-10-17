@@ -203,19 +203,19 @@ void storeForce(void)
 
 void CANInitial(uint32_t canRate)
 {
-    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOE); // enable GPIOE peripheral for CAN0
-    GPIOPinConfigure(GPIO_PE4_CAN0RX);
-    GPIOPinConfigure(GPIO_PE5_CAN0TX);
-    GPIOPinTypeCAN(GPIO_PORTE_BASE, GPIO_PIN_4 | GPIO_PIN_5);
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB);
+    GPIOPinConfigure(GPIO_PB4_CAN0RX);
+    GPIOPinConfigure(GPIO_PB5_CAN0TX);
+    GPIOPinTypeCAN(GPIO_PORTB_BASE, GPIO_PIN_4 | GPIO_PIN_5);
     SysCtlPeripheralEnable(SYSCTL_PERIPH_CAN0);
-    while(!SysCtlPeripheralReady(SYSCTL_PERIPH_CAN0)){
-    }
     CANInit(CAN0_BASE);
     CANBitRateSet(CAN0_BASE, SysCtlClockGet(), canRate); // set CAN communication rate to 500kbps, same as ATI CAN rate
+    CANEnable(CAN0_BASE);
+    while(!SysCtlPeripheralReady(SYSCTL_PERIPH_CAN0)){
+    }
 //    CANIntRegister(CAN0_BASE, CANIntHandler); // use dynamic vector table allocation
 //    CANIntEnable(CAN0_BASE, CAN_INT_MASTER | CAN_INT_ERROR | CAN_INT_STATUS);
 //    IntEnable(INT_CAN0);
-    CANEnable(CAN0_BASE);
 }
 
 void CANRx0Initial(CANBUSRx* msgRx0, uint16_t canID, uint16_t canObj){
