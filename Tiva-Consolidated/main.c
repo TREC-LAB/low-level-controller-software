@@ -198,6 +198,7 @@ int main(void)
 
     SysCtlDelay(2000);
 
+
     // Populate pandora object
     pandora = pandoraConstruct();
 
@@ -220,8 +221,11 @@ int main(void)
     }
 
     tivaInit(&pandora);
-
+//    setPulseWidth(0,20000,50.0,SysCtlClockGet(),0);
+//    setPulseWidth(1,20000,50.0,SysCtlClockGet(),0);
+//
     printf("Estop enable: %d\n", pandora.settings.softwareEStopEnable);
+//    while(1);
     // Enable processor interrupts
     IntMasterEnable();
 
@@ -268,8 +272,8 @@ void Timer1AIntHandler(void)
             // Send shutdown signal to master
             haltLEDS();
             EtherCAT_MainTask();
-  //          pandora.initialized = false;
-  //          pandora.numberOfInitFramesReceived = 0;
+            pandora.initialized = false;
+            pandora.numberOfInitFramesReceived = 0;
         }
         else
         {
@@ -361,8 +365,8 @@ void Timer3AIntHandler(void)
             runTimer1 = processDataFromMaster(&pandora);
              // Populate TivaToMaster data frame
             loadDataForMaster(&pandora);
- //           if(pandora.initialized)
- //               runTimer3 = true;
+            if(pandora.initialized)
+                runTimer3 = true;
         }
         else
         {
