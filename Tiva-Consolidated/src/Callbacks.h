@@ -1,12 +1,13 @@
 /*
- * main.h
+ * Callbacks.h
  *
- *  Created on: Aug 27, 2018
- *      Author: Zhoubao Pang
+ *  Created on: Oct 5, 2022
+ *      Author: Max Stelmack
  */
 
-#ifndef MAIN_H_
-#define MAIN_H_
+#ifndef CALLBACKS_H_
+#define CALLBACKS_H_
+
 //*****************************************************************************
 //
 //includes
@@ -53,6 +54,7 @@
 // Implementation
 #include "EtherCAT_FrameData.h"
 #include "PandoraLowLevel.h"
+#include "Callbacks.h"
 
 //*****************************************************************************
 //
@@ -110,6 +112,13 @@ extern volatile enum dof{
     ankle_pitch,
     ankle_roll,}dof_state;
 
+void lowLevelStartup(void);
+void lowLevelStartup_noMaster(void);
+void readSensors(void);
+void readForceSensors(void);
+void readJointEncoders(void);
+void readMotorPositions(void);
+void readMotorVelocities(void);
+void checkEstop(void);
 
-//*****************************************************************************
-#endif /* MAIN_H_ */
+#endif /* CALLBACKS_H_ */
