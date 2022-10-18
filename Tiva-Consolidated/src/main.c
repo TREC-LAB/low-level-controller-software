@@ -1,5 +1,7 @@
 #include "main.h"
 
+#define NO_RTOS 1
+
 // EtherCAT buffer
 extern PROCBUFFER_OUT MasterToTiva;
 extern PROCBUFFER_IN TivaToMaster;

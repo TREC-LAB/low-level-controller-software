@@ -278,9 +278,11 @@ void tivaInit(PandoraLowLevel* pandora)
     enableDebugLEDS();
     if(pandora->imu.enabled)
         imuEnable(&pandora->imu);
-    //timer1A_Config();
-    //timer2A_Config();
-    //timer3A_Config();
+    #ifdef NO_RTOS
+        timer1A_Config();
+        timer2A_Config();
+        timer3A_Config();
+    #endif
 
 //    printf("ret: %d\n", ret);
 }
