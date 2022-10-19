@@ -43,13 +43,15 @@ SSIEncoder ssiEncoderConstruct(uint32_t SSIBase, uint16_t sampleRate, SSIEncoder
 void enableSSIEncoder(SSIEncoder* encoder)
 {
     // TODO: Add error checking if the SSIBase is not correct
-    if (encoder->SSIBase == SSI0_BASE) {
+    if (encoder->SSIBase == SSI0_BASE)
+    {
         if (encoder->encoderBrand == Gurley_Encoder)
             SSI0_Gurley_Config();
         else if (encoder->encoderBrand == Orbis_Encoder)
             SSI0_Orbis_Config();
     }
-    else if (encoder->SSIBase == SSI1_BASE) {
+    else if (encoder->SSIBase == SSI1_BASE)
+    {
         if (encoder->encoderBrand == Gurley_Encoder)
             SSI1_Gurley_Config();
         else if (encoder->encoderBrand == Orbis_Encoder)
