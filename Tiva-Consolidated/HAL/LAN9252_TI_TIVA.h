@@ -138,38 +138,41 @@
 // Check that BYTE_NUM and CUST_BYTE_NUM_OUT are not declared at
 // the same time
 #ifdef BYTE_NUM
-// cannot be defined at the same time
-#ifdef CUST_BYTE_NUM_OUT
-    #error "BYTE_NUM and CUST_BYTE_NUM_OUT cannot be defined at the same time !!!!"
-    #error "define them correctly in file EasyCAT.h"
+
+    // cannot be defined at the same time
+    #ifdef CUST_BYTE_NUM_OUT
+        #error "BYTE_NUM and CUST_BYTE_NUM_OUT cannot be defined at the same time !!!!"
+        #error "define them correctly in file EasyCAT.h"
     #endif
 
-#ifdef CUST_BYTE_NUM_IN
-    #error "BYTE_NUM and CUST_BYTE_NUM_IN cannot be defined at the same time !!!!"
-    #error "define them correctly in file EasyCAT.h"
-  #endif
+    // cannot be defined at the same time
+    #ifdef CUST_BYTE_NUM_IN
+        #error "BYTE_NUM and CUST_BYTE_NUM_IN cannot be defined at the same time !!!!"
+        #error "define them correctly in file EasyCAT.h"
+    #endif
 #endif
 
-#ifdef BYTE_NUM                     //--- for BYTE_NUM we accept only 16  32  64  128 --
+// check that BYTE_NUM is only either 16, 32, 64, 128
+#ifdef BYTE_NUM
+    #if ((BYTE_NUM !=16) && (BYTE_NUM !=32) && (BYTE_NUM !=64)  && (BYTE_NUM !=128))
+        #error "BYTE_NUM must be 16, 32, 64 or 128 !!! define it correctly in file EasyCAT.h"
+    #endif
 
-#if ((BYTE_NUM !=16) && (BYTE_NUM !=32) && (BYTE_NUM !=64)  && (BYTE_NUM !=128))
-    #error "BYTE_NUM must be 16, 32, 64 or 128 !!! define it correctly in file EasyCAT.h"
-  #endif
-
+// if CUSTOM_BYTE_NUM_OUT or CUSTOM_BYTE_NUM_IN is defined make sure
+// it is within an appropriate range
 #else
-                                   //--- CUST_BYTE_NUM_OUT and CUST_BYTE_NUM_IN --------
-                                   //    must be max 128
-  #if (CUST_BYTE_NUM_OUT > 128)
-    #error "CUST_BYTE_NUM_OUT must be max 128 !!! define it correctly in file EasyCAT.h"
-  #endif
+    #if (CUST_BYTE_NUM_OUT > 128)
+        #error "CUST_BYTE_NUM_OUT must be max 128 !!! define it correctly in file EasyCAT.h"
+    #endif
 
-  #if (CUST_BYTE_NUM_IN > 128)
-    #error "CUST_BYTE_NUM_IN must be max 128 !!! define it correctly in file EasyCAT.h"
-  #endif
-
+    #if (CUST_BYTE_NUM_IN > 128)
+        #error "CUST_BYTE_NUM_IN must be max 128 !!! define it correctly in file EasyCAT.h"
+    #endif
 #endif
 
-//---- LAN9252 registers --------------------------------------------------------------------------
+/*********************End of Pre-Processor error checking ****************/
+
+/*********************Start of LAN9252 register addresses**************************/
 
 //---- access to EtherCAT registers -------------------
 
@@ -246,19 +249,23 @@
 // Error checking
 #define ETHERCAT_INIT_TIMEOUT 1000
 
-typedef union
+union ULONG
 {
     uint32_t Long;
     uint16_t Word[2];
     uint8_t Byte[4];
-} ULONG;
-
-//-------------------------------------------  Input/Output buffers for Standard Mode -----------
-#ifdef BYTE_NUM
+};
+typedef union ULONG ULONG;
 
 /**********InputFrames**********/
 
 // used to avoid padding
+/**
+ * ControlSignalEtherCATFrame_IN
+ * Contains all of the data for an input control signal frame
+ * from the master computer
+ * Note the "__attribute__((__packed__))" is to prevent padding
+ */
 struct __attribute__((__packed__)) ControlSignalEtherCATFrame_IN
 {
     uint8_t signalFromMaster;
@@ -271,7 +278,12 @@ struct __attribute__((__packed__)) ControlSignalEtherCATFrame_IN
 };
 typedef struct ControlSignalEtherCATFrame_IN ControlSignalEtherCATFrame_IN;
 
-// used to avoid padding
+/**
+ * LocationDebugSignalEtherCATFrame_IN
+ * Contains all of the data for an input location debug signal frame
+ * from the master computer
+ * Note the "__attribute__((__packed__))" is to prevent padding
+ */
 struct __attribute__((__packed__)) LocationDebugSignalEtherCATFrame_IN
 {
     uint8_t signalFromMaster;
@@ -281,7 +293,12 @@ struct __attribute__((__packed__)) LocationDebugSignalEtherCATFrame_IN
 };
 typedef struct LocationDebugSignalEtherCATFrame_IN LocationDebugSignalEtherCATFrame_IN;
 
-// used to avoid padding
+/**
+ * InitSignal0EtherCATFrame_IN
+ * Contains all of the data for the 0th input initialization signal frame
+ * form the master computer
+ * Note the "__attribute__((__packed__))" is to prevent padding
+ */
 struct __attribute__((__packed__)) InitSignal0EtherCATFrame_IN
 {
     uint8_t signalFromMaster;
@@ -297,7 +314,12 @@ struct __attribute__((__packed__)) InitSignal0EtherCATFrame_IN
 };
 typedef struct InitSignal0EtherCATFrame_IN InitSignal0EtherCATFrame_IN;
 
-// used to avoid padding
+/**
+ * InitSignal1EtherCATFrame_IN
+ * Contains all of the data for the 1st input initialization signal frame
+ * form the master computer
+ * Note the "__attribute__((__packed__))" is to prevent padding
+ */
 struct __attribute__((__packed__)) InitSignal1EtherCATFrame_IN
 {
     uint8_t signalFromMaster;
@@ -313,7 +335,12 @@ struct __attribute__((__packed__)) InitSignal1EtherCATFrame_IN
 };
 typedef struct InitSignal1EtherCATFrame_IN InitSignal1EtherCATFrame_IN;
 
-// used to avoid padding
+/**
+ * InitSignal2EtherCATFrame_IN
+ * Contains all of the data for the 2nd input initialization signal frame
+ * form the master computer
+ * Note the "__attribute__((__packed__))" is to prevent padding
+ */
 struct __attribute__((__packed__)) InitSignal2EtherCATFrame_IN
 {
     uint8_t signalFromMaster;
@@ -330,7 +357,12 @@ struct __attribute__((__packed__)) InitSignal2EtherCATFrame_IN
 };
 typedef struct InitSignal2EtherCATFrame_IN InitSignal2EtherCATFrame_IN;
 
-// used to avoid padding
+/**
+ * InitSignal3EtherCATFrame_IN
+ * Contains all of the data for the 3rd input initialization signal frame
+ * form the master computer
+ * Note the "__attribute__((__packed__))" is to prevent padding
+ */
 struct __attribute__((__packed__)) InitSignal3EtherCATFrame_IN
 {
     uint8_t signalFromMaster;
@@ -347,7 +379,12 @@ struct __attribute__((__packed__)) InitSignal3EtherCATFrame_IN
 };
 typedef struct InitSignal3EtherCATFrame_IN InitSignal3EtherCATFrame_IN;
 
-// used to avoid padding
+/**
+ * InitSignal4EtherCATFrame_IN
+ * Contains all of the data for the 4th input initialization signal frame
+ * form the master computer
+ * Note the "__attribute__((__packed__))" is to prevent padding
+ */
 struct __attribute__((__packed__)) InitSignal4EtherCATFrame_IN
 {
     uint8_t signalFromMaster;
@@ -358,7 +395,12 @@ struct __attribute__((__packed__)) InitSignal4EtherCATFrame_IN
 };
 typedef struct InitSignal4EtherCATFrame_IN InitSignal4EtherCATFrame_IN;
 
-// used to avoid padding
+/**
+ * InitSignal5EtherCATFrame_IN
+ * Contains all of the data for the 5th input initialization signal frame
+ * form the master computer
+ * Note the "__attribute__((__packed__))" is to prevent padding
+ */
 struct __attribute__((__packed__)) InitSignal5EtherCATFrame_IN
 {
     uint8_t signalFromMaster;
@@ -369,7 +411,11 @@ struct __attribute__((__packed__)) InitSignal5EtherCATFrame_IN
 };
 typedef struct InitSignal5EtherCATFrame_IN InitSignal5EtherCATFrame_IN;
 
-// used to avoid padding
+/**
+ * InitSignalHeaderEtherCATFrame_IN
+ * Contains all of the data for the header of the initialization frame
+ * Note the "__attribute__((__packed__))" is to prevent padding
+ */
 struct __attribute__((__packed__)) InitSignalHeaderEtherCATFrame_IN
 {
     uint8_t signalFromMaster;
@@ -379,9 +425,12 @@ struct __attribute__((__packed__)) InitSignalHeaderEtherCATFrame_IN
 };
 typedef struct InitSignalHeaderEtherCATFrame_IN InitSignalHeaderEtherCATFrame_IN;
 
-/**********OutputFrames**********/
-
-// used to avoid padding
+/**
+ * ControlSignalEtherCATFrame_OUT
+ * Contains all of the data for an output control signal to send
+ * to the master computer
+ * Note the "__attribute__((__packed__))" is to prevent padding
+ */
 struct __attribute__((__packed__)) ControlSignalEtherCATFrame_OUT
 {
     uint8_t signalToMaster;
@@ -410,7 +459,12 @@ struct __attribute__((__packed__)) ControlSignalEtherCATFrame_OUT
 };
 typedef struct ControlSignalEtherCATFrame_OUT ControlSignalEtherCATFrame_OUT;
 
-// used to avoid padding
+/**
+ * LocationDebugSignalEtherCATFrame_OUT
+ * Contains all of the data for an output location debug signal
+ * to send to the master computer
+ * Note the "__attribute__((__packed__))" is to prevent padding
+ */
 struct __attribute__((__packed__)) LocationDebugSignalEtherCATFrame_OUT
 {
     uint8_t signalFromMaster;
@@ -420,7 +474,11 @@ struct __attribute__((__packed__)) LocationDebugSignalEtherCATFrame_OUT
 };
 typedef struct LocationDebugSignalEtherCATFrame_OUT LocationDebugSignalEtherCATFrame_OUT;
 
-// used to avoid padding
+/**
+ * InitSignalEtherCATFrame_OUT
+ * Contains all of the data for an output initialization signal
+ * responce frame which is sent to the master
+ */
 struct __attribute__((__packed__)) InitSignalEtherCATFrame_OUT
 {
     uint8_t signalFromMaster;
@@ -431,7 +489,11 @@ struct __attribute__((__packed__)) InitSignalEtherCATFrame_OUT
 };
 typedef struct InitSignalEtherCATFrame_OUT InitSignalEtherCATFrame_OUT;
 
-// the input frames which come from the master
+/**
+ * EtherCATFrames_IN
+ * A union of all of the input etherCAT frames which can be
+ * received from the master computer
+ */
 union EtherCATFrames_IN
 {
     ControlSignalEtherCATFrame_IN controlSignalFrame;
@@ -447,7 +509,11 @@ union EtherCATFrames_IN
 };
 typedef union EtherCATFrames_IN EtherCATFrames_IN;
 
-// the output frames which are sent to the master
+/**
+ * EtherCATFrames_OUT
+ * A union of all of the output etherCAT frames which can be
+ * send to the master computer
+ */
 union EtherCATFrames_OUT
 {
     ControlSignalEtherCATFrame_OUT controlSignalFrame;
@@ -457,22 +523,30 @@ union EtherCATFrames_OUT
 };
 typedef union EtherCATFrames_OUT EtherCATFrames_OUT;
 
+// Initialize the EtherCAT board
 uint16_t EtherCAT_Init(EtherCATFrames_OUT *etherCATOutputFrames);
-uint16_t EtherCAT_MainTask(EtherCATFrames_OUT *etherCATOutputFrames,
-                           EtherCATFrames_IN *etherCATInputFrames);
-uint16_t SPI_Transfer(uint16_t value);
 
+// run the data transfer to and from the master computer
+uint16_t EtherCAT_MainTask(EtherCATFrames_OUT *etherCATOutputFrames, EtherCATFrames_IN *etherCATInputFrames);
+
+// directly write to a register
 void LAN9252WriteRegisterDirect(uint16_t address, uint32_t dataToSend);
+
+// directly read from a register
 uint32_t LAN9252ReadRegisterDirect(uint16_t address, uint16_t length);
 
-void LAN9252WriteRegisterIndirect(uint16_t address, uint32_t dataToSend,
-                                  uint16_t length);
+// indirectly write to a register
+void LAN9252WriteRegisterIndirect(uint16_t address, uint32_t dataToSend, uint16_t length);
+
+// indirectly read from a register(s)
 uint32_t LAN9252ReadRegisterIndirect(uint16_t address, uint16_t length);
 uint32_t LAN9252ReadRegisterIndirectOneByte(uint16_t address);
 
+// Read/Write to the RAM FIFO
 void LAN9252ReadProcRamFifo(EtherCATFrames_IN *etherCATInputFrames);
 void LAN9252WriteProcRamFifo(EtherCATFrames_OUT *etherCATOutputFrames);
 
-#endif
+// Transfer SPI data to and from the device
+uint16_t SPI_Transfer(uint16_t value);
 
 #endif
