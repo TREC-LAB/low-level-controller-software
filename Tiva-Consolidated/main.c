@@ -117,8 +117,8 @@ void Timer1AIntHandler(void)
             pandora.signalToMaster = HALT_SIGNAL_TM;
 
             // Stop motor
-            pandora.actuator0.dutyCycle = 0;
-            pandora.actuator1.dutyCycle = 0;
+            pandora.actuator0.pwmGenerator.dutyCycle = 0;
+            pandora.actuator1.pwmGenerator.dutyCycle = 0;
             SendPWMSignal(&pandora.actuator0);
             SendPWMSignal(&pandora.actuator1);
 
@@ -135,8 +135,8 @@ void Timer1AIntHandler(void)
     else
     {
         // Stop motors if not running estop interrupt
-        pandora.actuator0.dutyCycle = 0;
-        pandora.actuator1.dutyCycle = 0;
+        pandora.actuator0.pwmGenerator.dutyCycle = 0;
+        pandora.actuator1.pwmGenerator.dutyCycle = 0;
         SendPWMSignal(&pandora.actuator0);
         SendPWMSignal(&pandora.actuator1);
     }

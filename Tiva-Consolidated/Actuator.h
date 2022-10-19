@@ -20,10 +20,11 @@
 struct Actuator
 {
     QEIEncoder motorEncoder;
-    float dutyCycle;
-    uint8_t direction;
+//    float dutyCycle;
+//    uint8_t direction;
     uint8_t actuatorNumber;     // 0 or 1 for where the actuator plugs into the sensor board
     ForceSensor forceSensor;
+    PWMGenerator pwmGenerator;
 };
 typedef struct Actuator Actuator;
 

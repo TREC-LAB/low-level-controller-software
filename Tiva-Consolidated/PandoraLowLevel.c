@@ -385,8 +385,8 @@ void checkActuatorDisable(PandoraLowLevel* pandora)
     if(pandora->signalFromMaster != CONTROL_SIGNAL)
     {
         // STOP MOTORS
-        pandora->actuator0.dutyCycle = 0;
-        pandora->actuator1.dutyCycle = 0;
+        pandora->actuator0.pwmGenerator.dutyCycle = 0;
+        pandora->actuator1.pwmGenerator.dutyCycle = 0;
         SendPWMSignal(&pandora->actuator0);
         SendPWMSignal(&pandora->actuator1);
     }
@@ -411,16 +411,16 @@ void storeDataFromMaster(PandoraLowLevel* pandora)
     if (pandora->signalFromMaster == CONTROL_SIGNAL)
     {
         // Set joint 0 direction
-        pandora->actuator0.direction = pandora->etherCATInputFrames.controlSignalFrame.actuator0Direction;
+        pandora->actuator0.pwmGenerator.direction = pandora->etherCATInputFrames.controlSignalFrame.actuator0Direction;
 
         // Set joint 0 duty cycle
-        pandora->actuator0.dutyCycle = pandora->etherCATInputFrames.controlSignalFrame.actuator0DutyCycle;
+        pandora->actuator0.pwmGenerator.dutyCycle = pandora->etherCATInputFrames.controlSignalFrame.actuator0DutyCycle;
 
         // Set joint 1 direction
-        pandora->actuator1.direction = pandora->etherCATInputFrames.controlSignalFrame.actuator1Direction;
+        pandora->actuator1.pwmGenerator.direction = pandora->etherCATInputFrames.controlSignalFrame.actuator1Direction;
 
         // Set joint 1 duty cycle
-        pandora->actuator1.dutyCycle = pandora->etherCATInputFrames.controlSignalFrame.actuator1DutyCycle;
+        pandora->actuator1.pwmGenerator.dutyCycle = pandora->etherCATInputFrames.controlSignalFrame.actuator1DutyCycle;
     }
     else if (pandora->signalFromMaster == LOCATION_DEBUG_SIGNAL)
     {
