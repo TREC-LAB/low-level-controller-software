@@ -47,9 +47,7 @@ Actuator actuatorConstruct(uint8_t actuatorNumber, uint32_t QEIBase, uint16_t QE
  */
 void SendPWMSignal(Actuator* actuator)
 {
-    setPulseWidth(actuator->actuatorNumber,actuator->pwmGenerator.pwmFrequency,
-                  actuator->pwmGenerator.dutyCycle,SysCtlClockGet(),
-                  actuator->pwmGenerator.direction);
+    setPulseWidth(actuator->actuatorNumber, &actuator->pwmGenerator, SysCtlClockGet());
 }
 
 /**
