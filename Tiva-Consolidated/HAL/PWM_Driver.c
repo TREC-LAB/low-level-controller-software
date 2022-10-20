@@ -73,74 +73,87 @@ PWMGenerator PWMGeneratorConstruct(uint16_t pwmFrequency)
  */
 void setPulseWidth(uint8_t actuator, PWMGenerator* pwmGenerator, uint32_t sysClock)
 {
-    uint32_t pwmClockSpeed = sysClock/2;                                                                        //get current processor clock speed
-//    actuator = act;
-    if (dc < 0.1)
-    {
-        dc = 0;
-    }
-    else if(dc >= 100.0)
-    {
-        dc = 100.0;
-    }
+    // get the pwmClockSpeed
+    uint32_t pwmClockSpeed = sysClock / 2;
+
+    // Set PWM dead zone
+    if (pwmGenerator->dutyCycle < 0.1)
+        pwmGenerator->dutyCycle = 0;
+
+    // prevent the pwm from going over the maximum value
+    else if(pwmGenerator->dutyCycle >= 100.0)
+        pwmGenerator->dutyCycle = 100.0;
 
     //Added SysCtlPeripheralEnable for GPIO and PWM, Modified the PWM generator in the Configure and PeriodSet to generator 0
     SysCtlPWMClockSet(SYSCTL_PWMDIV_2);
 
+    // TODO: Remove this and replace it with a better method
+    // switch case statement for each actuator number
     switch(actuator)
     {
-    case 0: //Actuator 0
 
-        //set pwm clock to 20MHz, a quarter of system clock. This should give the resolution needed to set duty cycle in increments of 0.1%
-        //Pin PE4
-        PWMGenConfigure(PWM0_BASE, PWM_GEN_2, PWM_GEN_MODE_DOWN | PWM_GEN_MODE_NO_SYNC);                                    //Configure the PWM generator for count down mode with immediate updates to the parameters.
-        PWMGenPeriodSet(PWM0_BASE, PWM_GEN_2, (int)((float)pwmClockSpeed/(float)pwmGenerator->pwmFrequency));                             //Set the period of the pwm signal using the pwm clock frequency and the desired signal frequency
-        PWMPulseWidthSet(PWM0_BASE, PWM_OUT_4, (int)(((float)pwmClockSpeed/(float)pwmGenerator->pwmFrequency)*((float)pwmGenerator->dutyCycle/100)));  //Set the pulse width of PWM2 with duty cycle. PWM_OUT_2 refers to the second PWM2.
-        PWMGenEnable(PWM0_BASE, PWM_GEN_2);                                                                                 //Start the timers in generator 2 which controls PWM2.
+    // Actuator 0
+    case 0:
 
-        //output duty cycle and direction pin
-        if (dc == 0)
-        {
+        //Configure the PWM generator for count down mode with immediate updates to the parameters.
+        PWMGenConfigure(PWM0_BASE, PWM_GEN_2, PWM_GEN_MODE_DOWN | PWM_GEN_MODE_NO_SYNC);
+
+        //Set the period of the pwm signal using the pwm clock frequency and the desired signal frequency
+        PWMGenPeriodSet(PWM0_BASE, PWM_GEN_2, (int)((float)pwmClockSpeed/(float)pwmGenerator->pwmFrequency));
+
+        //Set the pulse width of PWM2 with duty cycle. PWM_OUT_2 refers to the second PWM2.
+        PWMPulseWidthSet(PWM0_BASE, PWM_OUT_4, (int)(((float)pwmClockSpeed/(float)pwmGenerator->pwmFrequency)*((float)pwmGenerator->dutyCycle/100)));
+
+        // Enable the PWM
+        PWMGenEnable(PWM0_BASE, PWM_GEN_2);
+
+        // Output the pwm duty cycle
+        if (pwmGenerator->dutyCycle == 0)
            PWMOutputState(PWM0_BASE, (PWM_OUT_4_BIT), false);
-        }
         else
-        {
             PWMOutputState(PWM0_BASE, (PWM_OUT_4_BIT), true);
-        }
-        if (dir == 0) // Direction is Clockwise
-        {
+
+        // Output the direction pin
+        // Direction is Clockwise
+        if (pwmGenerator->direction == 0)
             GPIOPinWrite(GPIO_PORTB_BASE, GPIO_PIN_2, 0);
-        }
-        else // Direction is Counter-Clockwise
-        {
+
+        // Direction is Counter-Clockwise
+        else
             GPIOPinWrite(GPIO_PORTB_BASE, GPIO_PIN_2, 0xff);
-        }
+
         break;
 
-    case 1: //Actuator 1
-        //set pwm clock to 20MHz, a quarter of system clock. This should give the resolution needed to set duty cycle in increments of 0.1%
-        //PB4
-        PWMGenConfigure(PWM0_BASE, PWM_GEN_0, PWM_GEN_MODE_DOWN | PWM_GEN_MODE_NO_SYNC);                                    //Configure the PWM generator for count down mode with immediate updates to the parameters.
-        PWMGenPeriodSet(PWM0_BASE, PWM_GEN_0, (int)((float)pwmClockSpeed/(float)pwmFrequency));                             //Set the period of the pwm signal using the pwm clock frequency and the desired signal frequency
-        PWMPulseWidthSet(PWM0_BASE, PWM_OUT_0, (int)(((float)pwmClockSpeed/(float)pwmFrequency)*((float)dc/100)));  //Set the pulse width of PWM2 with duty cycle. PWM_OUT_2 refers to the second PWM2.
+    // Actuator 1
+    case 1:
+
+        // Configure the PWM generator for count down mode with immediate updates to the parameters.
+        PWMGenConfigure(PWM0_BASE, PWM_GEN_0, PWM_GEN_MODE_DOWN | PWM_GEN_MODE_NO_SYNC);
+
+        // Set the period of the pwm signal using the pwm clock frequency and the desired signal frequency
+        PWMGenPeriodSet(PWM0_BASE, PWM_GEN_0, (int)((float)pwmClockSpeed/(float)pwmGenerator->pwmFrequency));
+
+        // Set the pulse width of PWM2 with duty cycle. PWM_OUT_2 refers to the second PWM2.
+        PWMPulseWidthSet(PWM0_BASE, PWM_OUT_0, (int)(((float)pwmClockSpeed/(float)pwmGenerator->pwmFrequency)*((float)pwmGenerator->dutyCycle/100)));
+
+        // Enable the PWM
         PWMGenEnable(PWM0_BASE, PWM_GEN_0);
-        //output duty cycle and direction pin
-        if (dc == 0)
-        {
+
+        // Output the pwm duty cycle
+        if (pwmGenerator->dutyCycle == 0)
             PWMOutputState(PWM0_BASE, (PWM_OUT_0_BIT), false);
-        }
         else
-        {
             PWMOutputState(PWM0_BASE, (PWM_OUT_0_BIT), true);
-        }
-        if (dir == 0) // Direction is Clockwise
-        {
+
+        // Output the direction pin
+        // Direction is Clockwise
+        if (pwmGenerator->direction == 0)
             GPIOPinWrite(GPIO_PORTE_BASE, GPIO_PIN_1, 0);
-        }
-        else // Direction is Counter-Clockwise
-        {
+
+        // Direction is Counter-Clockwise
+        else
             GPIOPinWrite(GPIO_PORTE_BASE, GPIO_PIN_1, 0xff);
-        }
+
         break;
       }
 }
