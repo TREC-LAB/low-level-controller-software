@@ -31,45 +31,6 @@
 #define LED_ON_DELAY_TIME 1000
 #define LED_OFF_DELAY_TIME 500
 
-
-// For ethercat communication
-//struct PROCBUFFER_OUT MasterToTiva;
-//struct PROCBUFFER_IN TivaToMaster;
-
-
-/**
- * TivaLocations
- * An enumeration of all of the different locations
- * the Tiva Board can be on Athena. The enumeration
- * values start at 1
- */
-enum TivaLocations
-{
-    notValidLocation,
-    hipL,
-    hipR,
-    thighL,
-    thighR,
-    ankleL,
-    ankleR,
-    DEBUG   // a location for debugging
-};
-typedef enum TivaLocations TivaLocations;
-
-/**
- * TivaLocationBitSet
- * The bits that are used to determine which location
- * the Tiva is at. These boolean values are determined
- * by the pin configuration of the Tiva at startup
- */
-struct TivaLocationBitSet
-{
-    bool Bit0 : 1;
-    bool Bit1 : 1;
-    bool Bit2 : 1;
-};
-typedef struct TivaLocationBitSet TivaLocationBitSet;
-
 /**
  * PandoraLowLevelSettings
  * A structure which holds settings regarding how
@@ -169,9 +130,6 @@ void enableDebugLEDS();
 
 // disable the debug LEDS
 void disableDebugLEDs();
-
-// LED patterns for when the master is pinging a Tiva location
-void checkLocationLEDS(TivaLocations locationGuess, TivaLocations actualLocation);
 
 // LED patterns for when the Tiva is not connected to the master
 void notConnectedLEDS();

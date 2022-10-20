@@ -248,57 +248,13 @@ void enableDebugLEDS()
  */
 void disableDebugLEDs()
 {
+    // set all the LEDs to be off
     GPIOPinWrite(GPIO_PORTB_BASE, RED_LED, 0);
     GPIOPinWrite(GPIO_PORTB_BASE, GREEN_LED, 0);
     GPIOPinWrite(GPIO_PORTB_BASE, BLUE_LED, 0);
+
+    // disable the LED peripheral on the Tiva
     SysCtlPeripheralDisable(LED_PERIPH);
-}
-
-/**
- * checkLocationLEDS
- *
- * Emits certain blink codes or solid colors depending on if the
- * Tiva Location is the same as the location guess input.
- *
- * @param locationGuess: the guess location
- * @param actualLocation: the actual location the Tiva is in which
- * is determined by the location pins at startup
- */
-void checkLocationLEDS(TivaLocations locationGuess, TivaLocations actualLocation)
-{
-    static bool led_on = false;
-    static uint32_t led_start = 0;
-    static uint32_t led_current = 0;
-
-    if(locationGuess != actualLocation || locationGuess == notValidLocation)
-    {
-        // if the location guess is wrong or not value, turn the LEDS to yellow
-        GPIOPinWrite(GPIO_PORTB_BASE, RED_LED, RED_LED);
-        GPIOPinWrite(GPIO_PORTB_BASE, GREEN_LED, GREEN_LED);
-        GPIOPinWrite(GPIO_PORTB_BASE, BLUE_LED, 0);
-    }
-    else
-    {
-        // if the location guess matches the actual location
-        // then blink blue
-        if (!led_on && (abs(led_current - led_start) > 100))
-        {
-            GPIOPinWrite(GPIO_PORTB_BASE, RED_LED, 0);
-            GPIOPinWrite(GPIO_PORTB_BASE, GREEN_LED, 0);
-            GPIOPinWrite(GPIO_PORTB_BASE, BLUE_LED, BLUE_LED);
-            led_on = true;
-            led_start = 0;
-            led_current = 0;
-        }
-        else if (led_on && (abs(led_current - led_start) > 50))
-        {
-            GPIOPinWrite(GPIO_PORTB_BASE, BLUE_LED, 0);
-            led_on = false;
-            led_start = 0;
-            led_current = 0;
-        }
-        led_current++;
-    }
 }
 
 /**
