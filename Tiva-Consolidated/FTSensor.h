@@ -50,12 +50,19 @@ struct FTSensor
 };
 typedef struct FTSensor FTSensor;
 
+// constructs an FT sensor
 FTSensor ftSensorConstruct(void);
 
+// enalbes the FT sensor
 void ftSensorEnable(FTSensor* ftSensor);
+
+// sends a request to the FT sensor to get a responce
 void SendFTSensorData(FTSensor* ftSensor);
 
+// calibrate the FT sensor
 void ftSensorCalibrate(FTSensor* ftSensor);
+
+// read force and torque data from the FT sensor
 void readForceTorqueData(FTSensor* ftSensor);
 
 #endif
