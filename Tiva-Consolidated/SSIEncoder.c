@@ -20,16 +20,23 @@ SSIEncoder ssiEncoderConstruct(uint32_t SSIBase, uint16_t sampleRate, SSIEncoder
 {
     SSIEncoder encoder;
 
+    // store the encoder brand accordingly
     encoder.encoderBrand = encoderBrand;
+
+    // store the SSI Base accordingly
     encoder.SSIBase = SSIBase;
+
+    // store the sample rate accordingly
+    encoder.sampleRate = sampleRate;
+
+    // initialize the other values to raw
     encoder.raw = 0;
     encoder.rawPrev = 0;
     encoder.rawVelF = 0;
     encoder.rawVelPrev = 0;
     encoder.rawVel = 0;
 
-    encoder.sampleRate = sampleRate;
-
+    // by default the ssi encoder will be disabled
     encoder.enabled = false;
 
     return encoder;
@@ -42,7 +49,8 @@ SSIEncoder ssiEncoderConstruct(uint32_t SSIBase, uint16_t sampleRate, SSIEncoder
  */
 void enableSSIEncoder(SSIEncoder* encoder)
 {
-    // TODO: Add error checking if the SSIBase is not correct
+    // enable the encoder based on its SSI Base
+    // and the brand of the encoder
     if (encoder->SSIBase == SSI0_BASE)
     {
         if (encoder->encoderBrand == Gurley_Encoder)
@@ -62,6 +70,7 @@ void enableSSIEncoder(SSIEncoder* encoder)
     else
         return;
 
+    // set the encoder to be enabled
     encoder->enabled = true;
 
 }
@@ -73,8 +82,7 @@ void enableSSIEncoder(SSIEncoder* encoder)
  */
 void disableSSIEncoder(SSIEncoder* encoder)
 {
-    // TODO: See if when a encoder if disabled if all of the members of the
-    // encoder struct should be set to 0 (with the exception of the SSI Base)
+    // disable the encoder based on its SSI Base
     if(encoder->SSIBase == SSI0_BASE)
         SSI0_Disable();
     else if(encoder->SSIBase == SSI1_BASE)
@@ -84,6 +92,7 @@ void disableSSIEncoder(SSIEncoder* encoder)
     else
         return;
 
+    // disable the encoder
     encoder->enabled = false;
 }
 
@@ -96,7 +105,7 @@ void disableSSIEncoder(SSIEncoder* encoder)
 void readAbsEncoder(SSIEncoder* encoder)
 {
     SSIDataPut(encoder->SSIBase, 0);
-    while(SSIBusy(encoder->SSIBase)) {}
+    while(SSIBusy(encoder->SSIBase));
     // read and store it in the encoder structure
     SSIDataGet(encoder->SSIBase, &encoder->raw);
 }
