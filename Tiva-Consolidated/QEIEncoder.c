@@ -19,18 +19,25 @@ QEIEncoder qeiEncoderConstruct(uint32_t QEIBase, uint16_t sampleRate, int32_t co
 {
     QEIEncoder encoder;
 
+    // set the QEI Base accordingly
     encoder.QEIBase = QEIBase;
+
+    // set the sample rate accordingly
     encoder.sampleRate = sampleRate;
 
+    // set the counts per rotation accordingly
+    encoder.countsPerRotation = countsPerRotation;
+
+    // by default the encoder is disabled
     encoder.enabled = false;
 
+    // initialize the rest of the values to 0
     encoder.raw = 0;
     encoder.speed = 0;
     encoder.direction = 0;
     encoder.rawVel = 0;
 
-    encoder.countsPerRotation = countsPerRotation;
-
+    // return the new encoder
     return encoder;
 }
 
@@ -42,11 +49,14 @@ QEIEncoder qeiEncoderConstruct(uint32_t QEIBase, uint16_t sampleRate, int32_t co
  */
 void enableQEIEncoder(QEIEncoder* encoder)
 {
+    // configure the encoder based on what QEI
+    // Base it is on
     if(encoder->QEIBase == QEI0_BASE)
         QEIConfig0();
     else if(encoder->QEIBase == QEI1_BASE)
         QEIConfig1();
 
+    // set the enabled flag to true
     encoder->enabled = true;
 }
 
@@ -58,6 +68,7 @@ void enableQEIEncoder(QEIEncoder* encoder)
  */
 void readQEIEncoderPosition(QEIEncoder* encoder)
 {
+    // store the raw value of the encoder
     encoder->raw = QEIPositionGet(encoder->QEIBase);
 }
 
@@ -69,8 +80,12 @@ void readQEIEncoderPosition(QEIEncoder* encoder)
  */
 void readQEIEncoderVelocity(QEIEncoder* encoder)
 {
+    // get the speed of the encoder
     encoder->speed = QEIVelocityGet(encoder->QEIBase);
 
+    // get the direction of the encoder
     encoder->direction = QEIDirectionGet(encoder->QEIBase);
+
+    // get the raw velocity of the encoder
     encoder->rawVel = encoder->direction*encoder->speed*encoder->sampleRate/(encoder->countsPerRotation * 4);
 }

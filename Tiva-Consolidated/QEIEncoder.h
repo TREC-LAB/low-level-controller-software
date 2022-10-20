@@ -16,17 +16,29 @@
  */
 struct QEIEncoder
 {
-    uint32_t QEIBase;   // QEI0_BASE, QEI1_Base, etc.
+   // QEI0_BASE, QEI1_Base, etc.
+    uint32_t QEIBase;
 
+    // a flag to determine if the
+    // encoder is enabled
     bool enabled;
 
+    // the sample rate of the QEI encoder
     uint16_t sampleRate;
 
+    // the raw value of the encoder
     uint32_t raw;
+
+    // the speed of the encoder
     int32_t speed;
+
+    // the direction of the encoder
     int32_t direction;
+
+    // the raw velocity of the encoder
     int32_t rawVel;
 
+    // the counts per rotation of the encoder
     int32_t countsPerRotation;
 };
 typedef struct QEIEncoder QEIEncoder;
