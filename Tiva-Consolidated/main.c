@@ -1,33 +1,16 @@
+/**
+ * main.c
+ * @author: Nick Tremaroli
+ * Contains the main function which is used for initialization and all of the interrupts
+ * used for processing. After the main functions is done with initialization, it enables the
+ * interrupts which run routinely based on a timer. These interrupts are responsible for communicating
+ * with the master computer and checking the virtual Estop conditions.
+ */
+
 #include <stdint.h>
 #include <stdio.h>
 #include <stdbool.h>
-#include <math.h>
-#include <time.h>
-#include <string.h>
 #include <stdlib.h>
-
-// TivaWare
-#include "inc/hw_ints.h"
-#include "inc/hw_ssi.h"
-#include "inc/hw_types.h"
-#include "inc/hw_memmap.h"
-#include "inc/hw_gpio.h"
-#include "inc/hw_types.h"
-#include "driverlib/debug.h"
-#include "driverlib/fpu.h"
-#include "driverlib/gpio.h"
-#include "driverlib/interrupt.h"
-#include "driverlib/pin_map.h"
-#include "driverlib/rom.h"
-#include "driverlib/rom_map.h"
-#include "driverlib/sysctl.h"
-#include "driverlib/uart.h"
-#include "driverlib/timer.h"
-#include "driverlib/qei.h"
-#include "driverlib/ssi.h"
-#include "driverlib/adc.h"
-#include "driverlib/pwm.h"
-#include "utils/uartstdio.h"
 
 // HAL
 #include "HAL/LAN9252_TI_TIVA.h"
@@ -39,18 +22,26 @@
 #include "EtherCAT_FrameData.h"
 #include "PandoraLowLevel.h"
 
+// the main pandora structure
 PandoraLowLevel pandora;
 
+// the variables associated with running
+// certain parts of the timer
 volatile bool runTimer1 = true;
 volatile bool runTimer3 = true;
 
+// the rates at which to run the interrupts
 uint16_t sample_rate = 1000; // Hz
 uint16_t estop_rate = 1000;  // Hz
 
-
+// puts the Tiva in a halt state if the Estop is reached
 bool EngageVirtualEStop(PandoraLowLevel* pandora);
 
-
+/**
+ * main
+ * This is where the program starts. Main initializes the Tiva and
+ * then enables the interrupts to tak over the processing after initialization
+ */
 int main(void)
 {
     //Set the system clock to 80Mhz
@@ -65,10 +56,14 @@ int main(void)
     // stores the master's initialization data
     while(!pandora.initialized)
     {
-        GetAndSendDataToMaster(&pandora);
-        pandora.prevProcessIdFromMaster = pandora.processIdFromMaster;
-        pandora.processIdFromMaster = pandora.etherCATInputFrames.rawBytes[PROCESS_ID_INDEX];
+        // get and send new data to the master
+        GetAndSendDataToMaster(&pandora.easyCAT);
 
+        // update the process ID variables
+        pandora.prevProcessIdFromMaster = pandora.processIdFromMaster;
+        pandora.processIdFromMaster = pandora.easyCAT.etherCATInputFrames.rawBytes[PROCESS_ID_INDEX];
+
+        // only process this data if the master process ID has updated
         if(pandora.processIdFromMaster != pandora.prevProcessIdFromMaster)
         {
             storeDataFromMaster(&pandora);
@@ -83,8 +78,11 @@ int main(void)
     // Enable processor interrupts
     IntMasterEnable();
 
-    startTimer1(estop_rate); // Start vstop timer
-    startTimer3(sample_rate); // Start motor timer
+    // Start virtual estop timer
+    startTimer1(estop_rate);
+
+    // start controller timer
+    startTimer3(sample_rate);
 
     // loop forever, let the interrupts handle the tasks
     while(1);
@@ -108,11 +106,13 @@ void UART1IntHandler(void) {}
  */
 void Timer1AIntHandler(void)
 {
+    // if the estop should be checked
     if (runTimer1)
     {
+        // check the estop
         if (EngageVirtualEStop(&pandora))
         {
-            // Stop timer1
+            // Stop timer3
             runTimer3 = false;
             pandora.signalToMaster = HALT_SIGNAL_TM;
 
@@ -124,22 +124,26 @@ void Timer1AIntHandler(void)
 
             // Send shutdown signal to master
             haltLEDS();
-            GetAndSendDataToMaster(&pandora);
+            GetAndSendDataToMaster(&pandora.easyCAT);
         }
+        // if the estop is not hit
         else
         {
             runTimer3 = true;
             pandora.signalToMaster = NORMAL_OPERATION;
         }
     }
+    // if the estop is not needed to be checked
     else
     {
-        // Stop motors if not running estop interrupt
+        // stop motors because the estop is not needed
         pandora.actuator0.pwmGenerator.dutyCycle = 0;
         pandora.actuator1.pwmGenerator.dutyCycle = 0;
         SendPWMSignal(&pandora.actuator0);
         SendPWMSignal(&pandora.actuator1);
     }
+
+    // clear the interrupt
     TimerIntClear(TIMER1_BASE, TIMER_TIMA_TIMEOUT);
 }
 
@@ -179,50 +183,72 @@ void Timer2AIntHandler(void) {}
  */
 void Timer3AIntHandler(void)
 {
-    GetAndSendDataToMaster(&pandora);
-    pandora.signalFromMaster = pandora.etherCATInputFrames.rawBytes[SIGNAL_INDEX];
+    // get and send data to the master
+    GetAndSendDataToMaster(&pandora.easyCAT);
+
+    // get the signal from master
+    pandora.signalFromMaster = pandora.easyCAT.etherCATInputFrames.rawBytes[SIGNAL_INDEX];
+
+    // update sensor values if the signal is a control signal and pandora is initialized
     if (pandora.signalFromMaster == CONTROL_SIGNAL && pandora.initialized)
     {
+        // Send a request to read FT sensor data (will be read from last)
         SendFTSensorData(&pandora.ftSensor);
+
+        // get the updated values from the force sensors
         updateForces(&pandora.actuator0.forceSensor);
         updateForces(&pandora.actuator1.forceSensor);
+
+        // get the updated values for the joint angles
         updateJointAngles(&pandora.joint0);
         updateJointAngles(&pandora.joint1);
+
+        // get the updated positions of the QEI encoders
         readQEIEncoderPosition(&pandora.actuator0.motorEncoder);
         readQEIEncoderPosition(&pandora.actuator1.motorEncoder);
         readQEIEncoderVelocity(&pandora.actuator0.motorEncoder);
         readQEIEncoderVelocity(&pandora.actuator1.motorEncoder);
 
+        // If the IMU is enabled, read from it
         if(pandora.imu.enabled)
             readSensorData(&pandora.imu);
 
+        // read the FT sensor data
         readForceTorqueData(&pandora.ftSensor);
     }
 
-    // Send TivaToMaster and receive MasterToTiva
+    // the data from the master computer should be processed
     if (runTimer3 || pandora.signalFromMaster != CONTROL_SIGNAL)
     {
-
+        // store the current and previous master process IDs
         pandora.prevProcessIdFromMaster = pandora.processIdFromMaster;
-        pandora.processIdFromMaster = pandora.etherCATInputFrames.rawBytes[PROCESS_ID_INDEX];
+        pandora.processIdFromMaster = pandora.easyCAT.etherCATInputFrames.rawBytes[PROCESS_ID_INDEX];
 
+        // if the master process ID has updated
         if(pandora.processIdFromMaster != pandora.prevProcessIdFromMaster)
         {
-            // Read desired Tiva status, duty cycles, and directions from MasterToTiva
+            // store the data from the master computer
             storeDataFromMaster(&pandora);
 
-            // Act according Tiva status
-            // Turns off estop timer if necessary
+            // process the data from the master computer and
+            // turn off estop timer if necessary
             runTimer1 = processDataFromMaster(&pandora);
-             // Populate TivaToMaster data frame
+
+            // load the data to send to the master computer
             loadDataForMaster(&pandora);
         }
+        // if the master process ID has not been updated
         else
         {
+            // process the old data
             runTimer1 = processDataFromMaster(&pandora);
+
+            // load the data to send to the master computer
             loadDataForMaster(&pandora);
         }
     }
+
+    // clear the interrupt
     TimerIntClear(TIMER3_BASE, TIMER_TIMA_TIMEOUT);
 }
 
