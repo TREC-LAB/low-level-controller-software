@@ -34,6 +34,7 @@ ForceSensor forceSensorConstruct(uint32_t ADCBase, float slope, float offset);
 
 // enables a force sensor
 void enableForceSensor(ForceSensor* forceSensor);
+
 // TODO: Add a force sensor disable function
 
 // reads the ram value from the force sensor

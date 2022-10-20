@@ -60,10 +60,17 @@ void enableForceSensor(ForceSensor* forceSensor)
  */
 void readLoadCell(ForceSensor* forceSensor)
 {
-    ADCProcessorTrigger(forceSensor->ADCBase, 0);                       // Causes a processor trigger for a sample sequence, trigger the sample sequence.
-    while(!ADCIntStatusEx(forceSensor->ADCBase, false)){}               // Wait until the sample sequence has completed.
-    ADCIntClear(forceSensor->ADCBase, 0);                               // Clear the ADC interrupt flag generated upon ADC completion.
-    ADCSoftwareOversampleDataGet(forceSensor->ADCBase, 0, &forceSensor->raw, 1);   // Obtain single software averaged ADC value.
+    // Causes a processor trigger for a sample sequence, trigger the sample sequence.
+    ADCProcessorTrigger(forceSensor->ADCBase, 0);
+
+    // Wait until the sample sequence has completed.
+    while(!ADCIntStatusEx(forceSensor->ADCBase, false));
+
+    // Clear the ADC interrupt flag generated upon ADC completion.
+    ADCIntClear(forceSensor->ADCBase, 0);
+
+    // Obtain single software averaged ADC value.
+    ADCSoftwareOversampleDataGet(forceSensor->ADCBase, 0, &forceSensor->raw, 1);
 }
 
 /**
@@ -75,6 +82,9 @@ void readLoadCell(ForceSensor* forceSensor)
  */
 void updateForces(ForceSensor* forceSensor)
 {
+    // read the raw values from the force sensor
     readLoadCell(forceSensor);
+
+    // convert the raw values to newtons
     forceSensor->newtons = forceSensor->raw * forceSensor->slope + forceSensor->offset;
 }
