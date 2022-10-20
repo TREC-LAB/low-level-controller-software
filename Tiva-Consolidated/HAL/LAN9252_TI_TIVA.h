@@ -523,12 +523,6 @@ union EtherCATFrames_OUT
 };
 typedef union EtherCATFrames_OUT EtherCATFrames_OUT;
 
-// Initialize the EtherCAT board
-uint16_t EtherCAT_Init(EtherCATFrames_OUT *etherCATOutputFrames);
-
-// run the data transfer to and from the master computer
-uint16_t EtherCAT_MainTask(EtherCATFrames_OUT *etherCATOutputFrames, EtherCATFrames_IN *etherCATInputFrames);
-
 // directly write to a register
 void LAN9252WriteRegisterDirect(uint16_t address, uint32_t dataToSend);
 
