@@ -31,9 +31,7 @@ Actuator actuatorConstruct(uint8_t actuatorNumber, uint32_t QEIBase, uint16_t QE
 
     actuator.motorEncoder = qeiEncoderConstruct(QEIBase, QEISampleRate, QEICountsPerRotation);
 
-    actuator.dutyCycle = 0;
-
-    actuator.direction = 0;
+    actuator.pwmGenerator = PWMGeneratorConstruct(20000);
 
     actuator.forceSensor = forceSensorConstruct(ADCBase, forceSensorSlope, forceSensorOffset);
 
@@ -49,7 +47,7 @@ Actuator actuatorConstruct(uint8_t actuatorNumber, uint32_t QEIBase, uint16_t QE
  */
 void SendPWMSignal(Actuator* actuator)
 {
-    setPulseWidth(actuator->actuatorNumber,20000,actuator->dutyCycle,SysCtlClockGet(),actuator->direction);
+    setPulseWidth(actuator->actuatorNumber, &actuator->pwmGenerator, SysCtlClockGet());
 }
 
 /**

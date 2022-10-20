@@ -6,9 +6,6 @@
  */
 #include "Callbacks.h"
 
-extern PROCBUFFER_OUT MasterToTiva;
-extern PROCBUFFER_IN TivaToMaster;
-
 PandoraLowLevel pandora;
 
 volatile bool runTimer1 = true;
@@ -23,13 +20,13 @@ void lowLevelStartup(void)
 
     // Initialize tiva
 
-    tivaInitEtherCAT();
+    tivaInitEtherCAT(&pandora);
 
     while(!pandora.initialized)
     {
-        EtherCAT_MainTask();
+        GetAndSendDataToMaster(&pandora.easyCAT);
         pandora.prevProcessIdFromMaster = pandora.processIdFromMaster;
-        pandora.processIdFromMaster = etherCATInputFrames.rawBytes[PROCESS_ID_INDEX];
+        pandora.processIdFromMaster = pandora.easyCAT.etherCATInputFrames.rawBytes[PROCESS_ID_INDEX];
 
         if(pandora.processIdFromMaster != pandora.prevProcessIdFromMaster)
         {
@@ -85,14 +82,14 @@ void checkEstop(void)
             pandora.signalToMaster = HALT_SIGNAL_TM;
 
             // Stop motor
-            pandora.actuator0.dutyCycle = 0;
-            pandora.actuator1.dutyCycle = 0;
+            pandora.actuator0.pwmGenerator.dutyCycle = 0;
+            pandora.actuator1.pwmGenerator.dutyCycle = 0;
             SendPWMSignal(&pandora.actuator0);
             SendPWMSignal(&pandora.actuator1);
 
             // Send shutdown signal to master
             haltLEDS();
-            EtherCAT_MainTask();
+            GetAndSendDataToMaster(&pandora.easyCAT);
         }
         else
         {
@@ -103,8 +100,8 @@ void checkEstop(void)
     else
     {
         // Stop motors if not running estop interrupt
-        pandora.actuator0.dutyCycle = 0;
-        pandora.actuator1.dutyCycle = 0;
+        pandora.actuator0.pwmGenerator.dutyCycle = 0;
+        pandora.actuator1.pwmGenerator.dutyCycle = 0;
         SendPWMSignal(&pandora.actuator0);
         SendPWMSignal(&pandora.actuator1);
     }
@@ -134,8 +131,8 @@ bool EngageVirtualEStop(PandoraLowLevel* pandora)
 
 void readSensors(void)
 {
-    EtherCAT_MainTask();
-    pandora.signalFromMaster = etherCATInputFrames.rawBytes[SIGNAL_INDEX];
+    GetAndSendDataToMaster(&pandora.easyCAT);
+    pandora.signalFromMaster = pandora.easyCAT.etherCATInputFrames.rawBytes[SIGNAL_INDEX];
     if (pandora.signalFromMaster == CONTROL_SIGNAL && pandora.initialized)
     {
         readForceSensors();
@@ -143,7 +140,7 @@ void readSensors(void)
         readMotorPositions();
         readMotorVelocities();
         if(pandora.imu.enabled)
-            ReadIMUData(&pandora.imu);
+            readSensorData(&pandora.imu);
     }
 
     // Send TivaToMaster and receive MasterToTiva
@@ -151,7 +148,7 @@ void readSensors(void)
     {
 
         pandora.prevProcessIdFromMaster = pandora.processIdFromMaster;
-        pandora.processIdFromMaster = etherCATInputFrames.rawBytes[PROCESS_ID_INDEX];
+        pandora.processIdFromMaster = pandora.easyCAT.etherCATInputFrames.rawBytes[PROCESS_ID_INDEX];
 
         if(pandora.processIdFromMaster != pandora.prevProcessIdFromMaster)
         {

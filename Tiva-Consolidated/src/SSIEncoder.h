@@ -28,10 +28,14 @@ typedef enum SSIEncoderBrand SSIEncoderBrand;
 struct SSIEncoder
 {
     enum SSIEncoderBrand encoderBrand;
-    uint32_t SSIBase;   // SSI0_Base, SSI1_Base, etc.
+
+    // SSI0_Base, SSI1_Base, etc.
+    uint32_t SSIBase;
+
     uint16_t sampleRate;
     bool enabled;
 
+    // the raw values
     uint32_t raw;
     uint32_t rawPrev;
     int32_t rawVelF;

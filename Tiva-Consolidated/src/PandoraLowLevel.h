@@ -12,13 +12,16 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#include "HAL/LAN9252_TI_TIVA.h"
 #include "HAL/PWM_Driver.h"
+#include "HAL/Timer_TIVA.h"
+#include "EtherCAT_FrameData.h"
 
 #include "Actuator.h"
 #include "Joint.h"
 #include "IMU.h"
 #include "FTSensor.h"
+#include "EasyCAT.h"
+
 #define RED_LED GPIO_PIN_0
 #define BLUE_LED GPIO_PIN_1
 #define GREEN_LED GPIO_PIN_7
@@ -28,47 +31,6 @@
 
 #define LED_ON_DELAY_TIME 1000
 #define LED_OFF_DELAY_TIME 500
-
-
-// For ethercat communication
-//struct PROCBUFFER_OUT MasterToTiva;
-//struct PROCBUFFER_IN TivaToMaster;
-union EtherCATFrames_IN etherCATInputFrames;
-union EtherCATFrames_OUT etherCATOutputFrames;
-
-
-/**
- * TivaLocations
- * An enumeration of all of the different locations
- * the Tiva Board can be on Athena. The enumeration
- * values start at 1
- */
-enum TivaLocations
-{
-    notValidLocation,
-    hipL,
-    hipR,
-    thighL,
-    thighR,
-    ankleL,
-    ankleR,
-    DEBUG   // a location for debugging
-};
-typedef enum TivaLocations TivaLocations;
-
-/**
- * TivaLocationBitSet
- * The bits that are used to determine which location
- * the Tiva is at. These boolean values are determined
- * by the pin configuration of the Tiva at startup
- */
-struct TivaLocationBitSet
-{
-    bool Bit0 : 1;
-    bool Bit1 : 1;
-    bool Bit2 : 1;
-};
-typedef struct TivaLocationBitSet TivaLocationBitSet;
 
 /**
  * PandoraLowLevelSettings
@@ -85,30 +47,45 @@ typedef struct PandoraLowLevelSettings PandoraLowLevelSettings;
  * PandoraLowLevel
  * A structure consisting of all of the low level
  * variables needed for ONE Tiva. Each Tiva has 2 joints,
- * 2 actuators, a location on pandora, and variables to keep track
+ * 2 actuators, various sensors, and variables to keep track
  * of the processID
  */
 struct PandoraLowLevel
 {
+    // the two joints on pandora
     Joint joint0;
     Joint joint1;
+
+    // the two actuators on pandora
     Actuator actuator0;
     Actuator actuator1;
-    TivaLocations location;
-    TivaLocations masterLocationGuess;
+
+    // the settings for pandora
     PandoraLowLevelSettings settings;
+
+    // the signals to and from master
     uint8_t signalToMaster;
     uint8_t signalFromMaster;
     uint8_t prevSignalFromMaster;
 
+    // the IMU
     IMU imu;
+
+    // the FT sensor
     FTSensor ftSensor;
+
+    // an easyCAT board for communication
+    // to and from the master computer
+    EasyCAT easyCAT;
 
     // for synchronizing frames from the master and the Tiva
     uint8_t prevProcessIdFromMaster;
     uint8_t processIdFromMaster;
 
+    //  the number of initialization frame received
     uint8_t numberOfInitFramesReceived;
+
+    // a flag to tell if pandora is initialized
     bool initialized;
 };
 typedef struct PandoraLowLevel PandoraLowLevel;
@@ -143,16 +120,10 @@ typedef union ByteData ByteData;
 // Construct and init the PandoraLowLevel object
 PandoraLowLevel pandoraConstruct();
 
-// Configure the location pins
-//void tivaLocationPinsConfig();
-
-// Get the Tiva Location from the set of pins
-//TivaLocations getLocationsFromPins(void);
-
 // Only initializes the Tiva's ethercat capabilities
 // so it can read initialization data from the master.
 // This function is meant to be called before tivaInit
-void tivaInitEtherCAT();
+void tivaInitEtherCAT(PandoraLowLevel* pandora);
 
 // store the current initialization frame
 void StoreCurrentInitFrame(PandoraLowLevel* pandora);
@@ -168,9 +139,6 @@ void enableDebugLEDS();
 
 // disable the debug LEDS
 void disableDebugLEDs();
-
-// LED patterns for when the master is pinging a Tiva location
-void checkLocationLEDS(TivaLocations locationGuess, TivaLocations actualLocation);
 
 // LED patterns for when the Tiva is not connected to the master
 void notConnectedLEDS();

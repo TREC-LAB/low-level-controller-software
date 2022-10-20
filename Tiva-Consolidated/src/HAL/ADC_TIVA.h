@@ -1,11 +1,8 @@
-/*
- * myADC.h
- *
- *  Created on: Aug 27, 2018
- *      Author: Zhoubao Pang
- *  Modified by: Nick Tremaroli and Sam Schoedel
+/**
+ * ADC_TIVA.h
+ * @author: Nick Tremaroli
+ * Contains the layout and functions regarding the Tiva ADCs
  */
-
 #ifndef ADC_TIVA_H
 #define ADC_TIVA_H
 
@@ -19,7 +16,10 @@
 #include "driverlib/ssi.h"
 #include "driverlib/adc.h"
 
+// Configure ADC0
 void ADCConfig0(void);
+
+// Configure ADC1
 void ADCConfig1(void);
 
 #endif /* ADC_TIVA_H */

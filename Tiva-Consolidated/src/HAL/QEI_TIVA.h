@@ -1,8 +1,8 @@
-/*
- * myQEI.h
- *
- *  Created on: Aug 27, 2018
- *      Author: Zhoubao Pang
+/**
+ * QEI_TIVA.h
+ * @author: Nick Tremaroli
+ * Contains the layout and functions regarding
+ * QEI related communication of the Tiva
  */
 
 #ifndef QEI_TIVA_H_
@@ -19,8 +19,11 @@
 #include "driverlib/sysctl.h"
 #include "driverlib/qei.h"
 
-extern void QEIConfig0(void);
-extern void QEIConfig1(void);
+// Configure QEI Base 0
+void QEIConfig0(void);
+
+// Configure QEI Base 1
+void QEIConfig1(void);
 
 
 #endif /* QEI_TIVA_H_ */

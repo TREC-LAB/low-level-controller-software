@@ -1,8 +1,8 @@
-/*
- * myCAN.h
- *
- *  Created on: May 11, 2021
- *      Author: Chi
+/**
+ * CAN_TI_TIVA.h
+ * @author: Nick Tremaroli
+ * Contains the layout and functions regarding CAN communication
+ * on the Tiva
  */
 
 #ifndef MYCAN_H_
@@ -25,38 +25,52 @@
 #include "driverlib/can.h"
 #include "utils/uartstdio.h"
 
+/**
+ * CANBUSTx
+ * A struct containing all of the data necessary to
+ * send values via CAN
+ */
 struct CANBUSTx
 {
     tCANMsgObject msgTx;
     unsigned char msgTxData;
     unsigned char* msgTxDataPtr;
+    uint32_t canObjId;
 };
 typedef struct CANBUSTx CANBUSTx;
 
+/**
+ * CANBUSRx
+ * A struct containing all of the data necessary to
+ * receive values via CAN
+ */
 struct CANBUSRx
 {
     tCANMsgObject msgRx;
     unsigned char msgRxData[8];
+    uint32_t canObjId;
 };
 typedef struct CANBUSRx CANBUSRx;
 
-//extern void CANIntHandler(void);
-//UART & GPIO Initialization for CAN BUS
-extern void CANuartInitial(void);
-void ReadCAN(CANBUSRx* msgRx0, CANBUSRx* msgRx1);
-extern void CANInitial(uint32_t canRate);//rate has to be 500,000(500kbps) to match ATI board, unlikely to change this
-extern void CANRx0Initial(CANBUSRx* msgRx0, uint16_t canID, uint16_t canObj); // this set your Tiva to Receive, specify ID and Object number
-extern void CANRx1Initial(CANBUSRx* msgRx1, uint16_t canID, uint16_t canObj); // this set your Tiva to Receive, specify ID and Object number
-extern void CANTxInitial(CANBUSTx* msgTx0, uint16_t canID, uint16_t canObj);
-extern unsigned char * myCANRx(uint16_t canObj);
-extern void CANSend(CANBUSTx* msgTx0, uint16_t canID, uint16_t canObj);
-extern void tare(void);
-//extern void readFTSensor(FTSensor* ftSensor);
-void storeForce(void);
+// reads the data through the respective CAN Rx
+void ReadCAN(CANBUSRx* canMsgRx);
 
-float binTwoCToDec(unsigned char com0, unsigned char com1);
+// Initialize CAN using the canRate provided
+void CANInitial(uint32_t canRate);
 
+// Initialize Rx0 of the CAN BUS
+void CANRx0Initial(CANBUSRx* msgRx0, uint16_t canID, uint16_t canObj);
 
-//FTSensor FTSensorConfig(void);
+// Initialize Rx1 of the CAN BUS
+void CANRx1Initial(CANBUSRx* msgRx1, uint16_t canID, uint16_t canObj);
+
+// Initialize the tranfer  of the CAN BUS
+void CANTxInitial(CANBUSTx* msgTx0, uint16_t canID, uint16_t canObj);
+
+// send data to the CAN BUS
+void CANSend(CANBUSTx* msgTx0);
+
+// convert the binary data from the CAN bus to decimal data
+float BinaryToDecimal(unsigned char com0, unsigned char com1);
 
 #endif /* MYCAN_H_ */

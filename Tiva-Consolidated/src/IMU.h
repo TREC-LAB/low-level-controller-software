@@ -1,3 +1,9 @@
+/**
+ * IMU.h
+ * @author: Nick Tremaroli
+ * Contains the layout and functions regarding an FT Sensor
+ */
+
 #ifndef IMU_IMU_TIVA_H_
 #define IMU_IMU_TIVA_H_
 
@@ -11,22 +17,22 @@
 
 #include "HAL/I2C_Tiva.h"
 
-#define GYROFACTOR                  131.0
-#define ACCELEROMETERFACTOR         16384.0
-
 #define GYROFACTOR_2000DPS      ((2000.0 / 32767.5))
 #define ACCELEROMETERFACTOR_16G  (9.81 * (16.0/32767.5))
 
 /**
  * AccelerationData
- * Holds the x,y,z accelerationData of the IMU
+ * Holds the raw data and actual data regarding
+ * acceleration data
  */
 struct AccelerationData
 {
+    // raw data
     int16_t AxRaw;
     int16_t AyRaw;
     int16_t AzRaw;
 
+    // actual floating point data
     float Ax;
     float Ay;
     float Az;
@@ -35,42 +41,56 @@ typedef struct AccelerationData AccelerationData;
 
 /**
  * GyroData
- * Holds the x,y,z gyro data of the IMU
+ * Holds the raw data, actual data and gyro biases
+ * regarding gyro data
  */
 struct GyroData
 {
+    // raw data
     int16_t GxRaw;
     int16_t GyRaw;
     int16_t GzRaw;
 
+    // actual data
     float Gx;
     float Gy;
     float Gz;
 
+    // gyro bias data
     float GxBias;
     float GyBias;
     float GzBias;
 };
 typedef struct GyroData GyroData;
 
+/**
+ * MagnetometerData
+ * Holds the raw data, actual data, magnetometer biases,
+ * factory biases, and scale regarding mangetometer data
+ */
 struct MagnetometerData
 {
+    // raw data
     int16_t MxRaw;
     int16_t MyRaw;
     int16_t MzRaw;
 
+    // actual data
     float Mx;
     float My;
     float Mz;
 
+    // factory bias data
     float MxFactoryBias;
     float MyFactoryBias;
     float MzFactoryBias;
 
+    // bias data
     float MxBias;
     float MyBias;
     float MzBias;
 
+    // scale data
     float MxScale;
     float MyScale;
     float MzScale;
@@ -115,32 +135,36 @@ enum GyroScale
   GFS_2000DPS
 };
 
+/**
+ * MagentometerOutputBits
+ * The number of bits regarding resolution of the magnetometer
+ */
 enum MagnetometerOutputBits
 {
     fourteenBits,
     sixteenBits
 };
 
-// initialization related functions
+// construct the IMU
 IMU imuConstruct(void);
+
+// initalize the IMU
 void imuInitialize(IMU* imu);
+
+// enable the IMU
 void imuEnable(IMU* imu);
-void initMPU9250();
-void initAndCalibrateAK8963(IMU* imu);
+
+// calibrate the imu
 void imuCalibrate(IMU* imu);
+
+// read all sensor data from the IMU
 void readSensorData(IMU* imu);
 
-void readAK8963Registers(uint8_t subAddress, uint8_t count, uint8_t* dest);
+// read to the registers of the AK8963 (the magnetometer)
+void readAK8963Registers(uint8_t subAddress, uint8_t length, uint8_t* dest);
+
+// write to the register of the AK8963 (the magnetometer)
 void writeAK8963Register(uint8_t subAddress, uint8_t data);
-
-// functions related to reading
-void readAccelerationData(IMU* imu);
-void readGyroData(IMU* imu);
-void readRawMagnetometerData(IMU* imu);
-void getMagnetometerDataFromRaw(IMU* imu);
-void readMagnetometerData(IMU* imu);
-void ReadIMUData(IMU* imu);
-
 
 /**     MPU9250 - related macros        */
 

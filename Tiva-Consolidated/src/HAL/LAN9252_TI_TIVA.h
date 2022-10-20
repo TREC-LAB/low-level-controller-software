@@ -1,177 +1,185 @@
-//Author:       Hongxu Guo
-//Organization: Virginia Tech
-//Description:  This library is a modified version of the EasyCAT library
-//              written by AB&T. This library is written for 32 bit
-//              microcontrollers, especially for TI C2000 microcontrollers.
+/**
+ * LAN9252_TI_TIVA.c
+ * @author: Nick Tremaroli
+ * Contains all the low-level code for LAN9252 related functions
+ */
 
+#ifndef LAN9252_TI_H
+#define LAN9252_TI_H
 
-// Version:      2.0 - TIVA support
-// Last modified 2/24/2021
+#include <stdint.h>
+#include <stdbool.h>
+#include "inc/hw_memmap.h"
+#include "driverlib/gpio.h"
+#include "driverlib/ssi.h"
 
-// Modified by: Sam Schoedel and Nick Tremaroli
+/**********************Start of Pre-Processor functions*******************************/
+/**
+ * the preprocessor calculates the parameters necessary to transfer out data
+ * define the number of bytes
+ */
 
-#ifndef LAN9252_TI
-#define LAN9252_TI
-
-//#include "device.h"
-#include "../main.h"
-//Global Functiokns
-uint16_t EtherCAT_Init(void);
-uint16_t EtherCAT_MainTask(void);
-uint16_t SPI_Transfer(uint16_t Value);
-
-//-----------------------------------------------------------------------------------------------
-
-
-
-#if (!defined BYTE_NUM && !defined CUSTOM)			// if BYTE_NUM is not declared
-  #define BYTE_NUM 128
-#endif                                    			//
-
-
-//-- the preprocessor calculates the parameters necessary to transfer out data ---
-
-                                                    // define TOT_BYTE_NUM_OUT as the
-                                                    // total number of byte we have to
-                                                    // transfer in output
-                                                    // this must match the ESI XML
-                                                    //
-#ifdef  BYTE_NUM                                    // in Standard Mode
-  #define TOT_BYTE_NUM_OUT  BYTE_NUM                // 16, 32, 64 or 128
-                                                    //
-#else                                               // in Custom Mode
-  #define TOT_BYTE_NUM_OUT  CUST_BYTE_NUM_OUT       // any number between 0 and 128
-#endif                                              //
-
-
-#if TOT_BYTE_NUM_OUT > 64                           // if we have more then  64 bytes
-                                                    // we have to split the transfer in two
-
-  #define SEC_BYTE_NUM_OUT  (TOT_BYTE_NUM_OUT - 64) // number of bytes of the second transfer
-
-  #if ((SEC_BYTE_NUM_OUT & 0x03) != 0x00)           // number of bytes of the second transfer
-                                                    // rounded to long
-    #define SEC_BYTE_NUM_ROUND_OUT  ((SEC_BYTE_NUM_OUT | 0x03) + 1)
-  #else                                             //
-    #define SEC_BYTE_NUM_ROUND_OUT  SEC_BYTE_NUM_OUT//
-  #endif                                            //
-
-  #define FST_BYTE_NUM_OUT  64                      // number of bytes of the first transfer
-  #define FST_BYTE_NUM_ROUND_OUT  64                // number of bytes of the first transfer
-                                                    // rounded to 4 (long)
-
-#else                                               // if we have max 64 bytes we transfer
-                                                    // them in just one round
-
-  #define FST_BYTE_NUM_OUT  TOT_BYTE_NUM_OUT        // number of bytes of the first and only transfer
-
-  #if ((FST_BYTE_NUM_OUT & 0x03) != 0x00)           // number of bytes of the first and only transfer
-                                                    // rounded to 4 (long)
-    #define FST_BYTE_NUM_ROUND_OUT ((FST_BYTE_NUM_OUT | 0x03) + 1)
-  #else                                             //
-    #define FST_BYTE_NUM_ROUND_OUT  FST_BYTE_NUM_OUT//
-  #endif                                            //
-
-  #define SEC_BYTE_NUM_OUT  0                       // we don't use the second round
-  #define SEC_BYTE_NUM_ROUND_OUT  0                 //
-
+/*********************Start of Output related Pre-Processor functions ****************/
+/**
+ * These preprocessor calculations are used for the output buffer which is transfered
+ * from the Tiva to the LAN9252
+ */
+#if (!defined BYTE_NUM && !defined CUSTOM)
+    #define BYTE_NUM 128
 #endif
 
+// define TOT_BYTE_NUM_OUT as the total number of byte we have to
+// transfer in output in Standard Mode, 16, 32, 64, 128
+#ifdef  BYTE_NUM
+    #define TOT_BYTE_NUM_OUT  BYTE_NUM
 
-//-- the preprocessor calculates the parameters necessary to transfer in data ---
-
-                                                    // define TOT_BYTE_NUM_IN as the
-                                                    // total number of byte we have to
-                                                    // transfer in input
-                                                    // this must match the ESI XML
-                                                    //
-#ifdef  BYTE_NUM                                    // in Standard Mode
-  #define TOT_BYTE_NUM_IN  BYTE_NUM                 // 16, 32, 64 or 128
-                                                    //
-#else                                               // in Custom Mode
-  #define TOT_BYTE_NUM_IN  CUST_BYTE_NUM_IN         // any number between 0 and 128
-#endif                                              //
-
-
-#if TOT_BYTE_NUM_IN > 64                            // if we have more then  64 bytes
-                                                    // we have to split the transfer in two
-
-  #define SEC_BYTE_NUM_IN  (TOT_BYTE_NUM_IN - 64)   // number of bytes of the second transfer
-
-  #if ((SEC_BYTE_NUM_IN & 0x03) != 0x00)            // number of bytes of the second transfer
-                                                    // rounded to 4 (long)
-    #define SEC_BYTE_NUM_ROUND_IN  ((SEC_BYTE_NUM_IN | 0x03) + 1)
-  #else                                             //
-    #define SEC_BYTE_NUM_ROUND_IN  SEC_BYTE_NUM_IN  //
-  #endif                                            //
-
-  #define FST_BYTE_NUM_IN  64                       // number of bytes of the first transfer
-  #define FST_BYTE_NUM_ROUND_IN  64                 // number of bytes of the first transfer
-                                                    // rounded to 4 (long)
-
-#else                                               // if we have max 64 bytes we transfer
-                                                    // them in just one round
-
-  #define FST_BYTE_NUM_IN  TOT_BYTE_NUM_IN          // number of bytes of the first and only transfer
-
-  #if ((FST_BYTE_NUM_IN & 0x03) != 0x00)            // number of bytes of the first and only transfer
-                                                    // rounded to 4 (long)
-    #define FST_BYTE_NUM_ROUND_IN ((FST_BYTE_NUM_IN | 0x03) + 1)
-  #else                                             //
-    #define FST_BYTE_NUM_ROUND_IN  FST_BYTE_NUM_IN  //
-  #endif                                            //
-
-  #define SEC_BYTE_NUM_IN  0                        // we don't use the second round
-  #define SEC_BYTE_NUM_ROUND_IN  0                  //
-
+// in custom mode, any number between 0 and 128
+#else
+    #define TOT_BYTE_NUM_OUT  CUST_BYTE_NUM_OUT
 #endif
 
+// if there are more than 64 bytes to transfer
+// than split the data in two
+#if TOT_BYTE_NUM_OUT > 64
 
-//----------------- sanity check -------------------------------------------------------
+    // define the number of bytes of the second transfer
+    #define SEC_BYTE_NUM_OUT  (TOT_BYTE_NUM_OUT - 64)
 
-
-#ifdef BYTE_NUM                     // STANDARD MODE and CUSTOM MODE
-                                    // cannot be defined at the same time
-  #ifdef CUST_BYTE_NUM_OUT
-    #error "BYTE_NUM and CUST_BYTE_NUM_OUT cannot be defined at the same time !!!!"
-    #error "define them correctly in file EasyCAT.h"
+    // round the number of bytes of the second transfer to 4 (a long) if necessary
+    #if ((SEC_BYTE_NUM_OUT & 0x03) != 0x00)
+        #define SEC_BYTE_NUM_ROUND_OUT  ((SEC_BYTE_NUM_OUT | 0x03) + 1)
+    #else
+        #define SEC_BYTE_NUM_ROUND_OUT  SEC_BYTE_NUM_OUT
     #endif
 
-  #ifdef CUST_BYTE_NUM_IN
-    #error "BYTE_NUM and CUST_BYTE_NUM_IN cannot be defined at the same time !!!!"
-    #error "define them correctly in file EasyCAT.h"
-  #endif
-#endif
+    // number of bytes of the first transfer
+    #define FST_BYTE_NUM_OUT  64
+    #define FST_BYTE_NUM_ROUND_OUT  64
 
-#ifdef BYTE_NUM                     //--- for BYTE_NUM we accept only 16  32  64  128 --
-
-  #if ((BYTE_NUM !=16) && (BYTE_NUM !=32) && (BYTE_NUM !=64)  && (BYTE_NUM !=128))
-    #error "BYTE_NUM must be 16, 32, 64 or 128 !!! define it correctly in file EasyCAT.h"
-  #endif
-
+// if we have a max of 64 bytes to transfer
 #else
-                                   //--- CUST_BYTE_NUM_OUT and CUST_BYTE_NUM_IN --------
-                                   //    must be max 128
-  #if (CUST_BYTE_NUM_OUT > 128)
-    #error "CUST_BYTE_NUM_OUT must be max 128 !!! define it correctly in file EasyCAT.h"
-  #endif
 
-  #if (CUST_BYTE_NUM_IN > 128)
-    #error "CUST_BYTE_NUM_IN must be max 128 !!! define it correctly in file EasyCAT.h"
-  #endif
+    // define number of bytes of the first and only transfer
+    #define FST_BYTE_NUM_OUT  TOT_BYTE_NUM_OUT
+
+    // round the number of bytes to a long
+    #if ((FST_BYTE_NUM_OUT & 0x03) != 0x00)
+        #define FST_BYTE_NUM_ROUND_OUT ((FST_BYTE_NUM_OUT | 0x03) + 1)
+    #else
+        #define FST_BYTE_NUM_ROUND_OUT  FST_BYTE_NUM_OUT
+    #endif
+
+    // second transfer not being used
+    #define SEC_BYTE_NUM_OUT  0
+    #define SEC_BYTE_NUM_ROUND_OUT  0
 
 #endif
 
+/*********************End of Output related Pre-Processor functions ****************/
 
-//---- LAN9252 registers --------------------------------------------------------------------------
 
-                                            //---- access to EtherCAT registers -------------------
+/*********************Start of Input related Pre-Processor functions ****************/
+/**
+ * These preprocessor calculations are used for the input buffer which the Tiva
+ * reads from the LAN9252
+ */
+
+// define TOT_BYTE_NUM_IN as the total number of byte we have to
+// transfer as an input.
+// In Standard Mode 16, 32, 64, 128
+#ifdef  BYTE_NUM
+    #define TOT_BYTE_NUM_IN  BYTE_NUM
+
+// in Custom Mode any number between 0 and 128
+#else
+  #define TOT_BYTE_NUM_IN  CUST_BYTE_NUM_IN
+#endif
+
+// If we have more than 64 bytes we have to split the transfer in two
+#if TOT_BYTE_NUM_IN > 64
+
+    // define the number of bytes of the second transfer
+    #define SEC_BYTE_NUM_IN  (TOT_BYTE_NUM_IN - 64)
+
+    // round the number of bytes of the second transfer to 4 (a long) if necessary
+    #if ((SEC_BYTE_NUM_IN & 0x03) != 0x00)
+        #define SEC_BYTE_NUM_ROUND_IN  ((SEC_BYTE_NUM_IN | 0x03) + 1)
+    #else
+        #define SEC_BYTE_NUM_ROUND_IN  SEC_BYTE_NUM_IN
+    #endif
+
+    // the number of bytes of the first transfer
+    #define FST_BYTE_NUM_IN  64
+    #define FST_BYTE_NUM_ROUND_IN  64
+
+// if we have a max of 64 bytes to transfer
+#else
+
+    // number of bytes of the first and only transfer
+    #define FST_BYTE_NUM_IN  TOT_BYTE_NUM_IN
+
+    // round the number of bytes to 4 (a long)
+    #if ((FST_BYTE_NUM_IN & 0x03) != 0x00)
+        #define FST_BYTE_NUM_ROUND_IN ((FST_BYTE_NUM_IN | 0x03) + 1)
+    #else
+        #define FST_BYTE_NUM_ROUND_IN  FST_BYTE_NUM_IN
+    #endif
+
+    // we don't use the second round
+    #define SEC_BYTE_NUM_IN  0
+    #define SEC_BYTE_NUM_ROUND_IN  0
+
+#endif
+
+/*********************End of Input related Pre-Processor functions ****************/
+
+/*********************Start of Pre-Processor error checking ****************/
+
+// Check that BYTE_NUM and CUST_BYTE_NUM_OUT are not declared at
+// the same time
+#ifdef BYTE_NUM
+
+    // cannot be defined at the same time
+    #ifdef CUST_BYTE_NUM_OUT
+        #error "BYTE_NUM and CUST_BYTE_NUM_OUT cannot be defined at the same time !!!!"
+        #error "define them correctly in file EasyCAT.h"
+    #endif
+
+    // cannot be defined at the same time
+    #ifdef CUST_BYTE_NUM_IN
+        #error "BYTE_NUM and CUST_BYTE_NUM_IN cannot be defined at the same time !!!!"
+        #error "define them correctly in file EasyCAT.h"
+    #endif
+#endif
+
+// check that BYTE_NUM is only either 16, 32, 64, 128
+#ifdef BYTE_NUM
+    #if ((BYTE_NUM !=16) && (BYTE_NUM !=32) && (BYTE_NUM !=64)  && (BYTE_NUM !=128))
+        #error "BYTE_NUM must be 16, 32, 64 or 128 !!! define it correctly in file EasyCAT.h"
+    #endif
+
+// if CUSTOM_BYTE_NUM_OUT or CUSTOM_BYTE_NUM_IN is defined make sure
+// it is within an appropriate range
+#else
+    #if (CUST_BYTE_NUM_OUT > 128)
+        #error "CUST_BYTE_NUM_OUT must be max 128 !!! define it correctly in file EasyCAT.h"
+    #endif
+
+    #if (CUST_BYTE_NUM_IN > 128)
+        #error "CUST_BYTE_NUM_IN must be max 128 !!! define it correctly in file EasyCAT.h"
+    #endif
+#endif
+
+/*********************End of Pre-Processor error checking ****************/
+
+/*********************Start of LAN9252 register addresses**************************/
+
+//---- access to EtherCAT registers -------------------
 
 #define ECAT_CSR_DATA           0x0300      // EtherCAT CSR Interface Data Register
 #define ECAT_CSR_CMD            0x0304      // EtherCAT CSR Interface Command Register
 
-
-                                            //---- access to EtherCAT process RAM -----------------
+//---- access to EtherCAT process RAM -----------------
 
 #define ECAT_PRAM_RD_ADDR_LEN   0x0308      // EtherCAT Process RAM Read Address and Length Register
 #define ECAT_PRAM_RD_CMD        0x030C      // EtherCAT Process RAM Read Command Register
@@ -181,7 +189,7 @@ uint16_t SPI_Transfer(uint16_t Value);
 #define ECAT_PRAM_RD_DATA       0x0000      // EtherCAT Process RAM Read Data FIFO
 #define ECAT_PRAM_WR_DATA       0x0020      // EtherCAT Process RAM Write Data FIFO
 
-                                            //---- EtherCAT registers -----------------------------
+//---- EtherCAT registers -----------------------------
 
 #define AL_CONTROL              0x0120      // AL control
 #define AL_STATUS               0x0130      // AL status
@@ -194,8 +202,7 @@ uint16_t SPI_Transfer(uint16_t Value);
 #define SM0_BASE                0x0800      // SM0 base address (output)
 #define SM1_BASE                0x0808      // SM1 base address (input)
 
-
-                                            //---- LAN9252 registers ------------------------------
+//---- LAN9252 registers ------------------------------
 
 #define HW_CFG                  0x0074      // hardware configuration register
 #define BYTE_TEST               0x0064      // byte order test register
@@ -203,7 +210,6 @@ uint16_t SPI_Transfer(uint16_t Value);
 #define ID_REV                  0x0050      // chip ID and revision
 #define IRQ_CFG                 0x0054      // interrupt configuration
 #define INT_EN                  0x005C      // interrupt enable
-
 
 //---- LAN9252 flags ------------------------------------------------------------------------------
 
@@ -214,12 +220,10 @@ uint16_t SPI_Transfer(uint16_t Value);
 #define READY             		0x0800
 #define DIGITAL_RST       		0x00000001
 
-
 //---- EtherCAT flags -----------------------------------------------------------------------------
 
 #define ALEVENT_CONTROL         0x0001
 #define ALEVENT_SM              0x0010
-
 
 //----- state machine ------------------------------------------------------------
 
@@ -229,12 +233,10 @@ uint16_t SPI_Transfer(uint16_t Value);
 #define ESM_SAFEOP              0x04          // safe-operational
 #define ESM_OP                  0x08          // operational
 
-
 //--- ESC commands --------------------------------------------------------------------------------
 
 #define ESC_WRITE 		   		0x80
 #define ESC_READ 		   		0xC0
-
 
 //---- SPI ----------------------------------------------------------------------------------------
 
@@ -247,43 +249,23 @@ uint16_t SPI_Transfer(uint16_t Value);
 // Error checking
 #define ETHERCAT_INIT_TIMEOUT 1000
 
-
-typedef union
+union ULONG
 {
     uint32_t Long;
     uint16_t Word[2];
     uint8_t Byte[4];
-}ULONG;
-
-//-------------------------------------------  Input/Output buffers for Standard Mode -----------
-#ifdef BYTE_NUM
-
-//  typedef struct						      //-- output buffer -----------------
-//  {		 									  //
-//    uint16_t  Word [BYTE_NUM];                 //
-//  } PROCBUFFER_OUT;							  //
-//
-//  typedef struct                              //-- input buffer ------------------
-//  {											  //
-//    uint16_t  Word [BYTE_NUM];                 //
-//  } PROCBUFFER_IN;                            //
-
-struct PROCBUFFER_OUT                             //-- output buffer -----------------
-{                                           //
-    uint8_t  Byte [BYTE_NUM];                 //
 };
-typedef struct PROCBUFFER_OUT PROCBUFFER_OUT;
+typedef union ULONG ULONG;
 
-struct PROCBUFFER_IN                             //-- input buffer ------------------
-{                                           //
-    uint8_t  Byte [BYTE_NUM];                 //
-};
-typedef struct PROCBUFFER_IN PROCBUFFER_IN;
+/**********InputFrames**********/
 
-//PROCBUFFER_OUT MasterToTiva;
-//PROCBUFFER_IN TivaToMaster;
-
-// InputFrames
+// used to avoid padding
+/**
+ * ControlSignalEtherCATFrame_IN
+ * Contains all of the data for an input control signal frame
+ * from the master computer
+ * Note the "__attribute__((__packed__))" is to prevent padding
+ */
 struct __attribute__((__packed__)) ControlSignalEtherCATFrame_IN
 {
     uint8_t signalFromMaster;
@@ -296,7 +278,12 @@ struct __attribute__((__packed__)) ControlSignalEtherCATFrame_IN
 };
 typedef struct ControlSignalEtherCATFrame_IN ControlSignalEtherCATFrame_IN;
 
-
+/**
+ * LocationDebugSignalEtherCATFrame_IN
+ * Contains all of the data for an input location debug signal frame
+ * from the master computer
+ * Note the "__attribute__((__packed__))" is to prevent padding
+ */
 struct __attribute__((__packed__)) LocationDebugSignalEtherCATFrame_IN
 {
     uint8_t signalFromMaster;
@@ -306,7 +293,12 @@ struct __attribute__((__packed__)) LocationDebugSignalEtherCATFrame_IN
 };
 typedef struct LocationDebugSignalEtherCATFrame_IN LocationDebugSignalEtherCATFrame_IN;
 
-
+/**
+ * InitSignal0EtherCATFrame_IN
+ * Contains all of the data for the 0th input initialization signal frame
+ * form the master computer
+ * Note the "__attribute__((__packed__))" is to prevent padding
+ */
 struct __attribute__((__packed__)) InitSignal0EtherCATFrame_IN
 {
     uint8_t signalFromMaster;
@@ -322,6 +314,12 @@ struct __attribute__((__packed__)) InitSignal0EtherCATFrame_IN
 };
 typedef struct InitSignal0EtherCATFrame_IN InitSignal0EtherCATFrame_IN;
 
+/**
+ * InitSignal1EtherCATFrame_IN
+ * Contains all of the data for the 1st input initialization signal frame
+ * form the master computer
+ * Note the "__attribute__((__packed__))" is to prevent padding
+ */
 struct __attribute__((__packed__)) InitSignal1EtherCATFrame_IN
 {
     uint8_t signalFromMaster;
@@ -337,6 +335,12 @@ struct __attribute__((__packed__)) InitSignal1EtherCATFrame_IN
 };
 typedef struct InitSignal1EtherCATFrame_IN InitSignal1EtherCATFrame_IN;
 
+/**
+ * InitSignal2EtherCATFrame_IN
+ * Contains all of the data for the 2nd input initialization signal frame
+ * form the master computer
+ * Note the "__attribute__((__packed__))" is to prevent padding
+ */
 struct __attribute__((__packed__)) InitSignal2EtherCATFrame_IN
 {
     uint8_t signalFromMaster;
@@ -353,6 +357,12 @@ struct __attribute__((__packed__)) InitSignal2EtherCATFrame_IN
 };
 typedef struct InitSignal2EtherCATFrame_IN InitSignal2EtherCATFrame_IN;
 
+/**
+ * InitSignal3EtherCATFrame_IN
+ * Contains all of the data for the 3rd input initialization signal frame
+ * form the master computer
+ * Note the "__attribute__((__packed__))" is to prevent padding
+ */
 struct __attribute__((__packed__)) InitSignal3EtherCATFrame_IN
 {
     uint8_t signalFromMaster;
@@ -369,6 +379,12 @@ struct __attribute__((__packed__)) InitSignal3EtherCATFrame_IN
 };
 typedef struct InitSignal3EtherCATFrame_IN InitSignal3EtherCATFrame_IN;
 
+/**
+ * InitSignal4EtherCATFrame_IN
+ * Contains all of the data for the 4th input initialization signal frame
+ * form the master computer
+ * Note the "__attribute__((__packed__))" is to prevent padding
+ */
 struct __attribute__((__packed__)) InitSignal4EtherCATFrame_IN
 {
     uint8_t signalFromMaster;
@@ -379,6 +395,12 @@ struct __attribute__((__packed__)) InitSignal4EtherCATFrame_IN
 };
 typedef struct InitSignal4EtherCATFrame_IN InitSignal4EtherCATFrame_IN;
 
+/**
+ * InitSignal5EtherCATFrame_IN
+ * Contains all of the data for the 5th input initialization signal frame
+ * form the master computer
+ * Note the "__attribute__((__packed__))" is to prevent padding
+ */
 struct __attribute__((__packed__)) InitSignal5EtherCATFrame_IN
 {
     uint8_t signalFromMaster;
@@ -389,6 +411,11 @@ struct __attribute__((__packed__)) InitSignal5EtherCATFrame_IN
 };
 typedef struct InitSignal5EtherCATFrame_IN InitSignal5EtherCATFrame_IN;
 
+/**
+ * InitSignalHeaderEtherCATFrame_IN
+ * Contains all of the data for the header of the initialization frame
+ * Note the "__attribute__((__packed__))" is to prevent padding
+ */
 struct __attribute__((__packed__)) InitSignalHeaderEtherCATFrame_IN
 {
     uint8_t signalFromMaster;
@@ -398,9 +425,12 @@ struct __attribute__((__packed__)) InitSignalHeaderEtherCATFrame_IN
 };
 typedef struct InitSignalHeaderEtherCATFrame_IN InitSignalHeaderEtherCATFrame_IN;
 
-// OutputFrames
-
-//#pragma pack(1)     // used to avoid padding
+/**
+ * ControlSignalEtherCATFrame_OUT
+ * Contains all of the data for an output control signal to send
+ * to the master computer
+ * Note the "__attribute__((__packed__))" is to prevent padding
+ */
 struct __attribute__((__packed__)) ControlSignalEtherCATFrame_OUT
 {
     uint8_t signalToMaster;
@@ -429,7 +459,12 @@ struct __attribute__((__packed__)) ControlSignalEtherCATFrame_OUT
 };
 typedef struct ControlSignalEtherCATFrame_OUT ControlSignalEtherCATFrame_OUT;
 
-//#pragma pack(1)     // used to avoid padding
+/**
+ * LocationDebugSignalEtherCATFrame_OUT
+ * Contains all of the data for an output location debug signal
+ * to send to the master computer
+ * Note the "__attribute__((__packed__))" is to prevent padding
+ */
 struct __attribute__((__packed__)) LocationDebugSignalEtherCATFrame_OUT
 {
     uint8_t signalFromMaster;
@@ -439,7 +474,11 @@ struct __attribute__((__packed__)) LocationDebugSignalEtherCATFrame_OUT
 };
 typedef struct LocationDebugSignalEtherCATFrame_OUT LocationDebugSignalEtherCATFrame_OUT;
 
-//#pragma pack(1)     // used to avoid padding
+/**
+ * InitSignalEtherCATFrame_OUT
+ * Contains all of the data for an output initialization signal
+ * responce frame which is sent to the master
+ */
 struct __attribute__((__packed__)) InitSignalEtherCATFrame_OUT
 {
     uint8_t signalFromMaster;
@@ -450,7 +489,11 @@ struct __attribute__((__packed__)) InitSignalEtherCATFrame_OUT
 };
 typedef struct InitSignalEtherCATFrame_OUT InitSignalEtherCATFrame_OUT;
 
-// the input frames which come from the master
+/**
+ * EtherCATFrames_IN
+ * A union of all of the input etherCAT frames which can be
+ * received from the master computer
+ */
 union EtherCATFrames_IN
 {
     ControlSignalEtherCATFrame_IN controlSignalFrame;
@@ -466,7 +509,11 @@ union EtherCATFrames_IN
 };
 typedef union EtherCATFrames_IN EtherCATFrames_IN;
 
-//#pragma pack(1)
+/**
+ * EtherCATFrames_OUT
+ * A union of all of the output etherCAT frames which can be
+ * send to the master computer
+ */
 union EtherCATFrames_OUT
 {
     ControlSignalEtherCATFrame_OUT controlSignalFrame;
@@ -474,12 +521,26 @@ union EtherCATFrames_OUT
     InitSignalEtherCATFrame_OUT initSignalFrame;
     uint8_t rawBytes[BYTE_NUM];
 };
-typedef union EtherCATFrames_Out EtherCATFrames_OUT;
+typedef union EtherCATFrames_OUT EtherCATFrames_OUT;
 
-//EtherCATFrames_IN etherCATInputFrames;
-//EtherCATFrames_OUT etherCATOutputFrames;
+// directly write to a register
+void LAN9252WriteRegisterDirect(uint16_t address, uint32_t dataToSend);
 
-#endif
+// directly read from a register
+uint32_t LAN9252ReadRegisterDirect(uint16_t address, uint16_t length);
 
+// indirectly write to a register
+void LAN9252WriteRegisterIndirect(uint16_t address, uint32_t dataToSend, uint16_t length);
+
+// indirectly read from a register(s)
+uint32_t LAN9252ReadRegisterIndirect(uint16_t address, uint16_t length);
+uint32_t LAN9252ReadRegisterIndirectOneByte(uint16_t address);
+
+// Read/Write to the RAM FIFO
+void LAN9252ReadProcRamFifo(EtherCATFrames_IN *etherCATInputFrames);
+void LAN9252WriteProcRamFifo(EtherCATFrames_OUT *etherCATOutputFrames);
+
+// Transfer SPI data to and from the device
+uint16_t SPI_Transfer(uint16_t value);
 
 #endif
