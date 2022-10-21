@@ -8,6 +8,20 @@ Designed for the [Virginia Tech TREC Lab](https://trecvt.org) by [Nick Tremaroli
 Low-level code which allows for the controlling of pandora
 
 ---
+### *v2.5*:
+* Added more documentation to all of the program files
+* Fixed E-stop issue related to re-initialization
+	* Now when the estop is triggered, it can only
+	get back to normal mode by re-initalizing the
+	Tiva
+* Fixed CAN Pin conflict with PWM pin
+* Added EasyCAT.h and EasyCAT.c
+* Added PWM generator struct
+* removed 35% PWM cap
+* First RTOS merge complete
+	* RTOS can now be developed in parallel
+	with the low-level framework
+
 ### *v2.4*:
 * Added magnetometer data from the IMU to the etherCAT frame
 * Fixed issues noticed from the new sensor board
