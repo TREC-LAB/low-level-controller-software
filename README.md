@@ -17,8 +17,9 @@ Low-level code which allows for the controlling of pandora
 * Fixed CAN Pin conflict with PWM pin
 * Added EasyCAT.h and EasyCAT.c
 * Added PWM generator struct
+* removed 35% PWM cap
 * First RTOS merge complete
-	* RTOS can now be developed in parrallel
+	* RTOS can now be developed in parallel
 	with the low-level framework
 
 ### *v2.4*:
